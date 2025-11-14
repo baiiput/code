@@ -18,6 +18,18 @@ $transaksiTerakhir = $db->fetchAll("
     ORDER BY t.created_at DESC
     LIMIT 10
 ");
+
+// Get warga yang perlu perhatian (warning & alert)
+$wargaAlert = $db->fetchAll("
+    SELECT *
+    FROM progress_pembayaran_warga
+    WHERE status_pembayaran IN ('warning', 'alert')
+    ORDER BY persentase_pencapaian ASC
+    LIMIT 5
+");
+
+$countAlert = $db->fetchOne("SELECT COUNT(*) as total FROM progress_pembayaran_warga WHERE status_pembayaran = 'alert'");
+$countWarning = $db->fetchOne("SELECT COUNT(*) as total FROM progress_pembayaran_warga WHERE status_pembayaran = 'warning'");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -55,6 +67,8 @@ $transaksiTerakhir = $db->fetchAll("
                 <li><a href="warga.php">Data Warga</a></li>
                 <li><a href="transaksi.php">Transaksi</a></li>
                 <li><a href="pengeluaran.php">Pengeluaran</a></li>
+                <li><a href="alert.php">Notifikasi <?php if (($countAlert['total'] + $countWarning['total']) > 0): ?><span class="badge badge-danger" style="margin-left: 0.25rem;"><?php echo $countAlert['total'] + $countWarning['total']; ?></span><?php endif; ?></a></li>
+                <li><a href="settings.php">Pengaturan</a></li>
             </ul>
         </div>
     </nav>
@@ -87,6 +101,73 @@ $transaksiTerakhir = $db->fetchAll("
                 <div class="stat-subtitle">Warga yang aktif jimpitan</div>
             </div>
         </div>
+
+        <!-- Warga Yang Perlu Perhatian -->
+        <?php if (!empty($wargaAlert)): ?>
+        <div class="card mb-3" style="border-left: 4px solid var(--danger-color);">
+            <div class="card-header">
+                <h2 class="card-title">🔔 Warga Yang Perlu Perhatian</h2>
+                <a href="alert.php" class="btn btn-danger btn-sm">
+                    Lihat Semua (<?php echo $countAlert['total'] + $countWarning['total']; ?>)
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Nama Warga</th>
+                                <th>Dawis</th>
+                                <th>Target Bulan Ini</th>
+                                <th>Sudah Bayar</th>
+                                <th>Kurang</th>
+                                <th>Progress</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($wargaAlert as $w): ?>
+                            <tr style="background: <?php echo $w['status_pembayaran'] == 'alert' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(245, 158, 11, 0.05)'; ?>">
+                                <td>
+                                    <?php if ($w['status_pembayaran'] == 'alert'): ?>
+                                        <span class="badge badge-danger">🚨 Alert</span>
+                                    <?php else: ?>
+                                        <span class="badge badge-warning">⚠️ Warning</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><strong><?php echo htmlspecialchars($w['nama_lengkap']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($w['nama_dawis']); ?></td>
+                                <td><?php echo formatRupiah($w['target_sampai_bulan_ini']); ?></td>
+                                <td class="<?php echo $w['status_pembayaran'] == 'alert' ? 'text-danger' : 'text-warning'; ?>">
+                                    <strong><?php echo formatRupiah($w['saldo_tahun_ini']); ?></strong>
+                                </td>
+                                <td class="text-danger">
+                                    <strong><?php echo formatRupiah($w['target_sampai_bulan_ini'] - $w['saldo_tahun_ini']); ?></strong>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden; min-width: 80px;">
+                                            <div style="background: <?php echo $w['status_pembayaran'] == 'alert' ? 'var(--danger-color)' : 'var(--warning-color)'; ?>; height: 100%; width: <?php echo min(100, $w['persentase_pencapaian']); ?>%;"></div>
+                                        </div>
+                                        <span style="font-weight: 600; min-width: 45px; font-size: 0.875rem;">
+                                            <?php echo number_format($w['persentase_pencapaian'], 1); ?>%
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="transaksi.php?warga_id=<?php echo $w['warga_id']; ?>" class="btn btn-primary btn-sm">
+                                        💰 Catat Bayar
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Laporan Per Dawis -->
         <div class="card mb-3">

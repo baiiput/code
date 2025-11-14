@@ -70,6 +70,8 @@ foreach ($pengeluaran as $p) {
                 <li><a href="warga.php">Data Warga</a></li>
                 <li><a href="transaksi.php">Transaksi</a></li>
                 <li><a href="pengeluaran.php" class="active">Pengeluaran</a></li>
+                <li><a href="alert.php">Notifikasi</a></li>
+                <li><a href="settings.php">Pengaturan</a></li>
             </ul>
         </div>
     </nav>

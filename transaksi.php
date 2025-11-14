@@ -79,6 +79,8 @@ $warga = $db->fetchAll("
                 <li><a href="warga.php">Data Warga</a></li>
                 <li><a href="transaksi.php" class="active">Transaksi</a></li>
                 <li><a href="pengeluaran.php">Pengeluaran</a></li>
+                <li><a href="alert.php">Notifikasi</a></li>
+                <li><a href="settings.php">Pengaturan</a></li>
             </ul>
         </div>
     </nav>

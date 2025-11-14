@@ -6,19 +6,24 @@ require_once 'includes/functions.php';
 
 $db = Database::getInstance();
 
-// Get all warga
+// Get all warga with progress
 $warga = $db->fetchAll("
-    SELECT w.*, d.nama_dawis,
-    COALESCE(SUM(CASE WHEN t.jenis_transaksi = 'setoran' THEN t.jumlah ELSE -t.jumlah END), 0) as total_saldo
-    FROM warga w
-    JOIN dawis d ON w.dawis_id = d.id
-    LEFT JOIN transaksi t ON w.id = t.warga_id
-    GROUP BY w.id
-    ORDER BY d.nama_dawis, w.nama_lengkap
+    SELECT *
+    FROM progress_pembayaran_warga
+    ORDER BY nama_dawis, nama_lengkap
 ");
 
 // Get all dawis for form
 $allDawis = $db->fetchAll("SELECT * FROM dawis ORDER BY id");
+
+// Get settings for display
+$settings = $db->fetchAll("SELECT * FROM settings");
+$targetTahunan = 0;
+foreach ($settings as $s) {
+    if ($s['setting_key'] == 'target_tahunan') {
+        $targetTahunan = $s['setting_value'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -56,15 +61,32 @@ $allDawis = $db->fetchAll("SELECT * FROM dawis ORDER BY id");
                 <li><a href="warga.php" class="active">Data Warga</a></li>
                 <li><a href="transaksi.php">Transaksi</a></li>
                 <li><a href="pengeluaran.php">Pengeluaran</a></li>
+                <li><a href="alert.php">Notifikasi</a></li>
+                <li><a href="settings.php">Pengaturan</a></li>
             </ul>
         </div>
     </nav>
 
     <!-- Main Content -->
     <main class="container">
+        <!-- Info Card -->
+        <div class="card mb-3" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white;">
+            <div class="card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="margin: 0 0 0.5rem 0;">Target Tahunan: <?php echo formatRupiah($targetTahunan); ?></h3>
+                        <p style="margin: 0; opacity: 0.9;">Target per bulan: <?php echo formatRupiah($targetTahunan / 12); ?></p>
+                    </div>
+                    <a href="settings.php" class="btn btn-secondary">
+                        ⚙️ Ubah Target
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Data Warga</h2>
+                <h2 class="card-title">Data Warga & Progress Pembayaran</h2>
                 <button onclick="openModal('modalWarga')" class="btn btn-primary">
                     ➕ Tambah Warga
                 </button>
@@ -77,10 +99,11 @@ $allDawis = $db->fetchAll("SELECT * FROM dawis ORDER BY id");
                                 <th>No</th>
                                 <th>Nama Lengkap</th>
                                 <th>Dawis</th>
-                                <th>No. KK</th>
-                                <th>Alamat</th>
-                                <th>No. Telepon</th>
-                                <th>Saldo</th>
+                                <th>Kontak</th>
+                                <th>Target s/d Bulan Ini</th>
+                                <th>Total Bayar Tahun Ini</th>
+                                <th>Selisih</th>
+                                <th>Progress</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -88,30 +111,87 @@ $allDawis = $db->fetchAll("SELECT * FROM dawis ORDER BY id");
                         <tbody id="wargaTableBody">
                             <?php if (empty($warga)): ?>
                             <tr>
-                                <td colspan="9" class="text-center">Belum ada data warga</td>
+                                <td colspan="10" class="text-center">Belum ada data warga</td>
                             </tr>
                             <?php else: ?>
                                 <?php $no = 1; foreach ($warga as $w): ?>
-                                <tr>
+                                <tr style="background: <?php
+                                    if ($w['status_pembayaran'] == 'alert') echo 'rgba(239, 68, 68, 0.05)';
+                                    elseif ($w['status_pembayaran'] == 'warning') echo 'rgba(245, 158, 11, 0.05)';
+                                ?>">
                                     <td><?php echo $no++; ?></td>
-                                    <td><strong><?php echo htmlspecialchars($w['nama_lengkap']); ?></strong></td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($w['nama_lengkap']); ?></strong><br>
+                                        <small style="color: var(--text-secondary);">
+                                            <?php echo htmlspecialchars($w['nomor_kk'] ?? '-'); ?>
+                                        </small>
+                                    </td>
                                     <td><?php echo htmlspecialchars($w['nama_dawis']); ?></td>
-                                    <td><?php echo htmlspecialchars($w['nomor_kk'] ?? '-'); ?></td>
-                                    <td><?php echo htmlspecialchars($w['alamat'] ?? '-'); ?></td>
-                                    <td><?php echo htmlspecialchars($w['no_telepon'] ?? '-'); ?></td>
-                                    <td><strong><?php echo formatRupiah($w['total_saldo']); ?></strong></td>
+                                    <td>
+                                        <small style="color: var(--text-secondary);">
+                                            📍 <?php echo htmlspecialchars($w['alamat'] ?? '-'); ?><br>
+                                            📞 <?php echo htmlspecialchars($w['no_telepon'] ?? '-'); ?>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong><?php echo formatRupiah($w['target_sampai_bulan_ini']); ?></strong>
+                                    </td>
+                                    <td class="<?php
+                                        if ($w['status_pembayaran'] == 'alert') echo 'text-danger';
+                                        elseif ($w['status_pembayaran'] == 'warning') echo 'text-warning';
+                                        else echo 'text-success';
+                                    ?>">
+                                        <strong><?php echo formatRupiah($w['saldo_tahun_ini']); ?></strong>
+                                    </td>
+                                    <td class="<?php echo $w['selisih_dari_target'] < 0 ? 'text-danger' : 'text-success'; ?>">
+                                        <strong><?php echo formatRupiah($w['selisih_dari_target']); ?></strong>
+                                    </td>
+                                    <td>
+                                        <div style="min-width: 120px;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                                <div style="flex: 1; background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                                                    <div style="background: <?php
+                                                        if ($w['status_pembayaran'] == 'alert') echo 'var(--danger-color)';
+                                                        elseif ($w['status_pembayaran'] == 'warning') echo 'var(--warning-color)';
+                                                        else echo 'var(--secondary-color)';
+                                                    ?>; height: 100%; width: <?php echo min(100, $w['persentase_pencapaian']); ?>%;"></div>
+                                                </div>
+                                                <span style="font-weight: 600; min-width: 45px; font-size: 0.875rem;">
+                                                    <?php echo number_format($w['persentase_pencapaian'], 1); ?>%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
                                         <?php if ($w['status'] == 'aktif'): ?>
-                                            <span class="badge badge-success">Aktif</span>
+                                            <?php if ($w['status_pembayaran'] == 'alert'): ?>
+                                                <span class="badge badge-danger">🚨 Alert</span>
+                                            <?php elseif ($w['status_pembayaran'] == 'warning'): ?>
+                                                <span class="badge badge-warning">⚠️ Warning</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-success">✅ OK</span>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <span class="badge badge-danger">Tidak Aktif</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <button onclick="editWarga(<?php echo htmlspecialchars(json_encode($w)); ?>)"
+                                        <button onclick="editWarga(<?php echo htmlspecialchars(json_encode([
+                                            'id' => $w['warga_id'],
+                                            'dawis_id' => $w['dawis_id'],
+                                            'nama_lengkap' => $w['nama_lengkap'],
+                                            'nomor_kk' => $w['nomor_kk'],
+                                            'alamat' => $w['alamat'],
+                                            'no_telepon' => $w['no_telepon'],
+                                            'status' => $w['status']
+                                        ])); ?>)"
                                                 class="btn btn-secondary btn-sm">
-                                            ✏️ Edit
+                                            ✏️
                                         </button>
+                                        <a href="transaksi.php?warga_id=<?php echo $w['warga_id']; ?>"
+                                           class="btn btn-primary btn-sm">
+                                            💰
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
