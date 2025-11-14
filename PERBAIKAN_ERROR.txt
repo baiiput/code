@@ -1,0 +1,84 @@
+================================================================================
+  CARA MEMPERBAIKI ERROR COLLATION
+================================================================================
+
+ERROR YANG TERJADI:
+-------------------
+Fatal error: Uncaught PDOException: SQLSTATE[HY000]: General error: 1270
+Illegal mix of collations (utf8mb4_unicode_ci,COERCIBLE),
+(utf8mb4_general_ci,COERCIBLE)...
+
+PENYEBAB:
+---------
+Database memiliki tabel dengan collation yang berbeda-beda:
+- Beberapa tabel: utf8mb4_unicode_ci
+- Beberapa tabel: utf8mb4_general_ci
+- MySQL tidak bisa JOIN tabel dengan collation berbeda
+
+SOLUSI:
+-------
+
+OPSI 1: Via phpMyAdmin (PALING MUDAH)
+--------------------------------------
+1. Login ke phpMyAdmin
+2. Pilih database "jimpitan_rt"
+3. Klik tab "Import"
+4. Pilih file: fix_collation.sql
+5. Klik "Go"
+6. Tunggu sampai selesai
+7. Refresh halaman website Anda
+
+OPSI 2: Via MySQL Command Line
+-------------------------------
+1. Login ke MySQL:
+   mysql -u username -p
+
+2. Jalankan script:
+   source /path/to/fix_collation.sql
+
+3. Atau copy-paste isi file fix_collation.sql ke MySQL prompt
+
+OPSI 3: Hapus Database dan Import Ulang (HATI-HATI!)
+-----------------------------------------------------
+Jika Anda masih testing dan data belum penting:
+
+1. Backup data Anda dulu (jika ada yang penting)
+2. Hapus database jimpitan_rt
+3. Buat ulang database jimpitan_rt
+4. Import file database.sql yang sudah diperbaiki
+
+   Via phpMyAdmin:
+   - Pilih database jimpitan_rt
+   - Klik "Import"
+   - Pilih database.sql
+   - Klik "Go"
+
+VERIFIKASI SETELAH PERBAIKAN:
+------------------------------
+1. Buka website Anda
+2. Jika tidak ada error, berarti berhasil!
+3. Coba buka semua menu:
+   - Dashboard
+   - Data Warga
+   - Laporan
+   - Notifikasi
+
+JIKA MASIH ERROR:
+-----------------
+Coba jalankan query ini di phpMyAdmin untuk cek collation:
+
+SELECT
+    TABLE_NAME,
+    TABLE_COLLATION
+FROM
+    information_schema.TABLES
+WHERE
+    TABLE_SCHEMA = 'jimpitan_rt';
+
+Semua tabel harus menunjukkan: utf8mb4_unicode_ci
+
+KONTAK SUPPORT:
+---------------
+Jika masih bermasalah, kirim screenshot error lengkapnya.
+
+================================================================================
