@@ -1,0 +1,55 @@
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# PHP
+*.log
+composer.phar
+/vendor/
+
+# Environment files (if you create one later)
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+*.sql.gz
+*.tar.gz
+backup_*.sql
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+/tmp/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Upload directories (if you add file upload feature later)
+/uploads/*
+!/uploads/.gitkeep
+
+# Cache directories
+/cache/*
+!/cache/.gitkeep
+
+# Sessions (if you use file-based sessions)
+/sessions/*
+!/sessions/.gitkeep
+
+# Don't ignore these important files
+!.htaccess
+!.gitignore

@@ -1,0 +1,124 @@
+================================================================================
+  PANDUAN INSTALASI SISTEM JIMPITAN RT
+  Version 1.0.0
+================================================================================
+
+PRASYARAT:
+----------
+✓ PHP 8.2 atau lebih tinggi
+✓ MySQL 5.7 atau lebih tinggi
+✓ Web server (Apache/Nginx)
+✓ Domain dan hosting
+
+LANGKAH INSTALASI:
+------------------
+
+1. UPLOAD FILE
+   - Upload semua file ke direktori web server (public_html/www)
+   - Pastikan struktur folder tetap sama
+
+2. BUAT DATABASE
+   a. Buka phpMyAdmin atau MySQL client
+   b. Buat database baru dengan nama: jimpitan_rt
+   c. Import file database.sql ke database tersebut
+
+3. KONFIGURASI
+   a. Buka file: config/database.php
+   b. Edit bagian berikut sesuai dengan setting Anda:
+
+      define('DB_HOST', 'localhost');
+      define('DB_USER', 'your_username');     <-- Ganti dengan username MySQL
+      define('DB_PASS', 'your_password');     <-- Ganti dengan password MySQL
+      define('DB_NAME', 'jimpitan_rt');
+      define('BASE_URL', 'https://yourdomain.com'); <-- Ganti dengan domain Anda
+
+   c. Simpan file
+
+4. SET PERMISSION (jika menggunakan Linux/Unix)
+   chmod 755 api config includes assets
+   chmod 644 *.php
+
+5. AKSES APLIKASI
+   - Buka browser
+   - Akses: https://yourdomain.com
+   - Aplikasi siap digunakan!
+
+DATA LOGIN DEFAULT:
+-------------------
+Username: admin
+Password: admin123
+
+⚠️ PENTING: Segera ganti password default setelah login!
+
+LANGKAH SETELAH INSTALASI:
+---------------------------
+1. Login dengan username/password default
+2. Ganti password admin
+3. Hapus atau edit data sample (Dawis, Warga, Transaksi)
+4. Mulai input data warga RT Anda
+5. Mulai catat transaksi jimpitan
+
+MATIKAN ERROR REPORTING DI PRODUCTION:
+---------------------------------------
+Edit file: config/database.php
+
+Ganti:
+  error_reporting(E_ALL);
+  ini_set('display_errors', 1);
+
+Menjadi:
+  error_reporting(0);
+  ini_set('display_errors', 0);
+
+TROUBLESHOOTING:
+----------------
+Problem: Tidak bisa koneksi database
+Solution:
+  - Periksa kredensial di config/database.php
+  - Pastikan MySQL service berjalan
+  - Pastikan database sudah dibuat
+
+Problem: Error 404
+Solution:
+  - Periksa semua file sudah diupload
+  - Periksa permission file
+
+Problem: Tampilan berantakan
+Solution:
+  - Clear cache browser
+  - Periksa file CSS sudah ter-load
+
+BACKUP DATABASE:
+----------------
+Disarankan backup database secara rutin (minimal 1x seminggu)
+
+Via phpMyAdmin:
+  1. Pilih database jimpitan_rt
+  2. Klik tab Export
+  3. Pilih format SQL
+  4. Download
+
+Via Command Line:
+  mysqldump -u username -p jimpitan_rt > backup_$(date +%Y%m%d).sql
+
+FITUR APLIKASI:
+---------------
+✓ Dashboard dengan statistik real-time
+✓ Manajemen data warga per Dawis
+✓ Pencatatan transaksi (setoran & penarikan)
+✓ Pencatatan pengeluaran RT
+✓ Laporan keuangan per Dawis
+✓ Dark mode toggle
+✓ Responsive (Mobile, Tablet, Desktop)
+✓ Cetak laporan
+
+SUPPORT:
+--------
+Jika mengalami kesulitan:
+1. Baca file README.md untuk dokumentasi lengkap
+2. Periksa error log di web server
+3. Periksa browser console untuk JavaScript error
+
+================================================================================
+Selamat menggunakan Sistem Jimpitan RT!
+================================================================================
