@@ -85,6 +85,7 @@
             display: flex;
             align-items: center;
             gap: 24px;
+            margin-right: 48px;
             text-decoration: none;
             color: var(--text-primary);
             font-weight: 700;
