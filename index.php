@@ -128,10 +128,10 @@ include 'includes/header.php';
             <div class="stat-icon"><i class="fas fa-wallet"></i></div>
             <div class="stat-info">
                 <div class="stat-label">Saldo Warehouse</div>
-                <div class="stat-value"><?php echo formatRupiahCompact($stats['warehouse_balance']); ?></div>
+                <div class="stat-value"><?php echo formatRupiah($stats['warehouse_balance']); ?></div>
             </div>
         </div>
-        
+
         <div class="stat-card success">
             <div class="stat-icon"><i class="fas fa-box"></i></div>
             <div class="stat-info">
@@ -139,12 +139,12 @@ include 'includes/header.php';
                 <div class="stat-value"><?php echo number_format($stats['total_items']); ?></div>
             </div>
         </div>
-        
+
         <div class="stat-card info" onclick="window.location.href='reports.php'" style="cursor: pointer;">
             <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
             <div class="stat-info">
                 <div class="stat-label">Nilai Stok</div>
-                <div class="stat-value"><?php echo formatRupiahCompact($stats['total_stock_value']); ?></div>
+                <div class="stat-value"><?php echo formatRupiah($stats['total_stock_value']); ?></div>
             </div>
         </div>
         
@@ -203,7 +203,7 @@ include 'includes/header.php';
                                     <div class="trans-partner"><?php echo $trans['partner']; ?></div>
                                     <div class="trans-date"><?php echo date('d/m/Y', strtotime($trans['transaction_date'])); ?></div>
                                 </div>
-                                <div class="trans-amount"><?php echo formatRupiahCompact($trans['total_amount']); ?></div>
+                                <div class="trans-amount"><?php echo formatRupiah($trans['total_amount']); ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -350,13 +350,11 @@ include 'includes/header.php';
 }
 
 .stat-value {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
+    line-height: 1.3;
+    word-break: break-word;
 }
 
 .stat-unit {
@@ -513,11 +511,12 @@ include 'includes/header.php';
 
 .trans-amount {
     font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
+    font-size: 13px;
     color: var(--text-primary);
     text-align: right;
     flex-shrink: 0;
+    min-width: 120px;
+    word-break: break-word;
 }
 
 .stock-list {
@@ -622,11 +621,11 @@ include 'includes/header.php';
     .content-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-value {
-        font-size: 18px;
+        font-size: 15px;
     }
-    
+
     .stat-icon {
         width: 40px;
         height: 40px;
@@ -647,11 +646,11 @@ include 'includes/header.php';
     .stat-card {
         padding: 12px;
     }
-    
+
     .stat-value {
-        font-size: 16px;
+        font-size: 13px;
     }
-    
+
     .stat-icon {
         width: 36px;
         height: 36px;
