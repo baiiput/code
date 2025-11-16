@@ -3,9 +3,15 @@ $date_from = $_GET['date_from'] ?? date('Y-m-01');
 $date_to = $_GET['date_to'] ?? date('Y-m-d');
 
 $query = "
-    SELECT ft.*, u.full_name as created_by_name
+    SELECT ft.*, u.full_name as created_by_name,
+           si.supplier_id, s.supplier_name,
+           so.branch_id, b.branch_name
     FROM financial_transactions ft
     LEFT JOIN users u ON ft.created_by = u.user_id
+    LEFT JOIN stock_in si ON ft.reference_code = si.transaction_code AND ft.transaction_type = 'stock_in'
+    LEFT JOIN suppliers s ON si.supplier_id = s.supplier_id
+    LEFT JOIN stock_out so ON ft.reference_code = so.transaction_code AND ft.transaction_type = 'stock_out'
+    LEFT JOIN branches b ON so.branch_id = b.branch_id
     WHERE DATE(ft.transaction_date) BETWEEN '$date_from' AND '$date_to'
     ORDER BY ft.transaction_date DESC, ft.transaction_id DESC
 ";
@@ -16,6 +22,15 @@ $total_credit = 0;
 
 $result = $conn->query($query);
 while ($row = $result->fetch_assoc()) {
+    // Build detailed description
+    if ($row['transaction_type'] === 'stock_in' && !empty($row['supplier_name'])) {
+        $row['detail_description'] = "Pembelian dari supplier " . $row['supplier_name'];
+    } elseif ($row['transaction_type'] === 'stock_out' && !empty($row['branch_name'])) {
+        $row['detail_description'] = "Distribusi ke cabang " . $row['branch_name'];
+    } else {
+        $row['detail_description'] = $row['description'];
+    }
+
     $transactions[] = $row;
     $total_debit += $row['debit'];
     $total_credit += $row['credit'];
@@ -136,7 +151,7 @@ $net = $total_debit - $total_credit;
                 </span>
             </td>
             <td><strong><?php echo $trans['reference_code']; ?></strong></td>
-            <td><?php echo $trans['description']; ?></td>
+            <td><?php echo $trans['detail_description']; ?></td>
             <td class="text-right">
                 <?php if ($trans['debit'] > 0): ?>
                     <strong style="color: var(--success-color);"><?php echo formatRupiah($trans['debit']); ?></strong>
