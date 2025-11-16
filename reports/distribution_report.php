@@ -3,16 +3,17 @@ $date_from = $_GET['date_from'] ?? date('Y-m-01');
 $date_to = $_GET['date_to'] ?? date('Y-m-d');
 
 $query = "
-    SELECT b.branch_name, 
+    SELECT b.branch_name,
            COUNT(DISTINCT so.stock_out_id) as total_transactions,
            SUM(so.total_amount) as total_value,
-           SUM(sod.quantity) as total_qty
+           SUM(sod.quantity) as total_qty,
+           MAX(so.transaction_date) as last_transaction
     FROM stock_out so
     LEFT JOIN branches b ON so.branch_id = b.branch_id
     LEFT JOIN stock_out_detail sod ON so.stock_out_id = sod.stock_out_id
     WHERE DATE(so.transaction_date) BETWEEN '$date_from' AND '$date_to'
     GROUP BY so.branch_id, b.branch_name
-    ORDER BY total_value DESC
+    ORDER BY last_transaction DESC, total_value DESC
 ";
 
 $distributions = [];

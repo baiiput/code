@@ -43,7 +43,7 @@ $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 
 // Build query - Filter stock_out where destination is current branch
-$where_conditions = ["so.destination_branch_id = ?"];
+$where_conditions = ["so.branch_id = ?"];
 $params = [$branch_id];
 $types = "i";
 
@@ -80,15 +80,13 @@ $total_records = $count_stmt->get_result()->fetch_assoc()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
 // Get stock out transactions (distributions to this branch)
-$sql = "SELECT so.*, 
-        b.branch_name as cabang_asal_nama,
+$sql = "SELECT so.*,
         u.username as dibuat_oleh_nama,
         u.full_name as dibuat_oleh_lengkap,
         COUNT(DISTINCT sod.detail_id) as jumlah_item,
         SUM(sod.quantity) as total_qty,
         SUM(sod.subtotal) as total_nilai
         FROM stock_out so
-        LEFT JOIN branches b ON so.branch_id = b.branch_id
         LEFT JOIN users u ON so.created_by = u.user_id
         LEFT JOIN stock_out_detail sod ON so.stock_out_id = sod.stock_out_id
         WHERE $where_clause
@@ -106,13 +104,13 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 // Get statistics
-$stats_sql = "SELECT 
+$stats_sql = "SELECT
               COUNT(*) as total,
               SUM(CASE WHEN DATE(so.transaction_date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as minggu_ini,
               SUM(CASE WHEN DATE(so.transaction_date) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as bulan_ini,
               SUM(so.total_amount) as total_nilai
               FROM stock_out so
-              WHERE so.destination_branch_id = ?";
+              WHERE so.branch_id = ?";
 $stats_stmt = $conn->prepare($stats_sql);
 $stats_stmt->bind_param("i", $branch_id);
 $stats_stmt->execute();
@@ -432,21 +430,20 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                             <thead>
                                 <tr>
                                     <th style="width: 4%;">No</th>
-                                    <th style="width: 13%;">Kode Transaksi</th>
-                                    <th style="width: 11%;">Tanggal</th>
-                                    <th style="width: 15%;">Dari Cabang</th>
-                                    <th style="width: 8%;">Items</th>
-                                    <th style="width: 10%;">Qty Total</th>
-                                    <th style="width: 13%;">Total Nilai</th>
-                                    <th style="width: 16%;">Keterangan</th>
-                                    <th style="width: 10%;" class="text-center">Aksi</th>
+                                    <th style="width: 15%;">Kode Transaksi</th>
+                                    <th style="width: 13%;">Tanggal</th>
+                                    <th style="width: 10%;">Items</th>
+                                    <th style="width: 12%;">Qty Total</th>
+                                    <th style="width: 15%;">Total Nilai</th>
+                                    <th style="width: 20%;">Keterangan</th>
+                                    <th style="width: 11%;" class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if ($result->num_rows > 0): ?>
-                                    <?php 
+                                    <?php
                                     $no = $offset + 1;
-                                    while($row = $result->fetch_assoc()): 
+                                    while($row = $result->fetch_assoc()):
                                     ?>
                                     <tr>
                                         <td><?php echo $no++; ?></td>
@@ -464,10 +461,6 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                                     <?php echo date('H:i', strtotime($row['transaction_date'])); ?>
                                                 </span>
                                             </small>
-                                        </td>
-                                        <td>
-                                            <i class="bi bi-building text-muted"></i>
-                                            <strong><?php echo htmlspecialchars($row['cabang_asal_nama']); ?></strong>
                                         </td>
                                         <td>
                                             <span class="badge bg-info">
@@ -503,7 +496,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                     <?php endwhile; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="9" class="p-0">
+                                        <td colspan="8" class="p-0">
                                             <div class="empty-state">
                                                 <i class="bi bi-inbox"></i>
                                                 <h5>Tidak Ada Data Distribusi</h5>

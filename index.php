@@ -46,14 +46,14 @@ if ($row = $result->fetch_assoc()) {
     $stats['total_branches'] = $row['total'];
 }
 
-// Recent transactions (last 5)
+// Recent transactions (last 5) with item details
 $recent_transactions = [];
 $query = "
-    SELECT 'IN' as type, transaction_code, transaction_date, s.supplier_name as partner, total_amount
+    SELECT 'IN' as type, si.stock_in_id as trans_id, si.transaction_code, si.transaction_date, s.supplier_name as partner, si.total_amount
     FROM stock_in si
     JOIN suppliers s ON si.supplier_id = s.supplier_id
     UNION ALL
-    SELECT 'OUT' as type, transaction_code, transaction_date, b.branch_name as partner, total_amount
+    SELECT 'OUT' as type, so.stock_out_id as trans_id, so.transaction_code, so.transaction_date, b.branch_name as partner, so.total_amount
     FROM stock_out so
     JOIN branches b ON so.branch_id = b.branch_id
     ORDER BY transaction_date DESC
@@ -61,6 +61,26 @@ $query = "
 ";
 $result = $conn->query($query);
 while ($row = $result->fetch_assoc()) {
+    // Get items for this transaction
+    $items_list = [];
+    if ($row['type'] === 'IN') {
+        $items_query = "SELECT i.item_name, sid.quantity, i.unit
+                       FROM stock_in_detail sid
+                       JOIN items i ON sid.item_id = i.item_id
+                       WHERE sid.stock_in_id = " . $row['trans_id'] . "
+                       LIMIT 3";
+    } else {
+        $items_query = "SELECT i.item_name, sod.quantity, i.unit
+                       FROM stock_out_detail sod
+                       JOIN items i ON sod.item_id = i.item_id
+                       WHERE sod.stock_out_id = " . $row['trans_id'] . "
+                       LIMIT 3";
+    }
+    $items_result = $conn->query($items_query);
+    while ($item = $items_result->fetch_assoc()) {
+        $items_list[] = formatNumber($item['quantity'], 0) . ' ' . $item['unit'] . ' ' . $item['item_name'];
+    }
+    $row['items'] = $items_list;
     $recent_transactions[] = $row;
 }
 
@@ -155,6 +175,12 @@ include 'includes/header.php';
                                 </div>
                                 <div class="trans-info">
                                     <div class="trans-code"><?php echo $trans['transaction_code']; ?></div>
+                                    <div class="trans-items">
+                                        <?php if (!empty($trans['items'])): ?>
+                                            <?php echo implode(' • ', $trans['items']); ?>
+                                            <?php if (count($trans['items']) == 3): ?><span style="color: var(--text-secondary);">...</span><?php endif; ?>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="trans-partner"><?php echo $trans['partner']; ?></div>
                                     <div class="trans-date"><?php echo date('d/m/Y', strtotime($trans['transaction_date'])); ?></div>
                                 </div>
@@ -441,8 +467,19 @@ include 'includes/header.php';
     text-overflow: ellipsis;
 }
 
+.trans-items {
+    font-size: 11px;
+    color: var(--text-primary);
+    margin: 3px 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .trans-partner {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
     margin: 2px 0;
     white-space: nowrap;
@@ -451,7 +488,7 @@ include 'includes/header.php';
 }
 
 .trans-date {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-secondary);
 }
 

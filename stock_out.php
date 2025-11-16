@@ -18,7 +18,7 @@ while ($row = $result->fetch_assoc()) {
     $items[] = $row;
 }
 
-// Get stock out transactions
+// Get stock out transactions with item details
 $search = $_GET['search'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
@@ -46,6 +46,17 @@ $query .= " ORDER BY so.transaction_date DESC, so.stock_out_id DESC LIMIT 50";
 $transactions = [];
 $result = $conn->query($query);
 while ($row = $result->fetch_assoc()) {
+    // Get items for this transaction
+    $items_query = "SELECT i.item_name, sod.quantity, i.unit
+                   FROM stock_out_detail sod
+                   JOIN items i ON sod.item_id = i.item_id
+                   WHERE sod.stock_out_id = " . $row['stock_out_id'];
+    $items_result = $conn->query($items_query);
+    $items_list = [];
+    while ($item = $items_result->fetch_assoc()) {
+        $items_list[] = formatNumber($item['quantity'], 0) . ' ' . $item['unit'] . ' ' . $item['item_name'];
+    }
+    $row['items'] = implode(', ', $items_list);
     $transactions[] = $row;
 }
 
@@ -99,21 +110,23 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                 <tr>
                     <th width="12%">Kode Transaksi</th>
                     <th width="13%">Tanggal</th>
-                    <th>Cabang</th>
-                    <th width="13%" class="text-right">Total</th>
-                    <th>Dibuat Oleh</th>
+                    <th width="15%">Cabang</th>
+                    <th>Barang</th>
+                    <th width="12%" class="text-right">Total</th>
+                    <th width="10%">Dibuat Oleh</th>
                     <th width="<?php echo hasRole('admin') ? '18%' : '10%'; ?>">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($transactions)): ?>
-                <tr><td colspan="6" class="text-center">Belum ada distribusi stok keluar</td></tr>
+                <tr><td colspan="7" class="text-center">Belum ada distribusi stok keluar</td></tr>
                 <?php else: ?>
                 <?php foreach ($transactions as $trans): ?>
                 <tr>
                     <td><strong><?php echo $trans['transaction_code']; ?></strong></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($trans['transaction_date'])); ?></td>
                     <td><?php echo $trans['branch_name']; ?></td>
+                    <td><small><?php echo $trans['items']; ?></small></td>
                     <td class="text-right"><strong><?php echo formatRupiah($trans['total_amount']); ?></strong></td>
                     <td><?php echo $trans['created_by_name']; ?></td>
                     <td>
