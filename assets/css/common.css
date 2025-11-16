@@ -89,18 +89,13 @@
 
 .search-box i {
     position: absolute;
-    left: 14px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary);
     font-size: 14px;
     pointer-events: none;
     z-index: 1;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 10px 12px 10px 42px;
 }
 
 .filter-form input,
@@ -112,6 +107,11 @@
     color: var(--text-primary);
     font-size: 14px;
     transition: all 0.2s;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 12px 10px 46px !important;
 }
 
 .filter-form input:focus,
