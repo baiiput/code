@@ -173,7 +173,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-boxes"></i> Stok Fisik (Hasil Hitung) *</label>
-                    <input type="number" name="new_stock" id="newStock" step="0.01" min="0" required onchange="calculateDifference()">
+                    <input type="number" name="new_stock" id="newStock" step="1" min="0" required onchange="calculateDifference()">
                 </div>
             </div>
             

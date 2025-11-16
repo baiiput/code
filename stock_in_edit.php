@@ -126,10 +126,10 @@ include 'includes/header.php';
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <input type="number" name="items[<?php echo $index; ?>][quantity]" class="item-qty" value="<?php echo $detail['quantity']; ?>" step="0.01" min="0.01" required onchange="calculateRowTotal(<?php echo $index; ?>)">
+                        <input type="number" name="items[<?php echo $index; ?>][quantity]" class="item-qty" value="<?php echo $detail['quantity']; ?>" step="1" min="1" required onchange="calculateRowTotal(<?php echo $index; ?>)">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <input type="number" name="items[<?php echo $index; ?>][unit_price]" class="item-price" value="<?php echo $detail['unit_price']; ?>" step="0.01" min="0" required onchange="calculateRowTotal(<?php echo $index; ?>)">
+                        <input type="number" name="items[<?php echo $index; ?>][unit_price]" class="item-price" value="<?php echo $detail['unit_price']; ?>" step="1" min="0" required onchange="calculateRowTotal(<?php echo $index; ?>)">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <input type="text" class="item-subtotal" value="<?php echo formatRupiah($detail['subtotal']); ?>" readonly style="background: var(--bg-primary); font-weight: 600;">

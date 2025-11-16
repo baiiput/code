@@ -121,7 +121,8 @@ include 'includes/header.php';
 ?>
 
 <div class="dashboard-container">
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards - Hidden for cabang role -->
+    <?php if ($user['role'] !== 'cabang'): ?>
     <div class="stats-grid">
         <div class="stat-card primary" onclick="window.location.href='finance.php'" style="cursor: pointer;">
             <div class="stat-icon"><i class="fas fa-wallet"></i></div>
@@ -171,7 +172,8 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
-    
+    <?php endif; ?>
+
     <!-- Main Content Grid -->
     <div class="content-grid">
         <!-- Recent Transactions -->

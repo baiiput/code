@@ -134,7 +134,7 @@ include 'includes/header.php';
                             <input type="number" name="items[<?php echo $index; ?>][quantity]" 
                                    class="form-control item-qty" 
                                    value="<?php echo $detail['quantity']; ?>" 
-                                   min="0.01" step="0.01" 
+                                   min="1" step="1" 
                                    max="<?php echo $detail['current_stock']; ?>"
                                    required 
                                    onchange="calculateRowTotal(<?php echo $index; ?>)">
@@ -257,7 +257,7 @@ function addItemRow() {
                 <label><i class="fas fa-sort-numeric-up"></i> Qty</label>
                 <input type="number" name="items[${itemRowCount}][quantity]" 
                        class="form-control item-qty" 
-                       min="0.01" step="0.01" required 
+                       min="1" step="1" required 
                        onchange="calculateRowTotal(${itemRowCount})">
             </div>
             <div class="form-group" style="margin-bottom: 0;">

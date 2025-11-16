@@ -204,7 +204,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label><i class="fas fa-sort-numeric-up"></i> Jumlah</label>
-                            <input type="number" name="items[0][quantity]" class="item-qty" step="0.01" min="0.01" required onchange="calculateRowTotal(0)">
+                            <input type="number" name="items[0][quantity]" class="item-qty" step="1" min="1" required onchange="calculateRowTotal(0)">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label><i class="fas fa-money-bill"></i> Harga Satuan</label>

@@ -95,7 +95,7 @@ include 'includes/header.php';
                         <label><i class="fas fa-boxes"></i> Stok Baru (Fisik) <span class="required">*</span></label>
                         <input type="number" name="new_stock" id="newStock" class="form-control"
                                value="<?php echo $adjustment['new_stock']; ?>" 
-                               step="0.01" min="0" required onchange="calculateDifference()">
+                               step="1" min="0" required onchange="calculateDifference()">
                     </div>
                 </div>
 
