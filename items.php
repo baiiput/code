@@ -155,13 +155,13 @@ include 'includes/header.php';
                     <th>Kode</th>
                     <th>Nama Barang</th>
                     <th>Kategori</th>
-                    <th>Stok</th>
-                    <th>Satuan</th>
-                    <th>Min. Stok</th>
-                    <th>Harga Avg</th>
-                    <th>Status</th>
+                    <th class="text-right">Stok</th>
+                    <th class="text-center">Satuan</th>
+                    <th class="text-right">Min. Stok</th>
+                    <th class="text-right">Harga Avg</th>
+                    <th class="text-center">Status</th>
                     <?php if (hasRole('admin')): ?>
-                    <th>Aksi</th>
+                    <th class="text-center">Aksi</th>
                     <?php endif; ?>
                 </tr>
             </thead>
@@ -179,16 +179,16 @@ include 'includes/header.php';
                     <td><?php echo $item['item_name']; ?></td>
                     <td><?php echo $item['category_name'] ?? '-'; ?></td>
                     <td class="text-right"><strong><?php echo number_format($item['current_stock'], 0); ?></strong></td>
-                    <td><?php echo $item['unit']; ?></td>
+                    <td class="text-center"><?php echo $item['unit']; ?></td>
                     <td class="text-right"><?php echo formatNumber($item['min_stock'], 0); ?></td>
                     <td class="text-right"><?php echo formatRupiah($item['average_cost']); ?></td>
-                    <td>
+                    <td class="text-center">
                         <span class="badge badge-<?php echo $status['class']; ?>">
                             <?php echo $status['status']; ?>
                         </span>
                     </td>
                     <?php if (hasRole('admin')): ?>
-                    <td>
+                    <td class="text-center">
                         <button class="btn-sm btn-warning" onclick='editItem(<?php echo json_encode($item); ?>)'>Edit</button>
                         <button class="btn-sm btn-danger" onclick="deleteItem(<?php echo $item['item_id']; ?>, '<?php echo $item['item_code']; ?>')">Hapus</button>
                     </td>
