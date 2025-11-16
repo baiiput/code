@@ -10,9 +10,14 @@ $type = $_GET['type'] ?? 'all';
 // Get transactions based on type
 $transactions = [];
 
-if ($type === 'all' || $type === 'in') {
+// Check if user is cabang role
+$is_cabang = ($user['role'] === 'cabang' && !empty($user['cabang_id']));
+$branch_id = $is_cabang ? $user['cabang_id'] : null;
+
+// For cabang: don't show stock in transactions
+if (!$is_cabang && ($type === 'all' || $type === 'in')) {
     $query = "
-        SELECT 
+        SELECT
             si.transaction_code,
             si.transaction_date,
             'Stock In' as type,
@@ -33,7 +38,7 @@ if ($type === 'all' || $type === 'in') {
 
 if ($type === 'all' || $type === 'out') {
     $query = "
-        SELECT 
+        SELECT
             so.transaction_code,
             so.transaction_date,
             'Stock Out' as type,
@@ -43,9 +48,15 @@ if ($type === 'all' || $type === 'out') {
         FROM stock_out so
         LEFT JOIN branches b ON so.branch_id = b.branch_id
         LEFT JOIN users u ON so.created_by = u.user_id
-        ORDER BY so.transaction_date DESC
-        LIMIT 50
     ";
+
+    // Filter for cabang role
+    if ($is_cabang) {
+        $query .= " WHERE so.branch_id = $branch_id";
+    }
+
+    $query .= " ORDER BY so.transaction_date DESC LIMIT 50";
+
     $result = $conn->query($query);
     while ($row = $result->fetch_assoc()) {
         $transactions[] = $row;
@@ -68,14 +79,16 @@ include 'includes/header.php';
     
     <div class="filter-section">
         <div style="display: flex; gap: 12px;">
+            <?php if (!$is_cabang): ?>
             <a href="?type=all" class="btn <?php echo $type === 'all' ? 'btn-primary' : 'btn-secondary'; ?>">
                 <i class="fas fa-list"></i> Semua
             </a>
             <a href="?type=in" class="btn <?php echo $type === 'in' ? 'btn-primary' : 'btn-secondary'; ?>">
                 <i class="fas fa-arrow-down"></i> Stock In
             </a>
+            <?php endif; ?>
             <a href="?type=out" class="btn <?php echo $type === 'out' ? 'btn-primary' : 'btn-secondary'; ?>">
-                <i class="fas fa-arrow-up"></i> Stock Out
+                <i class="fas fa-arrow-up"></i> <?php echo $is_cabang ? 'Distribusi Masuk' : 'Stock Out'; ?>
             </a>
         </div>
     </div>

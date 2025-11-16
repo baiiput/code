@@ -48,17 +48,34 @@ if ($row = $result->fetch_assoc()) {
 
 // Recent transactions (last 5) with item details
 $recent_transactions = [];
-$query = "
-    SELECT 'IN' as type, si.stock_in_id as trans_id, si.transaction_code, si.transaction_date, s.supplier_name as partner, si.total_amount
-    FROM stock_in si
-    JOIN suppliers s ON si.supplier_id = s.supplier_id
-    UNION ALL
-    SELECT 'OUT' as type, so.stock_out_id as trans_id, so.transaction_code, so.transaction_date, b.branch_name as partner, so.total_amount
-    FROM stock_out so
-    JOIN branches b ON so.branch_id = b.branch_id
-    ORDER BY transaction_date DESC
-    LIMIT 5
-";
+
+// Check if user is cabang role - only show their transactions
+if ($user['role'] === 'cabang' && !empty($user['cabang_id'])) {
+    $branch_id = $user['cabang_id'];
+    // For cabang: only show stock_out to their branch
+    $query = "
+        SELECT 'OUT' as type, so.stock_out_id as trans_id, so.transaction_code, so.transaction_date,
+               'Warehouse' as partner, so.total_amount
+        FROM stock_out so
+        WHERE so.branch_id = $branch_id
+        ORDER BY so.transaction_date DESC
+        LIMIT 5
+    ";
+} else {
+    // For other roles: show all transactions
+    $query = "
+        SELECT 'IN' as type, si.stock_in_id as trans_id, si.transaction_code, si.transaction_date, s.supplier_name as partner, si.total_amount
+        FROM stock_in si
+        JOIN suppliers s ON si.supplier_id = s.supplier_id
+        UNION ALL
+        SELECT 'OUT' as type, so.stock_out_id as trans_id, so.transaction_code, so.transaction_date, b.branch_name as partner, so.total_amount
+        FROM stock_out so
+        JOIN branches b ON so.branch_id = b.branch_id
+        ORDER BY transaction_date DESC
+        LIMIT 5
+    ";
+}
+
 $result = $conn->query($query);
 while ($row = $result->fetch_assoc()) {
     // Get items for this transaction

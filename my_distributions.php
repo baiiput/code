@@ -486,11 +486,11 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                             </small>
                                         </td>
                                         <td class="text-center">
-                                            <a href="view_stock_out.php?id=<?php echo $row['stock_out_id']; ?>" 
-                                               class="btn btn-sm btn-info btn-action" 
-                                               title="Lihat Detail">
+                                            <button class="btn btn-sm btn-info btn-action"
+                                                    onclick="viewDetail(<?php echo $row['stock_out_id']; ?>)"
+                                                    title="Lihat Detail">
                                                 <i class="bi bi-eye"></i> Detail
-                                            </a>
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php endwhile; ?>
@@ -553,8 +553,47 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
             </div>
         </div>
     </div>
-    
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">
+                        <i class="bi bi-file-invoice"></i> Detail Distribusi
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detailContent">
+                    <!-- Content will be loaded via fetch -->
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function viewDetail(id) {
+        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+        modal.show();
+
+        document.getElementById('detailContent').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch('stock_out_detail.php?id=' + id)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('detailContent').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('detailContent').innerHTML = '<div class="alert alert-danger">Error loading detail</div>';
+            });
+    }
+    </script>
 </body>
 </html>
 <?php
