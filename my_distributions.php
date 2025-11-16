@@ -334,7 +334,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small">Total Distribusi</div>
-                                    <h3 class="mb-0"><?php echo number_format($stats['total']); ?></h3>
+                                    <h3 class="mb-0"><?php echo number_format($stats['total'] ?? 0); ?></h3>
                                 </div>
                                 <div class="text-primary stat-icon">
                                     <i class="bi bi-box-seam"></i>
@@ -342,13 +342,13 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 col-6">
                         <div class="stat-card success">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small">Minggu Ini</div>
-                                    <h3 class="mb-0"><?php echo number_format($stats['minggu_ini']); ?></h3>
+                                    <h3 class="mb-0"><?php echo number_format($stats['minggu_ini'] ?? 0); ?></h3>
                                 </div>
                                 <div class="text-success stat-icon">
                                     <i class="bi bi-calendar-week"></i>
@@ -356,13 +356,13 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 col-6">
                         <div class="stat-card warning">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-muted small">Bulan Ini</div>
-                                    <h3 class="mb-0"><?php echo number_format($stats['bulan_ini']); ?></h3>
+                                    <h3 class="mb-0"><?php echo number_format($stats['bulan_ini'] ?? 0); ?></h3>
                                 </div>
                                 <div class="text-warning stat-icon">
                                     <i class="bi bi-calendar-month"></i>
