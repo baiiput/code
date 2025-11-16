@@ -84,7 +84,7 @@
         .navbar-brand {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             text-decoration: none;
             color: var(--text-primary);
             font-weight: 700;
