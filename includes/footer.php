@@ -1,23 +1,26 @@
     <!-- Main Footer -->
-    <footer class="main-footer">
-        <strong>Copyright &copy; <?= date('Y') ?> <a href="#"><?= APP_NAME ?></a>.</strong>
-        All rights reserved.
-        <div class="float-right d-none d-sm-inline-block">
-            <b>Version</b> <?= APP_VERSION ?>
+    <footer class="bg-light border-top py-3 mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Copyright &copy; <?= date('Y') ?> <a href="#"><?= APP_NAME ?></a>.</strong>
+                    All rights reserved.
+                </div>
+                <div class="col-md-6 text-end">
+                    <b>Version</b> <?= APP_VERSION ?>
+                </div>
+            </div>
         </div>
     </footer>
-</div>
-<!-- ./wrapper -->
+</main>
 
 <!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Bootstrap 5 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- DataTables -->
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <!-- Select2 -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- SweetAlert2 -->
@@ -50,11 +53,11 @@ $(document).ready(function() {
         if (isDarkMode()) {
             // Disable dark mode
             document.cookie = 'dark_mode=0; path=/; max-age=' + (365 * 24 * 60 * 60);
-            $('body').removeClass('dark-mode');
+            $('html').attr('data-bs-theme', 'light');
         } else {
             // Enable dark mode
             document.cookie = 'dark_mode=1; path=/; max-age=' + (365 * 24 * 60 * 60);
-            $('body').addClass('dark-mode');
+            $('html').attr('data-bs-theme', 'dark');
         }
 
         updateDarkModeIcon();
@@ -67,7 +70,7 @@ $(document).ready(function() {
             "lengthChange": true,
             "autoWidth": false,
             "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json"
+                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
             }
         });
     }
@@ -75,7 +78,7 @@ $(document).ready(function() {
     // Initialize Select2
     if ($('.select2').length > 0) {
         $('.select2').select2({
-            theme: 'bootstrap4',
+            theme: 'bootstrap-5',
             width: '100%'
         });
     }

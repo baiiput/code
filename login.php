@@ -60,98 +60,137 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login | <?= APP_NAME ?></title>
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- AdminLTE -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        .login-page {
+        body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .login-box {
-            width: 400px;
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
         }
-        .login-card-body {
-            border-radius: 10px;
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
         }
         .login-logo a {
-            color: #fff !important;
+            color: #fff;
+            font-size: 2rem;
             font-weight: bold;
+            text-decoration: none;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        .btn-primary {
+        .login-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .login-card .card-body {
+            padding: 2rem;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--bs-secondary);
+            font-weight: 500;
+        }
+        .input-group-text {
+            background-color: var(--bs-light);
+            border-left: 0;
+        }
+        .form-control {
+            border-right: 0;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #dee2e6;
+        }
+        .btn-login {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
+            padding: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
-        .btn-primary:hover {
+        .btn-login:hover {
             background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .login-info {
+            background-color: var(--bs-light);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
         }
     </style>
 </head>
-<body class="hold-transition login-page">
-<div class="login-box">
-    <div class="login-logo">
-        <a href="#"><i class="fas fa-satellite-dish"></i> <b>Starlink</b> Manager</a>
-    </div>
-    <!-- /.login-logo -->
-    <div class="card">
-        <div class="card-body login-card-body">
-            <p class="login-box-msg">Silakan login untuk melanjutkan</p>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <a href="#">
+                <i class="fas fa-satellite-dish"></i> <strong>Starlink</strong> Manager
+            </a>
+        </div>
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="icon fas fa-ban"></i> <?= $error ?>
-                </div>
-            <?php endif; ?>
+        <div class="card login-card">
+            <div class="card-body">
+                <h5 class="login-header">Silakan login untuk melanjutkan</h5>
 
-            <form action="" method="post">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Username" name="username" required autofocus>
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-user"></span>
+                <?php if (!empty($error)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i><?= $error ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <form action="" method="post">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Username" name="username" required autofocus>
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div class="input-group mb-3">
-                    <input type="password" class="form-control" placeholder="Password" name="password" required>
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-lock"></span>
+
+                    <div class="mb-4">
+                        <div class="input-group">
+                            <input type="password" class="form-control" placeholder="Password" name="password" required>
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-sign-in-alt"></i> Login
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
                     </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="login-info">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i> Default: <strong>admin</strong> / <strong>admin123</strong>
+                    </small>
                 </div>
-            </form>
-
-            <hr>
-
-            <p class="mb-0 text-center text-muted">
-                <small>
-                    <i class="fas fa-info-circle"></i> Default: <b>admin</b> / <b>admin123</b>
-                </small>
-            </p>
+            </div>
         </div>
-        <!-- /.login-card-body -->
     </div>
-</div>
-<!-- /.login-box -->
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

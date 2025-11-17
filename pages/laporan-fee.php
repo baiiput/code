@@ -124,39 +124,31 @@ include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
 
-<!-- Content Wrapper -->
-<div class="content-wrapper">
-    <!-- Content Header -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0"><i class="fas fa-chart-line"></i> Laporan Fee</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="<?= APP_URL ?>">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Laporan Fee</li>
-                    </ol>
-                </div>
-            </div>
+<!-- Main Content -->
+<main class="flex-fill">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0"><i class="fas fa-chart-line"></i> Laporan Fee</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="<?= APP_URL ?>">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Laporan Fee</li>
+                </ol>
+            </nav>
         </div>
-    </div>
 
-    <!-- Main content -->
-    <section class="content">
-        <div class="container-fluid">
-            <?= getFlashMessage() ?>
+        <?= getFlashMessage() ?>
 
-            <!-- Filter Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-filter"></i> Filter Periode</h3>
-                </div>
-                <div class="card-body">
-                    <form method="GET" class="form-inline">
-                        <div class="form-group mr-3">
-                            <label class="mr-2">Bulan:</label>
+        <!-- Filter Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Periode</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label">Bulan:</label>
                             <select name="bulan" class="form-control">
                                 <?php
                                 $bulan_nama = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -167,30 +159,34 @@ include '../includes/sidebar.php';
                                 }
                                 ?>
                             </select>
-                        </div>
-                        <div class="form-group mr-3">
-                            <label class="mr-2">Tahun:</label>
-                            <select name="tahun" class="form-control">
-                                <?php
-                                $current_year = date('Y');
-                                for ($y = $current_year; $y >= $current_year - 3; $y--) {
-                                    $selected = ($tahun == $y) ? 'selected' : '';
-                                    echo "<option value='$y' $selected>$y</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary mr-2">
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label">Tahun:</label>
+                        <select name="tahun" class="form-select">
+                            <?php
+                            $current_year = date('Y');
+                            for ($y = $current_year; $y >= $current_year - 3; $y--) {
+                                $selected = ($tahun == $y) ? 'selected' : '';
+                                echo "<option value='$y' $selected>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i> Tampilkan
                         </button>
-                        <?php if (count($data) > 0): ?>
-                            <a href="?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&export=1" class="btn btn-success">
-                                <i class="fas fa-file-excel"></i> Export Excel
-                            </a>
-                        <?php endif; ?>
-                    </form>
-                </div>
+                    </div>
+                    <?php if (count($data) > 0): ?>
+                    <div class="col-auto">
+                        <a href="?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&export=1" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                </form>
             </div>
+        </div>
 
             <!-- Summary Cards -->
             <div class="row">
@@ -240,14 +236,14 @@ include '../includes/sidebar.php';
                 </div>
             </div>
 
-            <!-- Data Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-table"></i> Detail Laporan Fee -
-                        <?= $bulan_nama[(int)$bulan] ?> <?= $tahun ?>
-                    </h3>
-                </div>
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-table"></i> Detail Laporan Fee -
+                    <?= $bulan_nama[(int)$bulan] ?> <?= $tahun ?>
+                </h5>
+            </div>
                 <div class="card-body table-responsive">
                     <table class="table table-bordered table-striped datatable">
                         <thead>
@@ -280,8 +276,8 @@ include '../includes/sidebar.php';
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted">
-                                        <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                    <td colspan="9" class="text-center text-muted py-5">
+                                        <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
                                         <p>Tidak ada data untuk periode ini</p>
                                     </td>
                                 </tr>
@@ -289,8 +285,8 @@ include '../includes/sidebar.php';
                         </tbody>
                         <?php if (count($data) > 0): ?>
                             <tfoot>
-                                <tr style="font-weight:bold; background-color:#f0f0f0;">
-                                    <td colspan="5" class="text-right">TOTAL:</td>
+                                <tr class="fw-bold table-light">
+                                    <td colspan="5" class="text-end">TOTAL:</td>
                                     <td><?= formatRupiah($summary['total_nominal']) ?></td>
                                     <td class="text-success"><?= formatRupiah($summary['total_fee']) ?></td>
                                     <td><?= formatRupiah($summary['total_keseluruhan']) ?></td>
@@ -302,8 +298,6 @@ include '../includes/sidebar.php';
                 </div>
             </div>
 
-        </div>
-    </section>
-</div>
+    </div>
 
 <?php include '../includes/footer.php'; ?>

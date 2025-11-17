@@ -56,41 +56,32 @@ include 'includes/header.php';
 include 'includes/sidebar.php';
 ?>
 
-<!-- Content Wrapper -->
-<div class="content-wrapper">
-    <!-- Content Header -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item active">Dashboard</li>
-                    </ol>
-                </div>
+<!-- Main Content -->
+<main class="flex-fill">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Flash Message -->
+        <?= getFlashMessage() ?>
+
+        <!-- Welcome Card -->
+        <div class="card border-primary mb-4">
+            <div class="card-body">
+                <h5><i class="fas fa-user-circle text-primary"></i> Selamat Datang, <?= $_SESSION['nama_lengkap'] ?>!</h5>
+                <p class="mb-0">
+                    Role: <span class="badge bg-info"><?= getRoleName($_SESSION['user_role']) ?></span> |
+                    Login terakhir: <span class="badge bg-secondary"><?= date('d/m/Y H:i') ?></span>
+                </p>
             </div>
         </div>
-    </div>
-    <!-- /.content-header -->
-
-    <!-- Main content -->
-    <section class="content">
-        <div class="container-fluid">
-            <!-- Flash Message -->
-            <?= getFlashMessage() ?>
-
-            <!-- Welcome Card -->
-            <div class="card card-primary card-outline">
-                <div class="card-body">
-                    <h5><i class="fas fa-user-circle"></i> Selamat Datang, <?= $_SESSION['nama_lengkap'] ?>!</h5>
-                    <p class="mb-0">
-                        Role: <span class="badge badge-info"><?= getRoleName($_SESSION['user_role']) ?></span> |
-                        Login terakhir: <span class="badge badge-secondary"><?= date('d/m/Y H:i') ?></span>
-                    </p>
-                </div>
-            </div>
 
             <!-- 4 Menu Utama -->
             <div class="row">
@@ -197,92 +188,92 @@ include 'includes/sidebar.php';
                 </div>
             </div>
 
-            <!-- Recent Activity / Quick Access -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-clock"></i> Aktivitas Terbaru</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-sm">
-                                <tbody>
-                                    <?php
-                                    try {
-                                        $query = "SELECT * FROM activity_log
-                                                  WHERE user_id = :user_id
-                                                  ORDER BY created_at DESC
-                                                  LIMIT 5";
-                                        $stmt = $db->prepare($query);
-                                        $stmt->bindParam(':user_id', $_SESSION['user_id']);
-                                        $stmt->execute();
-                                        $activities = $stmt->fetchAll();
-
-                                        if (count($activities) > 0) {
-                                            foreach ($activities as $activity) {
-                                                echo '<tr>';
-                                                echo '<td><i class="fas fa-circle text-primary" style="font-size: 8px;"></i></td>';
-                                                echo '<td>' . htmlspecialchars($activity['description']) . '</td>';
-                                                echo '<td class="text-muted"><small>' . date('d/m/Y H:i', strtotime($activity['created_at'])) . '</small></td>';
-                                                echo '</tr>';
-                                            }
-                                        } else {
-                                            echo '<tr><td colspan="3" class="text-center text-muted">Belum ada aktivitas</td></tr>';
-                                        }
-                                    } catch (PDOException $e) {
-                                        echo '<tr><td colspan="3" class="text-center text-danger">Error loading activities</td></tr>';
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
+        <!-- Recent Activity / Quick Access -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0"><i class="fas fa-clock"></i> Aktivitas Terbaru</h5>
                     </div>
-                </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <?php
+                                try {
+                                    $query = "SELECT * FROM activity_log
+                                              WHERE user_id = :user_id
+                                              ORDER BY created_at DESC
+                                              LIMIT 5";
+                                    $stmt = $db->prepare($query);
+                                    $stmt->bindParam(':user_id', $_SESSION['user_id']);
+                                    $stmt->execute();
+                                    $activities = $stmt->fetchAll();
 
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-rocket"></i> Quick Access</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <a href="<?= APP_URL ?>/pages/pelanggan.php" class="btn btn-app bg-primary w-100">
-                                        <i class="fas fa-users"></i> Data Pelanggan
-                                    </a>
-                                </div>
-                                <?php if (hasPermission('add_pembayaran')): ?>
-                                <div class="col-6 mb-3">
-                                    <a href="<?= APP_URL ?>/pages/pembayaran.php?action=add" class="btn btn-app bg-success w-100">
-                                        <i class="fas fa-plus"></i> Input Pembayaran
-                                    </a>
-                                </div>
-                                <?php endif; ?>
-                                <?php if (hasPermission('view_laporan')): ?>
-                                <div class="col-6 mb-3">
-                                    <a href="<?= APP_URL ?>/pages/laporan-fee.php" class="btn btn-app bg-warning w-100">
-                                        <i class="fas fa-chart-line"></i> Laporan Fee
-                                    </a>
-                                </div>
-                                <?php endif; ?>
-                                <?php if ($_SESSION['user_role'] == 'super_admin'): ?>
-                                <div class="col-6 mb-3">
-                                    <a href="<?= APP_URL ?>/pages/settings.php" class="btn btn-app bg-secondary w-100">
-                                        <i class="fas fa-cog"></i> Pengaturan
-                                    </a>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+                                    if (count($activities) > 0) {
+                                        foreach ($activities as $activity) {
+                                            echo '<tr>';
+                                            echo '<td><i class="fas fa-circle text-primary" style="font-size: 8px;"></i></td>';
+                                            echo '<td>' . htmlspecialchars($activity['description']) . '</td>';
+                                            echo '<td class="text-muted"><small>' . date('d/m/Y H:i', strtotime($activity['created_at'])) . '</small></td>';
+                                            echo '</tr>';
+                                        }
+                                    } else {
+                                        echo '<tr><td colspan="3" class="text-center text-muted py-3">Belum ada aktivitas</td></tr>';
+                                    }
+                                } catch (PDOException $e) {
+                                    echo '<tr><td colspan="3" class="text-center text-danger py-3">Error loading activities</td></tr>';
+                                }
+                                ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-        </div><!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
-</div>
-<!-- /.content-wrapper -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0"><i class="fas fa-rocket"></i> Quick Access</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <a href="<?= APP_URL ?>/pages/pelanggan.php" class="btn btn-primary w-100 py-3">
+                                    <i class="fas fa-users d-block mb-2" style="font-size: 2rem;"></i>
+                                    Data Pelanggan
+                                </a>
+                            </div>
+                            <?php if (hasPermission('add_pembayaran')): ?>
+                            <div class="col-6">
+                                <a href="<?= APP_URL ?>/pages/pembayaran.php?action=add" class="btn btn-success w-100 py-3">
+                                    <i class="fas fa-plus d-block mb-2" style="font-size: 2rem;"></i>
+                                    Input Pembayaran
+                                </a>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (hasPermission('view_laporan')): ?>
+                            <div class="col-6">
+                                <a href="<?= APP_URL ?>/pages/laporan-fee.php" class="btn btn-warning w-100 py-3">
+                                    <i class="fas fa-chart-line d-block mb-2" style="font-size: 2rem;"></i>
+                                    Laporan Fee
+                                </a>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($_SESSION['user_role'] == 'super_admin'): ?>
+                            <div class="col-6">
+                                <a href="<?= APP_URL ?>/pages/settings.php" class="btn btn-secondary w-100 py-3">
+                                    <i class="fas fa-cog d-block mb-2" style="font-size: 2rem;"></i>
+                                    Pengaturan
+                                </a>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.container-fluid -->
 
 <?php
 include 'includes/footer.php';

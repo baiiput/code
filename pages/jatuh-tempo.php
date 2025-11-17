@@ -23,37 +23,27 @@ include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
 
-<!-- Content Wrapper -->
-<div class="content-wrapper">
-    <!-- Content Header -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0"><i class="fas fa-calendar-alt text-info"></i> Jatuh Tempo</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="<?= APP_URL ?>">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Jatuh Tempo</li>
-                    </ol>
-                </div>
-            </div>
+<!-- Main Content -->
+<main class="flex-fill">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0"><i class="fas fa-calendar-alt text-info"></i> Jatuh Tempo</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="<?= APP_URL ?>">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Jatuh Tempo</li>
+                </ol>
+            </nav>
         </div>
-    </div>
 
-    <!-- Main content -->
-    <section class="content">
-        <div class="container-fluid">
-            <?= getFlashMessage() ?>
+        <?= getFlashMessage() ?>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-list"></i> Daftar Pelanggan Jatuh Tempo Besok</h3>
-                    <div class="card-tools">
-                        <span class="badge badge-info"><?= count($data) ?> Pelanggan</span>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Daftar Pelanggan Jatuh Tempo Besok</h5>
+                <span class="badge bg-info"><?= count($data) ?> Pelanggan</span>
+            </div>
                 <div class="card-body table-responsive">
                     <table class="table table-bordered table-striped datatable">
                         <thead>
@@ -78,14 +68,14 @@ include '../includes/sidebar.php';
                                         <td><code><?= htmlspecialchars($row['kit_number']) ?></code></td>
                                         <td><?= htmlspecialchars($row['paket']) ?></td>
                                         <td>
-                                            <span class="badge badge-info">
+                                            <span class="badge bg-info">
                                                 <?= formatTanggal($row['tanggal_jatuh_tempo']) ?>
                                             </span>
                                             <br>
                                             <small class="text-muted">Besok (<?= $row['hari_tersisa'] ?> hari)</small>
                                         </td>
                                         <td><?= getStatusBadge($row['status']) ?></td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             <?php if (!empty($row['nomor_cs'])): ?>
                                                 <a href="<?= generateWhatsAppLink(
                                                     $row['nama'],
@@ -106,8 +96,8 @@ include '../includes/sidebar.php';
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted">
-                                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <i class="fas fa-check-circle fa-3x mb-3 d-block"></i>
                                         <p>Tidak ada pelanggan yang jatuh tempo besok</p>
                                     </td>
                                 </tr>
@@ -117,8 +107,6 @@ include '../includes/sidebar.php';
                 </div>
             </div>
 
-        </div>
-    </section>
-</div>
+    </div>
 
 <?php include '../includes/footer.php'; ?>
