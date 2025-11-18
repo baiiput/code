@@ -616,6 +616,9 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         }
 
         // Detail Modal
+        let currentDetailPhotos = [];
+        let currentDetailTitle = '';
+
         function openDetail(item) {
             const modal = document.getElementById('detailModal');
             const content = document.getElementById('detailContent');
@@ -626,57 +629,72 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
             let photosHtml = '<span style="color: #9ca3af;">Tidak ada foto</span>';
             if (item.foto_bukti) {
                 const photos = item.foto_bukti.split(',');
-                photosHtml = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        ${photos.map((photo, index) => `
-                            <img src="../uploads/${photo}"
-                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid #e5e7eb;"
-                                 onclick="closeDetail(); openGallery(${JSON.stringify(photos)}, '${item.nama_karyawan} - ${formatDate(item.tanggal)}'); setTimeout(() => showPhotoAt(${index}), 100);"
-                                 alt="Foto ${index + 1}">
-                        `).join('')}
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #6b7280;">${photos.length} foto - klik untuk perbesar</div>
-                `;
+                currentDetailPhotos = photos;
+                currentDetailTitle = item.nama_karyawan + ' - ' + formatDate(item.tanggal);
+
+                let thumbsHtml = '';
+                photos.forEach((photo, index) => {
+                    thumbsHtml += '<img src="../uploads/' + photo + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid #e5e7eb;" onclick="openDetailPhoto(' + index + ')" alt="Foto ' + (index + 1) + '">';
+                });
+
+                photosHtml = '<div style="display: flex; flex-wrap: wrap; gap: 8px;">' + thumbsHtml + '</div><div style="margin-top: 8px; font-size: 11px; color: #6b7280;">' + photos.length + ' foto - klik untuk perbesar</div>';
             }
 
-            content.innerHTML = `
-                <div style="display: grid; gap: 8px; font-size: 13px;">
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Karyawan</span>
-                        <span>${item.nama_karyawan}</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Tanggal</span>
-                        <span>${formatDate(item.tanggal)}</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Jam Kerja</span>
-                        <span>${item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-'}</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Durasi</span>
-                        <span>${item.durasi_jam} jam</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Level</span>
-                        <span><span class="badge badge-${levelBadgeClass}" style="background: ${levelColor};">Level ${item.level}</span></span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="font-weight: 600;">Bonus</span>
-                        <span style="color: #10b981; font-weight: bold;">Rp ${parseInt(item.bonus).toLocaleString('id-ID')}</span>
-                    </div>
-                    <div style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                        <div style="font-weight: 600; margin-bottom: 6px;">Aktivitas</div>
-                        <div style="line-height: 1.5; color: #4b5563;">${item.aktivitas}</div>
-                    </div>
-                    <div style="padding: 8px 0;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Foto Bukti</div>
-                        ${photosHtml}
-                    </div>
-                </div>
-            `;
+            content.innerHTML = '<div style="display: grid; gap: 8px; font-size: 13px;">' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Karyawan</span>' +
+                    '<span>' + escapeHtml(item.nama_karyawan) + '</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Tanggal</span>' +
+                    '<span>' + formatDate(item.tanggal) + '</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Jam Kerja</span>' +
+                    '<span>' + (item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-') + '</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Durasi</span>' +
+                    '<span>' + item.durasi_jam + ' jam</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Level</span>' +
+                    '<span><span class="badge badge-' + levelBadgeClass + '" style="background: ' + levelColor + ';">Level ' + item.level + '</span></span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<span style="font-weight: 600;">Bonus</span>' +
+                    '<span style="color: #10b981; font-weight: bold;">Rp ' + parseInt(item.bonus).toLocaleString('id-ID') + '</span>' +
+                '</div>' +
+                '<div style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">' +
+                    '<div style="font-weight: 600; margin-bottom: 6px;">Aktivitas</div>' +
+                    '<div style="line-height: 1.5; color: #4b5563;">' + escapeHtml(item.aktivitas) + '</div>' +
+                '</div>' +
+                '<div style="padding: 8px 0;">' +
+                    '<div style="font-weight: 600; margin-bottom: 8px;">Foto Bukti</div>' +
+                    photosHtml +
+                '</div>' +
+            '</div>';
 
             modal.style.display = 'block';
+        }
+
+        function openDetailPhoto(index) {
+            closeDetail();
+            openGallery(currentDetailPhotos, currentDetailTitle);
+            setTimeout(function() {
+                currentPhotoIndex = index;
+                showPhoto();
+            }, 100);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function showPhotoAt(index) {
