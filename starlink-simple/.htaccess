@@ -1,0 +1,23 @@
+# Protect config file
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Protect database file
+<Files "database.sql">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Protect includes folder
+<Files "includes/*">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Enable URL rewriting (optional)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    Options -Indexes
+</IfModule>
