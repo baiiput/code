@@ -399,16 +399,20 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                     while ($row = mysqli_fetch_assoc($summary)) {
                         $level_data[$row['level']] = $row;
                     }
-                    
+
+                    $bonus_rates = getBonusRates();
                     $level_info = [
-                        'A' => ['name' => 'Level A', 'desc' => '< 1 jam', 'bonus' => 15000, 'class' => 'level-a', 'color' => '#ef4444'],
-                        'B' => ['name' => 'Level B', 'desc' => '1-1.9 jam', 'bonus' => 25000, 'class' => 'level-b', 'color' => '#f59e0b'],
-                        'C' => ['name' => 'Level C', 'desc' => '2-3.9 jam', 'bonus' => 45000, 'class' => 'level-c', 'color' => '#3b82f6'],
-                        'D' => ['name' => 'Level D', 'desc' => '≥ 4 jam', 'bonus' => 80000, 'class' => 'level-d', 'color' => '#10b981']
+                        'A' => ['name' => 'Level A', 'desc' => '< 1 jam', 'class' => 'level-a', 'color' => '#ef4444'],
+                        'B' => ['name' => 'Level B', 'desc' => '1-1.9 jam', 'class' => 'level-b', 'color' => '#f59e0b'],
+                        'C' => ['name' => 'Level C', 'desc' => '2-3.9 jam', 'class' => 'level-c', 'color' => '#3b82f6'],
+                        'D' => ['name' => 'Level D', 'desc' => '≥ 4 jam', 'class' => 'level-d', 'color' => '#10b981']
                     ];
-                    
+
                     foreach ($level_info as $level => $info):
                         $data = $level_data[$level];
+                        // Get bonus range for this activity level across all employee levels
+                        $min_bonus = $bonus_rates['1'][$level];
+                        $max_bonus = $bonus_rates['5'][$level];
                     ?>
                     <div class="stat-box <?php echo $info['class']; ?>">
                         <h3><?php echo $info['name']; ?> (<?php echo $info['desc']; ?>)</h3>
@@ -418,7 +422,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                         <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">
                             Total: <?php echo $data ? number_format($data['total_durasi'], 1) : 0; ?> jam<br>
                             Rata-rata: <?php echo $data ? number_format($data['avg_durasi'], 1) : 0; ?> jam<br>
-                            Bonus: <?php echo formatRupiah($info['bonus']); ?>
+                            Bonus: <?php echo formatRupiah($min_bonus); ?> - <?php echo formatRupiah($max_bonus); ?>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -462,8 +466,11 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     ?>
                                 </td>
                                 <td><?php echo $item['durasi_jam']; ?> jam</td>
-                                <td style="max-width: 300px; white-space: normal; word-wrap: break-word;">
-                                    <?php echo htmlspecialchars($item['aktivitas']); ?>
+                                <td class="description-cell" style="max-width: 200px;">
+                                    <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
+                                    <?php if (strlen($item['aktivitas']) > 50): ?>
+                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
@@ -691,6 +698,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         // Keyboard navigation for gallery
         document.addEventListener('keydown', function(event) {
             const galleryModal = document.getElementById('galleryModal');
+            const descModal = document.getElementById('descModal');
             if (galleryModal.style.display === 'block') {
                 if (event.key === 'ArrowLeft') {
                     changePhoto(-1);
@@ -700,7 +708,35 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                     closeGallery();
                 }
             }
+            if (descModal && descModal.style.display === 'block') {
+                if (event.key === 'Escape') {
+                    closeDescModal();
+                }
+            }
         });
+
+        // Description Modal
+        function showFullDescription(text) {
+            document.getElementById('fullDescText').textContent = text;
+            document.getElementById('descModal').style.display = 'block';
+        }
+
+        function closeDescModal() {
+            document.getElementById('descModal').style.display = 'none';
+        }
     </script>
+
+    <!-- Description Modal -->
+    <div id="descModal" class="modal">
+        <div class="modal-content detail-modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">📋 Deskripsi Aktivitas</div>
+                <span class="close" onclick="closeDescModal()">&times;</span>
+            </div>
+            <div class="detail-content">
+                <p id="fullDescText" style="white-space: pre-wrap; margin: 0;"></p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

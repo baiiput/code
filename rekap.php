@@ -292,7 +292,12 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
                                     ?>
                                 </td>
                                 <td><?php echo $item['durasi_jam']; ?> jam</td>
-                                <td><?php echo htmlspecialchars(substr($item['aktivitas'], 0, 80)) . (strlen($item['aktivitas']) > 80 ? '...' : ''); ?></td>
+                                <td class="description-cell">
+                                    <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
+                                    <?php if (strlen($item['aktivitas']) > 50): ?>
+                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
                                         Level <?php echo $item['level']; ?>
@@ -417,12 +422,39 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {
             const modal = document.getElementById('photoModal');
+            const descModal = document.getElementById('descModal');
             if (modal.style.display === 'block') {
                 if (e.key === 'ArrowLeft') changeImage(-1);
                 if (e.key === 'ArrowRight') changeImage(1);
                 if (e.key === 'Escape') closeGallery();
             }
+            if (descModal && descModal.style.display === 'block') {
+                if (e.key === 'Escape') closeDescModal();
+            }
         });
+
+        // Description Modal
+        function showFullDescription(text) {
+            document.getElementById('fullDescText').textContent = text;
+            document.getElementById('descModal').style.display = 'block';
+        }
+
+        function closeDescModal() {
+            document.getElementById('descModal').style.display = 'none';
+        }
     </script>
+
+    <!-- Description Modal -->
+    <div id="descModal" class="modal">
+        <div class="modal-content detail-modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">📋 Deskripsi Aktivitas</div>
+                <span class="close" onclick="closeDescModal()">&times;</span>
+            </div>
+            <div class="detail-content">
+                <p id="fullDescText" style="white-space: pre-wrap; margin: 0;"></p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

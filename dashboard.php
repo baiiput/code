@@ -150,7 +150,12 @@ if (isAdmin()) {
                                         }
                                         ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars(substr($item['aktivitas'], 0, 50)) . (strlen($item['aktivitas']) > 50 ? '...' : ''); ?></td>
+                                    <td class="description-cell">
+                                        <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
+                                        <?php if (strlen($item['aktivitas']) > 50): ?>
+                                        <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo $item['durasi_jam']; ?> jam</td>
                                     <td>
                                         <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
@@ -171,5 +176,42 @@ if (isAdmin()) {
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Description Modal -->
+    <div id="descModal" class="modal">
+        <div class="modal-content detail-modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">📋 Deskripsi Aktivitas</div>
+                <span class="close" onclick="closeDescModal()">&times;</span>
+            </div>
+            <div class="detail-content">
+                <p id="fullDescText" style="white-space: pre-wrap; margin: 0;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showFullDescription(text) {
+            document.getElementById('fullDescText').textContent = text;
+            document.getElementById('descModal').style.display = 'block';
+        }
+
+        function closeDescModal() {
+            document.getElementById('descModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('descModal');
+            if (event.target === modal) {
+                closeDescModal();
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDescModal();
+            }
+        });
+    </script>
 </body>
 </html>

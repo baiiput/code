@@ -5,6 +5,12 @@ requireKaryawan();
 $success = '';
 $error = '';
 
+// Get user info for bonus calculation
+$current_user = getUserInfo($_SESSION['user_id']);
+$user_level = $current_user['level_karyawan'] ?? '3';
+$bonus_rates = getBonusRates();
+$user_bonus_rates = $bonus_rates[$user_level];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $aktivitas = sanitize($_POST['aktivitas']);
     $tanggal = sanitize($_POST['tanggal']);
@@ -171,27 +177,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;">ℹ️ Informasi Bonus (4 Level)</h3>
+                <h3 style="margin-bottom: 15px;">ℹ️ Informasi Bonus - Level Karyawan <?php echo $user_level; ?></h3>
                 <div class="level-info">
                     <div class="level-box level-a">
                         <strong>Level A</strong><br>
                         &lt; 1 jam<br>
-                        <strong>Rp 15.000</strong>
+                        <strong><?php echo formatRupiah($user_bonus_rates['A']); ?></strong>
                     </div>
                     <div class="level-box level-b">
                         <strong>Level B</strong><br>
                         1 - 1,9 jam<br>
-                        <strong>Rp 25.000</strong>
+                        <strong><?php echo formatRupiah($user_bonus_rates['B']); ?></strong>
                     </div>
                     <div class="level-box level-c">
                         <strong>Level C</strong><br>
                         2 - 3,9 jam<br>
-                        <strong>Rp 45.000</strong>
+                        <strong><?php echo formatRupiah($user_bonus_rates['C']); ?></strong>
                     </div>
                     <div class="level-box level-d">
                         <strong>Level D</strong><br>
                         ≥ 4 jam<br>
-                        <strong>Rp 80.000</strong>
+                        <strong><?php echo formatRupiah($user_bonus_rates['D']); ?></strong>
                     </div>
                 </div>
                 <p style="margin-top: 15px; font-size: 13px; opacity: 0.9;">
@@ -280,40 +286,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         // Duration preview dengan 4 level
+        const userBonusRates = {
+            'A': <?php echo $user_bonus_rates['A']; ?>,
+            'B': <?php echo $user_bonus_rates['B']; ?>,
+            'C': <?php echo $user_bonus_rates['C']; ?>,
+            'D': <?php echo $user_bonus_rates['D']; ?>
+        };
+
         function updateDuration() {
             const jamMulai = document.getElementById('jam_mulai').value;
             const jamSelesai = document.getElementById('jam_selesai').value;
             const preview = document.getElementById('durationPreview');
-            
+
             if (!jamMulai || !jamSelesai) {
                 preview.innerHTML = 'Pilih jam kerja untuk melihat durasi';
                 preview.style.background = '#f3f4f6';
                 preview.style.color = '#6b7280';
                 return;
             }
-            
+
             const start = new Date('2000-01-01 ' + jamMulai);
             let end = new Date('2000-01-01 ' + jamSelesai);
-            
+
             if (end < start) {
                 end = new Date('2000-01-02 ' + jamSelesai);
             }
-            
+
             const diff = (end - start) / (1000 * 60 * 60);
             const durasi = Math.round(diff * 100) / 100;
-            
-            let level, bonus, badgeClass, bgColor;
-            
+
+            let level, badgeClass, bgColor;
+
             if (durasi < 1) {
-                level = 'A'; bonus = 15000; badgeClass = 'danger'; bgColor = '#fee2e2';
+                level = 'A'; badgeClass = 'danger'; bgColor = '#fee2e2';
             } else if (durasi >= 1 && durasi < 2) {
-                level = 'B'; bonus = 25000; badgeClass = 'warning'; bgColor = '#fef3c7';
+                level = 'B'; badgeClass = 'warning'; bgColor = '#fef3c7';
             } else if (durasi >= 2 && durasi < 4) {
-                level = 'C'; bonus = 45000; badgeClass = 'info'; bgColor = '#dbeafe';
+                level = 'C'; badgeClass = 'info'; bgColor = '#dbeafe';
             } else {
-                level = 'D'; bonus = 80000; badgeClass = 'success'; bgColor = '#d1fae5';
+                level = 'D'; badgeClass = 'success'; bgColor = '#d1fae5';
             }
-            
+
+            const bonus = userBonusRates[level];
+
             preview.innerHTML = `
                 <strong style="font-size: 16px;">⌛ Durasi: ${durasi} jam</strong><br>
                 <span class="badge badge-${badgeClass}" style="font-size: 14px; margin: 10px 0; display: inline-block;">Level ${level}</span><br>
