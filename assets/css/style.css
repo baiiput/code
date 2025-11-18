@@ -361,7 +361,13 @@ table thead {
     color: white;
 }
 
-table th,
+table th {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: white;
+}
+
 table td {
     padding: 15px;
     text-align: left;
