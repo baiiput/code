@@ -8,6 +8,66 @@
     --light-color: #f3f4f6;
 }
 
+/* Dark Mode (default) */
+body {
+    --bg-gradient-start: #0f172a;
+    --bg-gradient-end: #1e293b;
+    --dashboard-bg: #1e293b;
+    --card-bg: #334155;
+    --nav-bg: #334155;
+    --nav-item-bg: #475569;
+    --table-bg: #334155;
+    --table-header-bg: #3b82f6;
+    --input-bg: #1e293b;
+    --border-color: #475569;
+    --text-primary: #f1f5f9;
+    --text-secondary: #e2e8f0;
+    --text-muted: #94a3b8;
+}
+
+/* Light Mode */
+body.light-mode {
+    --bg-gradient-start: #e0e7ff;
+    --bg-gradient-end: #c7d2fe;
+    --dashboard-bg: #ffffff;
+    --card-bg: #ffffff;
+    --nav-bg: #ffffff;
+    --nav-item-bg: #f3f4f6;
+    --table-bg: #ffffff;
+    --table-header-bg: #4f46e5;
+    --input-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --text-primary: #1f2937;
+    --text-secondary: #374151;
+    --text-muted: #6b7280;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -16,9 +76,10 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     min-height: 100vh;
     line-height: 1.6;
+    transition: background 0.3s;
 }
 
 .container {
@@ -37,7 +98,7 @@ body {
 }
 
 .login-box {
-    background: #1e293b;
+    background: var(--dashboard-bg);
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
@@ -59,19 +120,19 @@ body {
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: #e2e8f0;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
 .form-control {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #475569;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s;
-    background: #1e293b;
-    color: #f1f5f9;
+    background: var(--input-bg);
+    color: var(--text-primary);
 }
 
 .form-control:focus {
@@ -170,11 +231,12 @@ body {
 
 /* Dashboard */
 .dashboard {
-    background: #1e293b;
+    background: var(--dashboard-bg);
     border-radius: 15px;
     padding: 30px;
     margin-top: 20px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s;
 }
 
 .dashboard-header {
@@ -187,7 +249,7 @@ body {
 }
 
 .dashboard-header h1 {
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-size: 28px;
 }
 
@@ -247,11 +309,12 @@ body {
 
 /* Navigation Menu */
 .nav-menu {
-    background: #334155;
+    background: var(--nav-bg);
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s;
 }
 
 .nav-menu ul {
@@ -264,8 +327,8 @@ body {
 .nav-menu a {
     display: block;
     padding: 10px 20px;
-    background: #475569;
-    color: #e2e8f0;
+    background: var(--nav-item-bg);
+    color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
     font-weight: 600;
@@ -287,13 +350,14 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    background: #334155;
+    background: var(--table-bg);
     border-radius: 8px;
     overflow: hidden;
+    transition: background 0.3s;
 }
 
 table thead {
-    background: #3b82f6;
+    background: var(--table-header-bg);
     color: white;
 }
 
@@ -301,12 +365,12 @@ table th,
 table td {
     padding: 15px;
     text-align: left;
-    border-bottom: 1px solid #475569;
-    color: #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 
 table tbody tr:hover {
-    background: #475569;
+    background: var(--nav-item-bg);
 }
 
 table tbody tr:last-child td {
@@ -343,21 +407,22 @@ table tbody tr:last-child td {
 
 /* Card */
 .card {
-    background: #334155;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s;
 }
 
 .card-header {
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #475569;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .card-header h2 {
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-size: 22px;
 }
 
@@ -389,17 +454,17 @@ textarea.form-control {
 .file-input-label {
     display: block;
     padding: 12px 15px;
-    background: #1e293b;
-    border: 2px dashed #475569;
+    background: var(--input-bg);
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .file-input-label:hover {
-    background: #334155;
+    background: var(--card-bg);
     border-color: #3b82f6;
 }
 
@@ -488,7 +553,7 @@ textarea.form-control {
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .empty-state img {
@@ -500,7 +565,7 @@ textarea.form-control {
 .empty-state h3 {
     font-size: 20px;
     margin-bottom: 10px;
-    color: #e2e8f0;
+    color: var(--text-secondary);
 }
 
 .empty-state p {
@@ -1062,5 +1127,21 @@ textarea.form-control {
 }
 
 .view-more-btn:hover {
+    background: #4f46e5;
+}
+
+/* View Detail Button */
+.view-detail-btn {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #6366f1;
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.view-detail-btn:hover {
     background: #4f46e5;
 }

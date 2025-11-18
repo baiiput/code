@@ -133,9 +133,8 @@ if (isAdmin()) {
                                     <th>Tanggal</th>
                                     <th>Jam Kerja</th>
                                     <th>Aktivitas</th>
-                                    <th>Durasi</th>
                                     <th>Level</th>
-                                    <th>Bukti</th>
+                                    <th>Detail</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -157,24 +156,15 @@ if (isAdmin()) {
                                         <span class="view-more-btn" onclick="showFullDescription(<?php echo htmlspecialchars(json_encode($item['aktivitas']), ENT_QUOTES, 'UTF-8'); ?>)">Lihat</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo $item['durasi_jam']; ?> jam</td>
                                     <td>
                                         <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
                                             Level <?php echo $item['level']; ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (!empty($item['foto_bukti'])):
-                                            $photos = explode(',', $item['foto_bukti']);
-                                            $photo_count = count($photos);
-                                            $gallery_date = date('d/m/Y', strtotime($item['tanggal']));
-                                        ?>
-                                            <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($gallery_date), ENT_QUOTES, 'UTF-8'); ?>)">
-                                                📸 <?php echo $photo_count; ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span style="color: #9ca3af;">-</span>
-                                        <?php endif; ?>
+                                        <a href="#" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8'); ?>); return false;" class="view-detail-btn">
+                                            👁️ Lihat
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -190,6 +180,11 @@ if (isAdmin()) {
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <span id="themeIcon">☀️</span>
+    </button>
 
     <!-- Photo Gallery Modal -->
     <div id="photoModal" class="modal">
@@ -221,10 +216,26 @@ if (isAdmin()) {
         </div>
     </div>
 
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content detail-modal">
+            <div class="modal-header">
+                <div class="modal-title">📋 Detail Aktivitas</div>
+                <span class="close" onclick="closeDetail()">&times;</span>
+            </div>
+            <div class="detail-content" id="detailContent">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Photo Gallery
         let currentPhotos = [];
         let currentIndex = 0;
+        let openedFromDetail = false;
+        let currentDetailPhotos = [];
+        let currentDetailTitle = '';
 
         function openGallery(photos, tanggal) {
             currentPhotos = photos;
@@ -239,6 +250,10 @@ if (isAdmin()) {
 
         function closeGallery() {
             document.getElementById('photoModal').style.display = 'none';
+            if (openedFromDetail) {
+                openedFromDetail = false;
+                document.getElementById('detailModal').style.display = 'block';
+            }
         }
 
         function showImage(index) {
@@ -294,15 +309,116 @@ if (isAdmin()) {
             document.getElementById('descModal').style.display = 'none';
         }
 
+        // Detail Modal
+        function openDetail(item) {
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('detailContent');
+
+            const levelBadgeClass = getLevelBadgeClass(item.level);
+            const levelColor = getLevelColor(item.level);
+
+            let photosHtml = '<span style="color: #9ca3af;">Tidak ada foto</span>';
+            if (item.foto_bukti) {
+                const photos = item.foto_bukti.split(',');
+                currentDetailPhotos = photos;
+                currentDetailTitle = formatDate(item.tanggal);
+
+                let thumbsHtml = '';
+                photos.forEach(function(photo, index) {
+                    thumbsHtml += '<img src="uploads/' + photo + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid #475569;" onclick="openDetailPhoto(' + index + ')" alt="Foto ' + (index + 1) + '">';
+                });
+
+                photosHtml = '<div style="display: flex; flex-wrap: wrap; gap: 8px;">' + thumbsHtml + '</div><div style="margin-top: 8px; font-size: 11px; color: #9ca3af;">' + photos.length + ' foto - klik untuk perbesar</div>';
+            }
+
+            content.innerHTML = '<div style="display: grid; gap: 8px; font-size: 13px;">' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Tanggal</span>' +
+                    '<span style="color: #f1f5f9;">' + formatDate(item.tanggal) + '</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Jam Kerja</span>' +
+                    '<span style="color: #f1f5f9;">' + (item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-') + '</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Durasi</span>' +
+                    '<span style="color: #f1f5f9;">' + item.durasi_jam + ' jam</span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Level</span>' +
+                    '<span><span class="badge badge-' + levelBadgeClass + '" style="background: ' + levelColor + ';">Level ' + item.level + '</span></span>' +
+                '</div>' +
+                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Bonus</span>' +
+                    '<span style="color: #10b981; font-weight: bold;">Rp ' + parseInt(item.bonus).toLocaleString('id-ID') + '</span>' +
+                '</div>' +
+                '<div style="padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<div style="font-weight: 600; margin-bottom: 6px; color: #e2e8f0;">Aktivitas</div>' +
+                    '<div style="line-height: 1.5; color: #cbd5e1;">' + escapeHtml(item.aktivitas) + '</div>' +
+                '</div>' +
+                '<div style="padding: 8px 0;">' +
+                    '<div style="font-weight: 600; margin-bottom: 8px; color: #e2e8f0;">Foto Bukti</div>' +
+                    photosHtml +
+                '</div>' +
+            '</div>';
+
+            modal.style.display = 'block';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        function openDetailPhoto(index) {
+            openedFromDetail = true;
+            document.getElementById('detailModal').style.display = 'none';
+            openGallery(currentDetailPhotos, currentDetailTitle);
+            setTimeout(function() {
+                showImage(index);
+            }, 100);
+        }
+
+        function getLevelBadgeClass(level) {
+            const classes = { 'A': 'danger', 'B': 'warning', 'C': 'info', 'D': 'success' };
+            return classes[level] || 'primary';
+        }
+
+        function getLevelColor(level) {
+            const colors = { 'A': '#ef4444', 'B': '#f59e0b', 'C': '#3b82f6', 'D': '#10b981' };
+            return colors[level] || '#6b7280';
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return day + '/' + month + '/' + year;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Close modals
         window.onclick = function(event) {
             const photoModal = document.getElementById('photoModal');
             const descModal = document.getElementById('descModal');
+            const detailModal = document.getElementById('detailModal');
             if (event.target === photoModal) {
                 closeGallery();
             }
             if (event.target === descModal) {
                 closeDescModal();
+            }
+            if (event.target === detailModal) {
+                closeDetail();
             }
         }
 
@@ -317,6 +433,33 @@ if (isAdmin()) {
                 closeDescModal();
             }
         });
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                icon.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-mode');
+                icon.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const icon = document.getElementById('themeIcon');
+
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                icon.textContent = '🌙';
+            }
+        })();
     </script>
 </body>
 </html>
