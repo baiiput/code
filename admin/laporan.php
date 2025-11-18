@@ -523,6 +523,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                 <button class="gallery-nav next" onclick="changePhoto(1)">❯</button>
             </div>
             <div class="gallery-counter" id="galleryCounter"></div>
+            <div class="gallery-thumbnails" id="thumbnailContainer"></div>
         </div>
     </div>
 
@@ -549,9 +550,10 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
             currentPhotos = photos;
             currentPhotoIndex = 0;
             galleryTitle = title;
-            
+
             document.getElementById('galleryModal').style.display = 'block';
             document.getElementById('galleryTitle').textContent = '📸 ' + title;
+            renderThumbnails();
             showPhoto();
         }
 
@@ -561,27 +563,27 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
 
         function changePhoto(direction) {
             currentPhotoIndex += direction;
-            
+
             if (currentPhotoIndex < 0) {
                 currentPhotoIndex = currentPhotos.length - 1;
             } else if (currentPhotoIndex >= currentPhotos.length) {
                 currentPhotoIndex = 0;
             }
-            
+
             showPhoto();
         }
 
         function showPhoto() {
             const img = document.getElementById('galleryImage');
             const counter = document.getElementById('galleryCounter');
-            
+
             img.src = '../uploads/' + currentPhotos[currentPhotoIndex];
             counter.textContent = (currentPhotoIndex + 1) + ' / ' + currentPhotos.length;
-            
+
             // Hide navigation if only one photo
-            const prevBtn = document.querySelector('.gallery-nav.prev');
-            const nextBtn = document.querySelector('.gallery-nav.next');
-            
+            const prevBtn = document.querySelector('#galleryModal .gallery-nav.prev');
+            const nextBtn = document.querySelector('#galleryModal .gallery-nav.next');
+
             if (currentPhotos.length <= 1) {
                 prevBtn.style.display = 'none';
                 nextBtn.style.display = 'none';
@@ -589,6 +591,28 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                 prevBtn.style.display = 'block';
                 nextBtn.style.display = 'block';
             }
+
+            // Update active thumbnail
+            const thumbnails = document.querySelectorAll('#thumbnailContainer .gallery-thumbnail');
+            thumbnails.forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === currentPhotoIndex);
+            });
+        }
+
+        function renderThumbnails() {
+            const container = document.getElementById('thumbnailContainer');
+            container.innerHTML = '';
+
+            currentPhotos.forEach((photo, index) => {
+                const img = document.createElement('img');
+                img.src = '../uploads/' + photo;
+                img.className = 'gallery-thumbnail' + (index === 0 ? ' active' : '');
+                img.onclick = () => {
+                    currentPhotoIndex = index;
+                    showPhoto();
+                };
+                container.appendChild(img);
+            });
         }
 
         // Detail Modal
