@@ -84,49 +84,49 @@ require_once 'includes/header.php';
     <form method="POST" class="space-y-6">
         <!-- Basic Info -->
         <div class="rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informasi Dasar</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Informasi Dasar</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="sm:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Nama *</label>
-                    <input type="text" name="nama" value="<?= e($customer['nama'] ?? '') ?>" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Nama *</label>
+                    <input type="text" name="nama" value="<?= e($customer['nama'] ?? '') ?>" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email Client</label>
-                    <input type="email" name="email_client" value="<?= e($customer['email_client'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Email Client</label>
+                    <input type="email" name="email_client" value="<?= e($customer['email_client'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Nomor CS</label>
-                    <input type="text" name="nomor_cs" value="<?= e($customer['nomor_cs'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Nomor CS</label>
+                    <input type="text" name="nomor_cs" value="<?= e($customer['nomor_cs'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
                 </div>
                 <div class="sm:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Alamat</label>
-                    <textarea name="alamat" rows="2" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"><?= e($customer['alamat'] ?? '') ?></textarea>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Alamat</label>
+                    <textarea name="alamat" rows="2" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"><?= e($customer['alamat'] ?? '') ?></textarea>
                 </div>
             </div>
         </div>
 
         <!-- Login Credentials -->
         <div class="rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Login Credentials</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Login Credentials</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Gmail Email</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Gmail Email</label>
                     <input type="email" name="gmail_email" value="<?= e($customer['gmail_email'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Gmail Password</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Gmail Password</label>
                     <input type="text" name="gmail_password" value="<?= e($customer['gmail_password'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Starlink Email</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Starlink Email</label>
                     <input type="email" name="starlink_email" value="<?= e($customer['starlink_email'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Starlink Password</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Starlink Password</label>
                     <input type="text" name="starlink_password" value="<?= e($customer['starlink_password'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div class="sm:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Login Alternatif</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Login Alternatif</label>
                     <textarea name="login_alternatif" rows="2" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"><?= e($customer['login_alternatif'] ?? '') ?></textarea>
                 </div>
             </div>
@@ -134,34 +134,34 @@ require_once 'includes/header.php';
 
         <!-- Starlink Info -->
         <div class="rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informasi Starlink</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Informasi Starlink</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">ACC No.</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">ACC No.</label>
                     <input type="text" name="acc_no" value="<?= e($customer['acc_no'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">KIT Number</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">KIT Number</label>
                     <input type="text" name="kit_number" value="<?= e($customer['kit_number'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Serial Number</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Serial Number</label>
                     <input type="text" name="serial_number" value="<?= e($customer['serial_number'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Kode</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Kode</label>
                     <input type="text" name="kode" value="<?= e($customer['kode'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Last 4 Digit</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Last 4 Digit</label>
                     <input type="text" name="last_4_digit" maxlength="4" value="<?= e($customer['last_4_digit'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">No Aktivasi</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">No Aktivasi</label>
                     <input type="text" name="no_aktivasi" value="<?= e($customer['no_aktivasi'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Koordinat Lokasi</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Koordinat Lokasi</label>
                     <input type="text" name="koordinat_lokasi" value="<?= e($customer['koordinat_lokasi'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
             </div>
@@ -169,14 +169,14 @@ require_once 'includes/header.php';
 
         <!-- Subscription -->
         <div class="rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informasi Langganan</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Informasi Langganan</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Paket</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Paket</label>
                     <input type="text" name="paket" value="<?= e($customer['paket'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status Langganan *</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Status Langganan *</label>
                     <select name="status_langganan" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                         <option value="aktif" <?= ($customer['status_langganan'] ?? 'aktif') == 'aktif' ? 'selected' : '' ?>>Aktif</option>
                         <option value="nonaktif" <?= ($customer['status_langganan'] ?? '') == 'nonaktif' ? 'selected' : '' ?>>Nonaktif</option>
@@ -185,7 +185,7 @@ require_once 'includes/header.php';
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Tanggal Jatuh Tempo</label>
+                    <label class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Tanggal Jatuh Tempo</label>
                     <input type="date" name="tanggal_jatuh_tempo" value="<?= e($customer['tanggal_jatuh_tempo'] ?? '') ?>" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
             </div>
@@ -193,7 +193,7 @@ require_once 'includes/header.php';
 
         <!-- Notes -->
         <div class="rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Catatan</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Catatan</h3>
             <textarea name="catatan" rows="3" class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"><?= e($customer['catatan'] ?? '') ?></textarea>
         </div>
 

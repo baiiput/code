@@ -85,23 +85,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <form method="POST" class="space-y-6">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
-                        <input type="email" name="email" id="email" required value="<?= e($_POST['email'] ?? '') ?>" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <label for="email" class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
+                        <input type="email" name="email" id="email" required value="<?= e($_POST['email'] ?? '') ?>" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 text-base dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
-                        <input type="password" name="password" id="password" required class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <label for="password" class="block text-base font-medium text-gray-700 dark:text-gray-200 mb-1">Password</label>
+                        <input type="password" name="password" id="password" required class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 text-base dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
                     </div>
 
                     <div class="flex items-center justify-between">
                         <div></div>
-                        <button type="button" onclick="toggleDarkMode()" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                        <button type="button" onclick="toggleDarkMode()" class="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                             Toggle Dark Mode
                         </button>
                     </div>
 
-                    <button type="submit" class="w-full flex justify-center rounded-lg bg-primary-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-primary-500 focus:ring-2 focus:ring-primary-600">
+                    <button type="submit" class="w-full flex justify-center rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-500 focus:ring-2 focus:ring-primary-600">
                         Login
                     </button>
                 </form>

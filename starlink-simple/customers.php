@@ -100,27 +100,27 @@ require_once 'includes/header.php';
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Nama</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email Client</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Nomor CS</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Paket</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Jatuh Tempo</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Aksi</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Nama</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Email Client</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Nomor CS</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Paket</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Jatuh Tempo</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <?php if (empty($customers)): ?>
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">Tidak ada data pelanggan</td>
+                        <td colspan="7" class="px-6 py-4 text-center text-base text-gray-500 dark:text-gray-400">Tidak ada data pelanggan</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($customers as $customer): ?>
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><?= e($customer['nama']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><?= e($customer['email_client'] ?? '-') ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><?= e($customer['nomor_cs'] ?? '-') ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><?= e($customer['paket'] ?? '-') ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900 dark:text-white"><?= e($customer['nama']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-base text-gray-600 dark:text-gray-400"><?= e($customer['email_client'] ?? '-') ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-base text-gray-600 dark:text-gray-400"><?= e($customer['nomor_cs'] ?? '-') ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-base text-gray-600 dark:text-gray-400"><?= e($customer['paket'] ?? '-') ?></td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <?php
                             $statusColors = [
@@ -131,12 +131,12 @@ require_once 'includes/header.php';
                             ];
                             $color = $statusColors[$customer['status_langganan']] ?? $statusColors['aktif'];
                             ?>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $color ?>">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <?= $color ?>">
                                 <?= ucfirst(str_replace('_', ' ', $customer['status_langganan'])) ?>
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><?= formatDate($customer['tanggal_jatuh_tempo']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td class="px-6 py-4 whitespace-nowrap text-base text-gray-600 dark:text-gray-400"><?= formatDate($customer['tanggal_jatuh_tempo']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-base font-medium">
                             <a href="customer_view.php?id=<?= $customer['id'] ?>" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 mr-3">Lihat</a>
                             <?php if (canManageCustomers()): ?>
                             <a href="customer_form.php?id=<?= $customer['id'] ?>" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 mr-3">Edit</a>
