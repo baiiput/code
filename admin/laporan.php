@@ -2,9 +2,17 @@
 require_once '../config.php';
 requireAdmin();
 
-$month = isset($_GET['month']) ? $_GET['month'] : date('m');
-$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
+$month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('m'));
+$year = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
 $user_filter = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+
+// Validate month and year ranges
+if ($month < 1 || $month > 12) {
+    $month = intval(date('m'));
+}
+if ($year < 2020 || $year > 2099) {
+    $year = intval(date('Y'));
+}
 
 // Get all active karyawan
 $karyawan_list = mysqli_query($conn, "SELECT id, nama FROM users WHERE role='karyawan' AND status='aktif' ORDER BY nama");
@@ -463,11 +471,12 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     </span>
                                 </td>
                                 <td style="text-align: center;">
-                                    <?php if (!empty($item['foto_bukti'])): 
+                                    <?php if (!empty($item['foto_bukti'])):
                                         $photos = explode(',', $item['foto_bukti']);
                                         $photo_count = count($photos);
+                                        $gallery_title = $item['nama_karyawan'] . ' - ' . date('d/m/Y', strtotime($item['tanggal']));
                                     ?>
-                                        <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos)); ?>, '<?php echo htmlspecialchars($item['nama_karyawan']) . ' - ' . date('d/m/Y', strtotime($item['tanggal'])); ?>')">
+                                        <span class="photo-badge" onclick="openGallery(<?php echo json_encode($photos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>, <?php echo json_encode($gallery_title, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">
                                             📸 <?php echo $photo_count; ?> foto
                                         </span>
                                     <?php else: ?>
@@ -475,7 +484,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a href="#" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item)); ?>); return false;" class="view-detail-btn">
+                                    <a href="#" onclick="openDetail(<?php echo json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>); return false;" class="view-detail-btn">
                                         👁️ Lihat
                                     </a>
                                 </td>

@@ -48,25 +48,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = sanitize($_POST['role']);
         $status = sanitize($_POST['status']);
         $level_karyawan = sanitize($_POST['level_karyawan'] ?? '3');
-        
+
         if (empty($nama) || empty($username)) {
             $error = 'Nama dan username harus diisi';
         } else {
-            if (!empty($password)) {
-                $hashed = password_hash($password, PASSWORD_BCRYPT);
-                $query = "UPDATE users SET nama=?, username=?, password=?, role=?, level_karyawan=?, status=? WHERE id=?";
-                $stmt = mysqli_prepare($conn, $query);
-                mysqli_stmt_bind_param($stmt, "ssssssi", $nama, $username, $hashed, $role, $level_karyawan, $status, $id);
+            // Check if username exists for another user
+            $check = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ? AND id != ?");
+            mysqli_stmt_bind_param($check, "si", $username, $id);
+            mysqli_stmt_execute($check);
+            $result = mysqli_stmt_get_result($check);
+
+            if (mysqli_num_rows($result) > 0) {
+                $error = 'Username sudah digunakan oleh user lain';
             } else {
-                $query = "UPDATE users SET nama=?, username=?, role=?, level_karyawan=?, status=? WHERE id=?";
-                $stmt = mysqli_prepare($conn, $query);
-                mysqli_stmt_bind_param($stmt, "sssssi", $nama, $username, $role, $level_karyawan, $status, $id);
-            }
-            
-            if (mysqli_stmt_execute($stmt)) {
-                $success = 'User berhasil diupdate';
-            } else {
-                $error = 'Gagal mengupdate user';
+                if (!empty($password)) {
+                    $hashed = password_hash($password, PASSWORD_BCRYPT);
+                    $query = "UPDATE users SET nama=?, username=?, password=?, role=?, level_karyawan=?, status=? WHERE id=?";
+                    $stmt = mysqli_prepare($conn, $query);
+                    mysqli_stmt_bind_param($stmt, "ssssssi", $nama, $username, $hashed, $role, $level_karyawan, $status, $id);
+                } else {
+                    $query = "UPDATE users SET nama=?, username=?, role=?, level_karyawan=?, status=? WHERE id=?";
+                    $stmt = mysqli_prepare($conn, $query);
+                    mysqli_stmt_bind_param($stmt, "sssssi", $nama, $username, $role, $level_karyawan, $status, $id);
+                }
+
+                if (mysqli_stmt_execute($stmt)) {
+                    $success = 'User berhasil diupdate';
+                } else {
+                    $error = 'Gagal mengupdate user';
+                }
             }
         }
     } elseif ($action === 'delete') {
@@ -207,10 +217,10 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY created_at DESC");
                                 <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                                 <td>
                                     <div class="action-btns">
-                                        <button onclick='openEditModal(<?php echo json_encode($user); ?>)' 
+                                        <button onclick='openEditModal(<?php echo json_encode($user, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'
                                                 class="btn btn-warning btn-sm">Edit</button>
                                         <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                        <button onclick="confirmDelete(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['nama']); ?>')" 
+                                        <button onclick="confirmDelete(<?php echo $user['id']; ?>, <?php echo json_encode($user['nama'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)"
                                                 class="btn btn-danger btn-sm">Hapus</button>
                                         <?php endif; ?>
                                     </div>
@@ -357,7 +367,7 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY created_at DESC");
         }
 
         function confirmDelete(id, nama) {
-            if (confirm('Apakah Anda yakin ingin menghapus user "' + nama + '"?\nSemua data aktivitas user ini juga akan terhapus!')) {
+            if (confirm('Apakah Anda yakin ingin menghapus user "' + nama + '"?\\nSemua data aktivitas user ini juga akan terhapus!')) {
                 document.getElementById('delete_user_id').value = id;
                 document.getElementById('deleteForm').submit();
             }

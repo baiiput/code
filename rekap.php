@@ -2,8 +2,16 @@
 require_once 'config.php';
 requireKaryawan();
 
-$month = isset($_GET['month']) ? $_GET['month'] : date('m');
-$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
+$month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('m'));
+$year = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
+
+// Validate month and year ranges
+if ($month < 1 || $month > 12) {
+    $month = intval(date('m'));
+}
+if ($year < 2020 || $year > 2099) {
+    $year = intval(date('Y'));
+}
 
 $aktivitas = getAktivitasUser($_SESSION['user_id'], $month, $year);
 $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
@@ -302,11 +310,12 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
                                     ?>
                                 </td>
                                 <td>
-                                    <?php if (!empty($item['foto_bukti'])): 
+                                    <?php if (!empty($item['foto_bukti'])):
                                         $photos = explode(',', $item['foto_bukti']);
                                         $photo_count = count($photos);
+                                        $gallery_date = date('d/m/Y', strtotime($item['tanggal']));
                                     ?>
-                                        <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos)); ?>, '<?php echo date('d/m/Y', strtotime($item['tanggal'])); ?>')">
+                                        <span class="photo-badge" onclick="openGallery(<?php echo json_encode($photos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>, <?php echo json_encode($gallery_date, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">
                                             📸 <?php echo $photo_count; ?> foto
                                         </span>
                                     <?php else: ?>

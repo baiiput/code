@@ -153,10 +153,7 @@ if (isAdmin()) {
                                     <td><?php echo htmlspecialchars(substr($item['aktivitas'], 0, 50)) . (strlen($item['aktivitas']) > 50 ? '...' : ''); ?></td>
                                     <td><?php echo $item['durasi_jam']; ?> jam</td>
                                     <td>
-                                        <span class="badge badge-<?php 
-                                            echo $item['level'] == 'A' ? 'danger' : 
-                                                 ($item['level'] == 'B' ? 'warning' : 'success'); 
-                                        ?>">
+                                        <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
                                             Level <?php echo $item['level']; ?>
                                         </span>
                                     </td>
