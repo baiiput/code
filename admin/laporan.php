@@ -443,10 +443,8 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                 <th>Tanggal</th>
                                 <th>Karyawan</th>
                                 <th>Jam Kerja</th>
-                                <th>Durasi</th>
                                 <th style="min-width: 250px;">Aktivitas</th>
                                 <th>Level</th>
-                                <th>Bukti</th>
                                 <th>Detail</th>
                             </tr>
                         </thead>
@@ -457,7 +455,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                 <td><?php echo date('d/m/Y', strtotime($item['tanggal'])); ?></td>
                                 <td><?php echo htmlspecialchars($item['nama_karyawan']); ?></td>
                                 <td style="font-size: 13px; color: #6b7280;">
-                                    <?php 
+                                    <?php
                                     if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
                                         echo substr($item['jam_mulai'], 0, 5) . ' - ' . substr($item['jam_selesai'], 0, 5);
                                     } else {
@@ -465,7 +463,6 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     }
                                     ?>
                                 </td>
-                                <td><?php echo $item['durasi_jam']; ?> jam</td>
                                 <td class="description-cell" style="max-width: 200px;">
                                     <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
                                     <?php if (strlen($item['aktivitas']) > 50): ?>
@@ -476,19 +473,6 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
                                         Level <?php echo $item['level']; ?>
                                     </span>
-                                </td>
-                                <td style="text-align: center;">
-                                    <?php if (!empty($item['foto_bukti'])):
-                                        $photos = explode(',', $item['foto_bukti']);
-                                        $photo_count = count($photos);
-                                        $gallery_title = $item['nama_karyawan'] . ' - ' . date('d/m/Y', strtotime($item['tanggal']));
-                                    ?>
-                                        <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($gallery_title), ENT_QUOTES, 'UTF-8'); ?>)">
-                                            📸 <?php echo $photo_count; ?> foto
-                                        </span>
-                                    <?php else: ?>
-                                        <span style="color: #9ca3af;">-</span>
-                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <a href="#" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8'); ?>); return false;" class="view-detail-btn">
@@ -545,6 +529,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         let currentPhotos = [];
         let currentPhotoIndex = 0;
         let galleryTitle = '';
+        let openedFromDetail = false;
 
         function openGallery(photos, title) {
             currentPhotos = photos;
@@ -559,6 +544,10 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
 
         function closeGallery() {
             document.getElementById('galleryModal').style.display = 'none';
+            if (openedFromDetail) {
+                openedFromDetail = false;
+                document.getElementById('detailModal').style.display = 'block';
+            }
         }
 
         function changePhoto(direction) {
@@ -679,7 +668,8 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         }
 
         function openDetailPhoto(index) {
-            closeDetail();
+            openedFromDetail = true;
+            document.getElementById('detailModal').style.display = 'none';
             openGallery(currentDetailPhotos, currentDetailTitle);
             setTimeout(function() {
                 currentPhotoIndex = index;
@@ -738,13 +728,19 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         window.onclick = function(event) {
             const galleryModal = document.getElementById('galleryModal');
             const detailModal = document.getElementById('detailModal');
-            
+
             if (event.target == galleryModal) {
                 closeGallery();
             }
             if (event.target == detailModal) {
                 closeDetail();
             }
+        }
+
+        // Reset openedFromDetail when clicking gallery directly from table
+        function openGalleryFromTable(photos, title) {
+            openedFromDetail = false;
+            openGallery(photos, title);
         }
 
         // Keyboard navigation for gallery
