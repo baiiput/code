@@ -751,20 +751,20 @@ textarea.form-control {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.7);
     overflow-y: auto;
-    padding: 20px;
+    padding: 15px;
     box-sizing: border-box;
 }
 
 .modal-content {
     position: relative;
-    margin: 20px auto;
-    padding: 15px;
+    margin: 10px auto;
+    padding: 12px;
     width: 100%;
-    max-width: 700px;
+    max-width: 550px;
     background: #1f2937;
-    border-radius: 12px;
+    border-radius: 10px;
     box-sizing: border-box;
 }
 
@@ -773,26 +773,26 @@ textarea.form-control {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 0 15px 0;
+    padding: 0 0 10px 0;
     border-bottom: 1px solid #374151;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .modal-title {
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     word-break: break-word;
 }
 
 .close {
     color: #9ca3af;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     cursor: pointer;
     line-height: 1;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
     background: #374151;
     transition: all 0.2s;
 }
@@ -808,32 +808,33 @@ textarea.form-control {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 10px 0;
+    padding: 8px 0;
+    min-height: 150px;
 }
 
 .gallery-image {
     max-width: 100%;
-    max-height: 45vh;
+    max-height: 35vh;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 .gallery-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.2);
     color: white;
     border: none;
-    font-size: 18px;
-    padding: 8px 12px;
+    font-size: 16px;
+    padding: 6px 10px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 4px;
     z-index: 10;
 }
 
 .gallery-nav:hover {
-    background: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.35);
 }
 
 .gallery-nav.prev {
@@ -847,14 +848,14 @@ textarea.form-control {
 .gallery-counter {
     color: #9ca3af;
     text-align: center;
-    margin-top: 10px;
-    font-size: 12px;
+    margin-top: 8px;
+    font-size: 11px;
 }
 
 .gallery-thumbnails {
     display: flex;
-    gap: 6px;
-    padding: 10px 0;
+    gap: 4px;
+    padding: 8px 0 0 0;
     overflow-x: auto;
     justify-content: center;
     flex-wrap: wrap;
@@ -862,8 +863,8 @@ textarea.form-control {
 }
 
 .gallery-thumbnail {
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
     border-radius: 4px;
     cursor: pointer;
@@ -902,13 +903,13 @@ textarea.form-control {
 
 /* Description Modal */
 .detail-modal {
-    max-width: 500px !important;
+    max-width: 450px !important;
 }
 
 .detail-content {
     background: white;
-    padding: 15px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 6px;
     margin: 0;
     max-width: 100%;
     overflow-x: auto;
@@ -916,17 +917,17 @@ textarea.form-control {
 
 .detail-content h3 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     color: #1f2937;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .detail-content p {
-    line-height: 1.5;
+    line-height: 1.4;
     color: #4b5563;
     word-wrap: break-word;
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* Responsive Gallery for Mobile */
