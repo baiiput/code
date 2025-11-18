@@ -213,10 +213,12 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
             align-items: center;
             justify-content: center;
             position: relative;
-            height: 350px;
-            background: #111827;
+            height: 60vh;
+            min-height: 300px;
+            max-height: 500px;
+            background: #000;
             border-radius: 8px;
-            padding: 10px 50px;
+            padding: 15px 50px;
         }
 
         .gallery-image {
