@@ -619,59 +619,69 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
         function openDetail(item) {
             const modal = document.getElementById('detailModal');
             const content = document.getElementById('detailContent');
-            
+
             const levelBadgeClass = getLevelBadgeClass(item.level);
             const levelColor = getLevelColor(item.level);
-            
-            let photosHtml = '-';
+
+            let photosHtml = '<span style="color: #9ca3af;">Tidak ada foto</span>';
             if (item.foto_bukti) {
                 const photos = item.foto_bukti.split(',');
-                photosHtml = photos.length + ' foto - <a href="#" onclick="openGallery(' + JSON.stringify(photos) + ', \'' + item.nama_karyawan + ' - ' + formatDate(item.tanggal) + '\'); return false;" style="color: #3b82f6;">Lihat Galeri</a>';
+                photosHtml = `
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${photos.map((photo, index) => `
+                            <img src="../uploads/${photo}"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid #e5e7eb;"
+                                 onclick="closeDetail(); openGallery(${JSON.stringify(photos)}, '${item.nama_karyawan} - ${formatDate(item.tanggal)}'); setTimeout(() => showPhotoAt(${index}), 100);"
+                                 alt="Foto ${index + 1}">
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #6b7280;">${photos.length} foto - klik untuk perbesar</div>
+                `;
             }
-            
+
             content.innerHTML = `
-                <h3>📋 Detail Aktivitas</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600; width: 150px;">Karyawan</td>
-                        <td style="padding: 12px;">${item.nama_karyawan}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600;">Tanggal</td>
-                        <td style="padding: 12px;">${formatDate(item.tanggal)}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600;">Jam Kerja</td>
-                        <td style="padding: 12px;">${item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-'}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600;">Durasi</td>
-                        <td style="padding: 12px;">${item.durasi_jam} jam</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600;">Level</td>
-                        <td style="padding: 12px;">
-                            <span class="badge badge-${levelBadgeClass}" style="background: ${levelColor};">
-                                Level ${item.level}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600;">Bonus</td>
-                        <td style="padding: 12px; color: #10b981; font-weight: bold;">Rp ${parseInt(item.bonus).toLocaleString('id-ID')}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 12px; font-weight: 600; vertical-align: top;">Aktivitas</td>
-                        <td style="padding: 12px; line-height: 1.6;">${item.aktivitas}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; font-weight: 600;">Foto Bukti</td>
-                        <td style="padding: 12px;">${photosHtml}</td>
-                    </tr>
-                </table>
+                <div style="display: grid; gap: 8px; font-size: 13px;">
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Karyawan</span>
+                        <span>${item.nama_karyawan}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Tanggal</span>
+                        <span>${formatDate(item.tanggal)}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Jam Kerja</span>
+                        <span>${item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-'}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Durasi</span>
+                        <span>${item.durasi_jam} jam</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Level</span>
+                        <span><span class="badge badge-${levelBadgeClass}" style="background: ${levelColor};">Level ${item.level}</span></span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600;">Bonus</span>
+                        <span style="color: #10b981; font-weight: bold;">Rp ${parseInt(item.bonus).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                        <div style="font-weight: 600; margin-bottom: 6px;">Aktivitas</div>
+                        <div style="line-height: 1.5; color: #4b5563;">${item.aktivitas}</div>
+                    </div>
+                    <div style="padding: 8px 0;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Foto Bukti</div>
+                        ${photosHtml}
+                    </div>
+                </div>
             `;
-            
+
             modal.style.display = 'block';
+        }
+
+        function showPhotoAt(index) {
+            currentPhotoIndex = index;
+            showPhoto();
         }
 
         function closeDetail() {

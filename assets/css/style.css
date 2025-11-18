@@ -808,41 +808,43 @@ textarea.form-control {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 8px 0;
-    min-height: 150px;
+    padding: 10px 40px;
+    min-height: 120px;
 }
 
 .gallery-image {
-    max-width: 100%;
-    max-height: 35vh;
+    max-width: calc(100% - 60px);
+    max-height: 30vh;
     object-fit: contain;
     border-radius: 6px;
+    display: block;
+    margin: 0 auto;
 }
 
 .gallery-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.3);
     color: white;
     border: none;
-    font-size: 16px;
-    padding: 6px 10px;
+    font-size: 14px;
+    padding: 8px 10px;
     cursor: pointer;
     border-radius: 4px;
     z-index: 10;
 }
 
 .gallery-nav:hover {
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.5);
 }
 
 .gallery-nav.prev {
-    left: 5px;
+    left: 0;
 }
 
 .gallery-nav.next {
-    right: 5px;
+    right: 0;
 }
 
 .gallery-counter {
