@@ -77,16 +77,19 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
         
         .gallery-container {
             width: 100%;
-            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            height: 350px;
+            background: #111827;
+            border-radius: 8px;
+            padding: 10px 50px;
         }
-        
+
         .gallery-image {
-            max-width: 100%;
-            max-height: 70vh;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             border-radius: 8px;
         }
