@@ -153,7 +153,7 @@ if (isAdmin()) {
                                     <td class="description-cell">
                                         <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
                                         <?php if (strlen($item['aktivitas']) > 50): ?>
-                                        <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                        <span class="view-more-btn" onclick="showFullDescription(<?php echo htmlspecialchars(json_encode($item['aktivitas']), ENT_QUOTES, 'UTF-8'); ?>)">Lihat</span>
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo $item['durasi_jam']; ?> jam</td>

@@ -469,7 +469,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                 <td class="description-cell" style="max-width: 200px;">
                                     <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
                                     <?php if (strlen($item['aktivitas']) > 50): ?>
-                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo htmlspecialchars(json_encode($item['aktivitas']), ENT_QUOTES, 'UTF-8'); ?>)">Lihat</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -483,7 +483,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                         $photo_count = count($photos);
                                         $gallery_title = $item['nama_karyawan'] . ' - ' . date('d/m/Y', strtotime($item['tanggal']));
                                     ?>
-                                        <span class="photo-badge" onclick="openGallery(<?php echo json_encode($photos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>, <?php echo json_encode($gallery_title, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">
+                                        <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($gallery_title), ENT_QUOTES, 'UTF-8'); ?>)">
                                             📸 <?php echo $photo_count; ?> foto
                                         </span>
                                     <?php else: ?>
@@ -491,7 +491,7 @@ $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stats_stmt));
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a href="#" onclick="openDetail(<?php echo json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>); return false;" class="view-detail-btn">
+                                    <a href="#" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8'); ?>); return false;" class="view-detail-btn">
                                         👁️ Lihat
                                     </a>
                                 </td>

@@ -295,7 +295,7 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
                                 <td class="description-cell">
                                     <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
                                     <?php if (strlen($item['aktivitas']) > 50): ?>
-                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo json_encode($item['aktivitas'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">Lihat</span>
+                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo htmlspecialchars(json_encode($item['aktivitas']), ENT_QUOTES, 'UTF-8'); ?>)">Lihat</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -320,7 +320,7 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
                                         $photo_count = count($photos);
                                         $gallery_date = date('d/m/Y', strtotime($item['tanggal']));
                                     ?>
-                                        <span class="photo-badge" onclick="openGallery(<?php echo json_encode($photos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>, <?php echo json_encode($gallery_date, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)">
+                                        <span class="photo-badge" onclick="openGallery(<?php echo htmlspecialchars(json_encode($photos), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($gallery_date), ENT_QUOTES, 'UTF-8'); ?>)">
                                             📸 <?php echo $photo_count; ?> foto
                                         </span>
                                     <?php else: ?>

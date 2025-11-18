@@ -217,10 +217,10 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY created_at DESC");
                                 <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                                 <td>
                                     <div class="action-btns">
-                                        <button onclick='openEditModal(<?php echo json_encode($user, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'
+                                        <button onclick='openEditModal(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, 'UTF-8'); ?>)'
                                                 class="btn btn-warning btn-sm">Edit</button>
                                         <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                        <button onclick="confirmDelete(<?php echo $user['id']; ?>, <?php echo json_encode($user['nama'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)"
+                                        <button onclick="confirmDelete(<?php echo $user['id']; ?>, <?php echo htmlspecialchars(json_encode($user['nama']), ENT_QUOTES, 'UTF-8'); ?>)"
                                                 class="btn btn-danger btn-sm">Hapus</button>
                                         <?php endif; ?>
                                     </div>
