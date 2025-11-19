@@ -321,7 +321,7 @@ CREATE TABLE IF NOT EXISTS `activity_logs` (
 
 -- Default Admin User (password: admin123)
 INSERT INTO `users` (`username`, `password`, `name`, `email`, `role`) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@example.com', 'admin');
+('admin', '$2y$12$GFSVRzGpmLSI3ZRw6QMb5ukuDOg.rrpUrAJvC0Oz9bK2HwBLTZw8y', 'Administrator', 'admin@example.com', 'admin');
 
 -- Default Categories
 INSERT INTO `categories` (`name`, `description`) VALUES
