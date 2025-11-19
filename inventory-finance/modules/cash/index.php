@@ -1,8 +1,29 @@
 <?php
-$pageTitle = 'Buku Kas';
-require_once __DIR__ . '/../../templates/header.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
-// Handle form submission for manual transaction
+// Handle delete (admin only)
+if (isset($_GET['delete']) && hasRole(['admin'])) {
+    $id = (int)$_GET['delete'];
+
+    // Get transaction to recalculate balance
+    $trx = getById('cash_transactions', $id);
+    if ($trx) {
+        // Delete the transaction
+        delete('cash_transactions', $id);
+
+        // Recalculate all balances after this transaction
+        recalculateCashBalances();
+
+        setFlash('success', 'Transaksi kas berhasil dihapus');
+    }
+
+    header('Location: ' . BASE_URL . 'modules/cash/');
+    exit;
+}
+
+// Handle form submission for add/edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
 
@@ -10,10 +31,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amount = (float)str_replace(['.', ','], ['', '.'], $_POST['amount']);
     $description = trim($_POST['description']);
     $category = $_POST['category'];
+    $date = $_POST['date'] ?? date('Y-m-d');
+    $editId = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
     if ($amount > 0 && !empty($description)) {
-        recordCashTransaction($type, $category, $description, $amount);
-        setFlash('success', 'Transaksi kas berhasil dicatat');
+        if ($editId > 0 && hasRole(['admin'])) {
+            // Update existing transaction
+            $db = getDB();
+            $db->prepare("UPDATE cash_transactions SET date = ?, type = ?, category = ?, description = ?, amount = ? WHERE id = ?")
+               ->execute([$date, $type, $category, $description, $amount, $editId]);
+
+            // Recalculate all balances
+            recalculateCashBalances();
+
+            setFlash('success', 'Transaksi kas berhasil diupdate');
+        } else {
+            // Insert new transaction
+            recordCashTransaction($type, $category, $description, $amount, null, null, $date);
+            setFlash('success', 'Transaksi kas berhasil dicatat');
+        }
     } else {
         setFlash('danger', 'Jumlah dan deskripsi harus diisi');
     }
@@ -21,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: ' . BASE_URL . 'modules/cash/');
     exit;
 }
+
+$pageTitle = 'Buku Kas';
+require_once __DIR__ . '/../../templates/header.php';
 
 // Date filters
 $startDate = $_GET['start_date'] ?? date('Y-m-01');
@@ -37,7 +76,7 @@ $summary = getCashSummary($startDate, $endDate);
         <h1>Buku Kas</h1>
         <?= breadcrumb(['Dashboard' => BASE_URL . 'modules/dashboard/', 'Buku Kas' => '']) ?>
     </div>
-    <button class="btn btn-primary" onclick="openModal('cashModal')">
+    <button class="btn btn-primary" onclick="openAddModal()">
         <i class="fas fa-plus me-2"></i>Tambah Transaksi
     </button>
 </div>
@@ -119,12 +158,15 @@ $summary = getCashSummary($startDate, $endDate);
                         <th class="text-end">Pemasukan</th>
                         <th class="text-end">Pengeluaran</th>
                         <th class="text-end">Saldo</th>
+                        <?php if (hasRole(['admin'])): ?>
+                        <th width="100">Aksi</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($transactions)): ?>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="<?= hasRole(['admin']) ? '7' : '6' ?>" class="text-center text-muted">
                             Belum ada transaksi. Mulai dengan menambahkan modal awal.
                         </td>
                     </tr>
@@ -146,6 +188,23 @@ $summary = getCashSummary($startDate, $endDate);
                             <?= $trx['type'] === 'out' ? formatCurrency($trx['amount']) : '-' ?>
                         </td>
                         <td class="text-end fw-bold"><?= formatCurrency($trx['balance']) ?></td>
+                        <?php if (hasRole(['admin'])): ?>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline"
+                                        onclick="editTransaction(<?= htmlspecialchars(json_encode($trx)) ?>)"
+                                        title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="?delete=<?= $trx['id'] ?>"
+                                   class="btn btn-sm btn-danger"
+                                   data-confirm="Yakin ingin menghapus transaksi ini? Saldo akan dihitung ulang."
+                                   title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -154,19 +213,25 @@ $summary = getCashSummary($startDate, $endDate);
     </div>
 </div>
 
-<!-- Modal Add Transaction -->
+<!-- Modal Add/Edit Transaction -->
 <div class="modal-backdrop"></div>
 <div class="modal" id="cashModal">
     <div class="modal-header">
-        <h5>Tambah Transaksi Kas</h5>
+        <h5 id="modalTitle">Tambah Transaksi Kas</h5>
         <button type="button" class="btn-close" onclick="closeModal('cashModal')">&times;</button>
     </div>
     <form method="POST">
         <?= csrfField() ?>
+        <input type="hidden" name="id" id="trxId">
         <div class="modal-body">
             <div class="form-group">
+                <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                <input type="date" name="date" id="trxDate" class="form-control" value="<?= date('Y-m-d') ?>" required>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Tipe Transaksi <span class="text-danger">*</span></label>
-                <select name="type" class="form-control form-select" required>
+                <select name="type" id="trxType" class="form-control form-select" required>
                     <option value="in">Pemasukan (Kas Masuk)</option>
                     <option value="out">Pengeluaran (Kas Keluar)</option>
                 </select>
@@ -174,7 +239,7 @@ $summary = getCashSummary($startDate, $endDate);
 
             <div class="form-group">
                 <label class="form-label">Kategori <span class="text-danger">*</span></label>
-                <select name="category" class="form-control form-select" required>
+                <select name="category" id="trxCategory" class="form-control form-select" required>
                     <option value="Modal">Modal / Saldo Awal</option>
                     <option value="Penjualan">Penjualan</option>
                     <option value="Pembelian">Pembelian Barang</option>
@@ -188,13 +253,13 @@ $summary = getCashSummary($startDate, $endDate);
 
             <div class="form-group">
                 <label class="form-label">Deskripsi <span class="text-danger">*</span></label>
-                <input type="text" name="description" class="form-control" required
+                <input type="text" name="description" id="trxDesc" class="form-control" required
                        placeholder="Contoh: Modal awal usaha">
             </div>
 
             <div class="form-group">
                 <label class="form-label">Jumlah <span class="text-danger">*</span></label>
-                <input type="text" name="amount" class="form-control" required
+                <input type="text" name="amount" id="trxAmount" class="form-control" required
                        placeholder="0">
             </div>
         </div>
@@ -204,5 +269,33 @@ $summary = getCashSummary($startDate, $endDate);
         </div>
     </form>
 </div>
+
+<?php
+$pageScripts = <<<SCRIPT
+<script>
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Tambah Transaksi Kas';
+    document.getElementById('trxId').value = '';
+    document.getElementById('trxDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('trxType').value = 'in';
+    document.getElementById('trxCategory').value = 'Modal';
+    document.getElementById('trxDesc').value = '';
+    document.getElementById('trxAmount').value = '';
+    openModal('cashModal');
+}
+
+function editTransaction(trx) {
+    document.getElementById('modalTitle').textContent = 'Edit Transaksi Kas';
+    document.getElementById('trxId').value = trx.id;
+    document.getElementById('trxDate').value = trx.date;
+    document.getElementById('trxType').value = trx.type;
+    document.getElementById('trxCategory').value = trx.category;
+    document.getElementById('trxDesc').value = trx.description;
+    document.getElementById('trxAmount').value = parseInt(trx.amount).toLocaleString('id-ID');
+    openModal('cashModal');
+}
+</script>
+SCRIPT;
+?>
 
 <?php require_once __DIR__ . '/../../templates/footer.php'; ?>

@@ -593,7 +593,7 @@ function getCurrentCashBalance() {
     return $result ? (float)$result['balance'] : 0;
 }
 
-function recordCashTransaction($type, $category, $description, $amount, $referenceType = null, $referenceId = null) {
+function recordCashTransaction($type, $category, $description, $amount, $referenceType = null, $referenceId = null, $date = null) {
     $db = getDB();
 
     // Get current balance
@@ -608,7 +608,7 @@ function recordCashTransaction($type, $category, $description, $amount, $referen
 
     // Insert transaction
     $data = [
-        'date' => date('Y-m-d'),
+        'date' => $date ?? date('Y-m-d'),
         'type' => $type,
         'category' => $category,
         'reference_type' => $referenceType,
@@ -620,6 +620,25 @@ function recordCashTransaction($type, $category, $description, $amount, $referen
     ];
 
     return insert('cash_transactions', $data);
+}
+
+function recalculateCashBalances() {
+    $db = getDB();
+
+    // Get all transactions ordered by id
+    $transactions = $db->query("SELECT id, type, amount FROM cash_transactions ORDER BY id ASC")->fetchAll();
+
+    $balance = 0;
+    foreach ($transactions as $trx) {
+        if ($trx['type'] === 'in') {
+            $balance += $trx['amount'];
+        } else {
+            $balance -= $trx['amount'];
+        }
+
+        $db->prepare("UPDATE cash_transactions SET balance = ? WHERE id = ?")
+           ->execute([$balance, $trx['id']]);
+    }
 }
 
 function getCashTransactions($startDate = null, $endDate = null, $limit = 100) {
