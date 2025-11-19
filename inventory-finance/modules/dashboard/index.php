@@ -222,6 +222,10 @@ for ($i = 1; $i <= 12; $i++) {
 </div>
 
 <?php
+$labelsJson = json_encode($chartLabels);
+$salesJson = json_encode($chartSales);
+$profitJson = json_encode($chartProfit);
+
 $pageScripts = <<<SCRIPT
 <script>
 // Sales Chart
@@ -229,11 +233,11 @@ const salesCtx = document.getElementById('salesChart').getContext('2d');
 new Chart(salesCtx, {
     type: 'line',
     data: {
-        labels: {$labels = json_encode($chartLabels)},
+        labels: {$labelsJson},
         datasets: [
             {
                 label: 'Penjualan',
-                data: {$sales = json_encode($chartSales)},
+                data: {$salesJson},
                 borderColor: '#3498db',
                 backgroundColor: 'rgba(52, 152, 219, 0.1)',
                 fill: true,
@@ -241,7 +245,7 @@ new Chart(salesCtx, {
             },
             {
                 label: 'Profit',
-                data: {$profit = json_encode($chartProfit)},
+                data: {$profitJson},
                 borderColor: '#27ae60',
                 backgroundColor: 'rgba(39, 174, 96, 0.1)',
                 fill: true,
