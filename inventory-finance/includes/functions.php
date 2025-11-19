@@ -6,6 +6,44 @@
 require_once __DIR__ . '/../config/database.php';
 
 // =====================================================
+// SECURITY: ALLOWED TABLES AND FIELDS
+// =====================================================
+
+define('ALLOWED_TABLES', [
+    'users', 'suppliers', 'customers', 'categories', 'products',
+    'product_serials', 'stock_in', 'stock_in_items', 'sales', 'sale_items',
+    'returns', 'return_items', 'expenses', 'expense_categories',
+    'payments', 'settings', 'activity_logs'
+]);
+
+define('ALLOWED_ORDER_FIELDS', [
+    'id', 'name', 'code', 'date', 'created_at', 'updated_at',
+    'invoice_number', 'return_number', 'serial_number'
+]);
+
+function validateTable($table) {
+    if (!in_array($table, ALLOWED_TABLES)) {
+        throw new InvalidArgumentException('Invalid table name: ' . $table);
+    }
+    return $table;
+}
+
+function validateOrderBy($orderBy) {
+    // Extract field name from "field ASC" or "field DESC"
+    $parts = explode(' ', trim($orderBy));
+    $field = $parts[0];
+    $direction = strtoupper($parts[1] ?? 'ASC');
+
+    if (!in_array($field, ALLOWED_ORDER_FIELDS)) {
+        return 'id DESC'; // Default safe value
+    }
+    if (!in_array($direction, ['ASC', 'DESC'])) {
+        $direction = 'DESC';
+    }
+    return "$field $direction";
+}
+
+// =====================================================
 // FLASH MESSAGES
 // =====================================================
 
@@ -56,8 +94,15 @@ function generateCode($prefix, $table, $field = 'code') {
     $year = date('y');
     $month = date('m');
 
+    // Validate table and field
+    validateTable($table);
+    $allowedFields = ['code', 'invoice_number', 'return_number'];
+    if (!in_array($field, $allowedFields)) {
+        $field = 'code';
+    }
+
     $pattern = $prefix . $year . $month . '%';
-    $stmt = $db->prepare("SELECT $field FROM $table WHERE $field LIKE ? ORDER BY $field DESC LIMIT 1");
+    $stmt = $db->prepare("SELECT `$field` FROM `$table` WHERE `$field` LIKE ? ORDER BY `$field` DESC LIMIT 1");
     $stmt->execute([$pattern]);
     $last = $stmt->fetch();
 
@@ -120,13 +165,20 @@ function setSetting($key, $value) {
 function getAll($table, $conditions = [], $orderBy = 'id DESC', $limit = null) {
     $db = getDB();
 
-    $sql = "SELECT * FROM $table";
+    // Validate inputs
+    validateTable($table);
+    $orderBy = validateOrderBy($orderBy);
+    $limit = $limit ? (int)$limit : null;
+
+    $sql = "SELECT * FROM `$table`";
     $params = [];
 
     if (!empty($conditions)) {
         $where = [];
         foreach ($conditions as $key => $value) {
-            $where[] = "$key = ?";
+            // Only allow alphanumeric field names
+            $key = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+            $where[] = "`$key` = ?";
             $params[] = $value;
         }
         $sql .= " WHERE " . implode(' AND ', $where);
@@ -145,18 +197,24 @@ function getAll($table, $conditions = [], $orderBy = 'id DESC', $limit = null) {
 
 function getById($table, $id) {
     $db = getDB();
-    $stmt = $db->prepare("SELECT * FROM $table WHERE id = ?");
-    $stmt->execute([$id]);
+    validateTable($table);
+    $stmt = $db->prepare("SELECT * FROM `$table` WHERE id = ?");
+    $stmt->execute([(int)$id]);
     return $stmt->fetch();
 }
 
 function insert($table, $data) {
     $db = getDB();
+    validateTable($table);
 
-    $fields = array_keys($data);
+    $fields = [];
+    foreach (array_keys($data) as $field) {
+        // Sanitize field names
+        $fields[] = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $field) . '`';
+    }
     $placeholders = array_fill(0, count($fields), '?');
 
-    $sql = "INSERT INTO $table (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
+    $sql = "INSERT INTO `$table` (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
     $stmt = $db->prepare($sql);
     $stmt->execute(array_values($data));
 
@@ -165,15 +223,18 @@ function insert($table, $data) {
 
 function update($table, $data, $id) {
     $db = getDB();
+    validateTable($table);
 
     $set = [];
     foreach (array_keys($data) as $field) {
-        $set[] = "$field = ?";
+        // Sanitize field names
+        $field = preg_replace('/[^a-zA-Z0-9_]/', '', $field);
+        $set[] = "`$field` = ?";
     }
 
-    $sql = "UPDATE $table SET " . implode(', ', $set) . " WHERE id = ?";
+    $sql = "UPDATE `$table` SET " . implode(', ', $set) . " WHERE id = ?";
     $params = array_values($data);
-    $params[] = $id;
+    $params[] = (int)$id;
 
     $stmt = $db->prepare($sql);
     return $stmt->execute($params);
@@ -181,8 +242,9 @@ function update($table, $data, $id) {
 
 function delete($table, $id) {
     $db = getDB();
-    $stmt = $db->prepare("DELETE FROM $table WHERE id = ?");
-    return $stmt->execute([$id]);
+    validateTable($table);
+    $stmt = $db->prepare("DELETE FROM `$table` WHERE id = ?");
+    return $stmt->execute([(int)$id]);
 }
 
 // =====================================================
@@ -216,7 +278,8 @@ function getLowStockProducts() {
             (SELECT COUNT(*) FROM product_serials ps WHERE ps.product_id = p.id AND ps.status = 'available') as current_stock
             FROM products p
             WHERE p.is_active = 1
-            HAVING current_stock <= p.min_stock AND p.min_stock > 0
+            AND p.min_stock > 0
+            AND (SELECT COUNT(*) FROM product_serials ps WHERE ps.product_id = p.id AND ps.status = 'available') <= p.min_stock
             ORDER BY current_stock ASC";
     $stmt = $db->query($sql);
     return $stmt->fetchAll();
@@ -242,7 +305,8 @@ function getTotalSales($startDate = null, $endDate = null) {
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    return $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    return $result ? $result['total'] : 0;
 }
 
 function getTotalProfit($startDate = null, $endDate = null) {
@@ -261,7 +325,8 @@ function getTotalProfit($startDate = null, $endDate = null) {
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    return $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    return $result ? $result['total'] : 0;
 }
 
 function getTotalExpenses($startDate = null, $endDate = null) {
@@ -280,19 +345,22 @@ function getTotalExpenses($startDate = null, $endDate = null) {
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    return $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    return $result ? $result['total'] : 0;
 }
 
 function getTotalReceivables() {
     $db = getDB();
     $stmt = $db->query("SELECT COALESCE(SUM(grand_total - paid_amount), 0) as total FROM sales WHERE payment_status IN ('unpaid', 'partial')");
-    return $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    return $result ? $result['total'] : 0;
 }
 
 function getTotalPayables() {
     $db = getDB();
     $stmt = $db->query("SELECT COALESCE(SUM(grand_total - paid_amount), 0) as total FROM stock_in WHERE payment_status IN ('unpaid', 'partial')");
-    return $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    return $result ? $result['total'] : 0;
 }
 
 // =====================================================

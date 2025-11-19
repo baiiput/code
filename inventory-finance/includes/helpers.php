@@ -116,10 +116,12 @@ function alertBox($type, $message) {
         'warning' => 'exclamation-triangle',
         'info' => 'info-circle',
     ];
+    $allowedTypes = ['success', 'danger', 'warning', 'info'];
+    $type = in_array($type, $allowedTypes) ? $type : 'info';
     $icon = $icons[$type] ?? 'info-circle';
 
     return '<div class="alert alert-' . $type . ' alert-dismissible fade show" role="alert">
-        <i class="fas fa-' . $icon . ' me-2"></i>' . $message . '
+        <i class="fas fa-' . $icon . ' me-2"></i>' . e($message) . '
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>';
 }

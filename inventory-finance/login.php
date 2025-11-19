@@ -13,16 +13,21 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    if (empty($username) || empty($password)) {
-        $error = 'Username dan password harus diisi';
-    } elseif (login($username, $password)) {
-        header('Location: ' . BASE_URL . 'modules/dashboard/');
-        exit;
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+        $error = 'Invalid request. Please try again.';
     } else {
-        $error = 'Username atau password salah';
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($username) || empty($password)) {
+            $error = 'Username dan password harus diisi';
+        } elseif (login($username, $password)) {
+            header('Location: ' . BASE_URL . 'modules/dashboard/');
+            exit;
+        } else {
+            $error = 'Username atau password salah';
+        }
     }
 }
 ?>
@@ -136,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" class="login-form">
+                <?= csrfField() ?>
                 <div class="form-group">
                     <label class="form-label">Username</label>
                     <input type="text" name="username" class="form-control" placeholder="Masukkan username"
