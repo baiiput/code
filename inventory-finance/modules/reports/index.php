@@ -70,9 +70,14 @@ $chartSales = array_column($dailySales, 'sales');
 $chartProfit = array_column($dailySales, 'profit');
 ?>
 
-<div class="page-header">
-    <h1>Laporan Keuangan</h1>
-    <?= breadcrumb(['Dashboard' => BASE_URL . 'modules/dashboard/', 'Laporan' => '']) ?>
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1>Laporan Keuangan</h1>
+        <?= breadcrumb(['Dashboard' => BASE_URL . 'modules/dashboard/', 'Laporan' => '']) ?>
+    </div>
+    <a href="<?= BASE_URL ?>modules/reports/sales.php?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" class="btn btn-outline">
+        <i class="fas fa-file-alt me-2"></i>Detail Penjualan
+    </a>
 </div>
 
 <!-- Date Filter -->
