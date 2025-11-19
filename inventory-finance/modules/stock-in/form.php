@@ -92,6 +92,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $db->commit();
 
+        // Record cash transaction if paid
+        $paidAmount = $stockInData['paid_amount'];
+        if ($stockInData['payment_status'] === 'paid') {
+            $paidAmount = $grandTotal;
+        }
+        if ($paidAmount > 0) {
+            recordCashTransaction(
+                'out',
+                'Pembelian',
+                'Pembelian stok: ' . $stockInData['invoice_number'],
+                $paidAmount,
+                'stock_in',
+                $stockInId
+            );
+        }
+
         logActivity('create', 'stock_in', $stockInId, 'Stock in created: ' . $stockInData['invoice_number']);
         setFlash('success', 'Stok masuk berhasil disimpan');
         header('Location: ' . BASE_URL . 'modules/stock-in/view.php?id=' . $stockInId);

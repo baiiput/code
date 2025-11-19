@@ -29,7 +29,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         update('expenses', $data, (int)$_POST['id']);
         setFlash('success', 'Pengeluaran berhasil diupdate');
     } else {
-        insert('expenses', $data);
+        $expenseId = insert('expenses', $data);
+
+        // Record cash transaction if payment is cash
+        if ($data['payment_method'] === 'cash' && $data['amount'] > 0) {
+            recordCashTransaction(
+                'out',
+                'Operasional',
+                'Pengeluaran: ' . $data['description'],
+                $data['amount'],
+                'expenses',
+                $expenseId
+            );
+        }
+
         setFlash('success', 'Pengeluaran berhasil ditambahkan');
     }
 

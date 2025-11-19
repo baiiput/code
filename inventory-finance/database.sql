@@ -290,6 +290,24 @@ CREATE TABLE IF NOT EXISTS `payments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
+-- Table: cash_transactions (Buku Kas)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cash_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `date` DATE NOT NULL,
+    `type` ENUM('in', 'out') NOT NULL,
+    `category` VARCHAR(50) NOT NULL,
+    `reference_type` VARCHAR(50),
+    `reference_id` INT,
+    `description` TEXT NOT NULL,
+    `amount` DECIMAL(15,2) NOT NULL,
+    `balance` DECIMAL(15,2) NOT NULL,
+    `created_by` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------
 -- Table: settings
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `settings` (

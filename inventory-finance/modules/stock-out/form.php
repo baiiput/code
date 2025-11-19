@@ -86,6 +86,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $db->commit();
 
+        // Record cash transaction if payment is cash
+        if ($saleData['payment_method'] === 'cash') {
+            $cashAmount = $saleData['paid_amount'];
+            if ($saleData['payment_status'] === 'paid') {
+                $cashAmount = $grandTotal;
+            }
+            if ($cashAmount > 0) {
+                recordCashTransaction(
+                    'in',
+                    'Penjualan',
+                    'Penjualan: ' . $saleData['invoice_number'],
+                    $cashAmount,
+                    'sales',
+                    $saleId
+                );
+            }
+        }
+
         logActivity('create', 'sales', $saleId, 'Sale created: ' . $saleData['invoice_number']);
         setFlash('success', 'Penjualan berhasil disimpan');
         header('Location: ' . BASE_URL . 'modules/stock-out/view.php?id=' . $saleId);

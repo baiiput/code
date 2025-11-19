@@ -13,7 +13,7 @@ define('ALLOWED_TABLES', [
     'users', 'suppliers', 'customers', 'categories', 'products',
     'product_serials', 'stock_in', 'stock_in_items', 'sales', 'sale_items',
     'returns', 'return_items', 'expenses', 'expense_categories',
-    'payments', 'settings', 'activity_logs'
+    'payments', 'settings', 'activity_logs', 'cash_transactions'
 ]);
 
 define('ALLOWED_ORDER_FIELDS', [
@@ -580,4 +580,91 @@ function exportToExcel($data, $filename, $headers = []) {
 
     echo '</table>';
     exit;
+}
+
+// =====================================================
+// CASH/KAS FUNCTIONS
+// =====================================================
+
+function getCurrentCashBalance() {
+    $db = getDB();
+    $stmt = $db->query("SELECT balance FROM cash_transactions ORDER BY id DESC LIMIT 1");
+    $result = $stmt->fetch();
+    return $result ? (float)$result['balance'] : 0;
+}
+
+function recordCashTransaction($type, $category, $description, $amount, $referenceType = null, $referenceId = null) {
+    $db = getDB();
+
+    // Get current balance
+    $currentBalance = getCurrentCashBalance();
+
+    // Calculate new balance
+    if ($type === 'in') {
+        $newBalance = $currentBalance + $amount;
+    } else {
+        $newBalance = $currentBalance - $amount;
+    }
+
+    // Insert transaction
+    $data = [
+        'date' => date('Y-m-d'),
+        'type' => $type,
+        'category' => $category,
+        'reference_type' => $referenceType,
+        'reference_id' => $referenceId,
+        'description' => $description,
+        'amount' => $amount,
+        'balance' => $newBalance,
+        'created_by' => $_SESSION['user_id'] ?? null,
+    ];
+
+    return insert('cash_transactions', $data);
+}
+
+function getCashTransactions($startDate = null, $endDate = null, $limit = 100) {
+    $db = getDB();
+    $sql = "SELECT ct.*, u.name as created_by_name
+            FROM cash_transactions ct
+            LEFT JOIN users u ON ct.created_by = u.id
+            WHERE 1=1";
+    $params = [];
+
+    if ($startDate) {
+        $sql .= " AND ct.date >= ?";
+        $params[] = $startDate;
+    }
+    if ($endDate) {
+        $sql .= " AND ct.date <= ?";
+        $params[] = $endDate;
+    }
+
+    $sql .= " ORDER BY ct.id DESC LIMIT " . (int)$limit;
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function getCashSummary($startDate = null, $endDate = null) {
+    $db = getDB();
+    $sql = "SELECT
+            COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) as total_in,
+            COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) as total_out
+            FROM cash_transactions WHERE 1=1";
+    $params = [];
+
+    if ($startDate) {
+        $sql .= " AND date >= ?";
+        $params[] = $startDate;
+    }
+    if ($endDate) {
+        $sql .= " AND date <= ?";
+        $params[] = $endDate;
+    }
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    return $result ?: ['total_in' => 0, 'total_out' => 0];
 }

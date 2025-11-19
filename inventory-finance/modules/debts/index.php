@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'notes' => trim($_POST['notes']),
         'created_by' => $_SESSION['user_id'],
     ];
-    insert('payments', $paymentData);
+    $paymentId = insert('payments', $paymentData);
 
     // Update paid amount
     $table = $type == 'receivable' ? 'sales' : 'stock_in';
@@ -51,6 +51,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $db->prepare("UPDATE $table SET paid_amount = ?, payment_status = ? WHERE id = ?")
        ->execute([$newPaid, $status, $refId]);
+
+    // Record cash transaction if payment is cash
+    if ($_POST['payment_method'] === 'cash' && $amount > 0) {
+        if ($type == 'receivable') {
+            // Terima piutang = kas masuk
+            recordCashTransaction(
+                'in',
+                'Terima Piutang',
+                'Terima piutang: ' . $record['invoice_number'],
+                $amount,
+                'payments',
+                $paymentId
+            );
+        } else {
+            // Bayar hutang = kas keluar
+            recordCashTransaction(
+                'out',
+                'Bayar Hutang',
+                'Bayar hutang: ' . $record['invoice_number'],
+                $amount,
+                'payments',
+                $paymentId
+            );
+        }
+    }
 
     setFlash('success', 'Pembayaran berhasil dicatat');
     header('Location: ' . BASE_URL . 'modules/debts/?tab=' . $type);

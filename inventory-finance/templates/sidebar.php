@@ -79,6 +79,12 @@
         <div class="menu-header">Keuangan</div>
         <ul>
             <li>
+                <a href="<?= BASE_URL ?>modules/cash/" class="<?= isActiveMenu('/cash/') ?>">
+                    <i class="fas fa-book"></i>
+                    <span>Buku Kas</span>
+                </a>
+            </li>
+            <li>
                 <a href="<?= BASE_URL ?>modules/debts/" class="<?= isActiveMenu('/debts/') ?>">
                     <i class="fas fa-hand-holding-usd"></i>
                     <span>Hutang/Piutang</span>
