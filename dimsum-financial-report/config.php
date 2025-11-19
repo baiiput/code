@@ -103,3 +103,141 @@ function getExpenseCategories(): array {
     $stmt = $db->query("SELECT * FROM expense_categories ORDER BY name");
     return $stmt->fetchAll();
 }
+
+/**
+ * Authentication Functions
+ */
+
+// Check if user is logged in
+function isLoggedIn(): bool {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+// Get current user data
+function getCurrentUser(): ?array {
+    if (!isLoggedIn()) {
+        return null;
+    }
+
+    $db = Database::getConnection();
+    $stmt = $db->prepare("SELECT id, username, name, role FROM users WHERE id = ? AND is_active = 1");
+    $stmt->execute([$_SESSION['user_id']]);
+    return $stmt->fetch() ?: null;
+}
+
+// Check if current user has specific role
+function hasRole(string|array $roles): bool {
+    $user = getCurrentUser();
+    if (!$user) {
+        return false;
+    }
+
+    if (is_string($roles)) {
+        $roles = [$roles];
+    }
+
+    return in_array($user['role'], $roles);
+}
+
+// Check if user can view (everyone can view)
+function canView(): bool {
+    return true; // Public access for viewing
+}
+
+// Check if user can add transactions (editor, admin)
+function canAdd(): bool {
+    return hasRole(['editor', 'admin']);
+}
+
+// Check if user can edit transactions (admin only)
+function canEdit(): bool {
+    return hasRole(['admin']);
+}
+
+// Check if user can delete (admin only)
+function canDelete(): bool {
+    return hasRole(['admin']);
+}
+
+// Check if user can manage branches (admin only)
+function canManageBranches(): bool {
+    return hasRole(['admin']);
+}
+
+// Check if user can manage users (admin only)
+function canManageUsers(): bool {
+    return hasRole(['admin']);
+}
+
+// Require login - redirect if not logged in
+function requireLogin(): void {
+    if (!isLoggedIn()) {
+        header('Location: login.php');
+        exit;
+    }
+}
+
+// Require specific role
+function requireRole(string|array $roles): void {
+    requireLogin();
+    if (!hasRole($roles)) {
+        $_SESSION['error'] = 'Anda tidak memiliki akses ke halaman ini.';
+        header('Location: index.php');
+        exit;
+    }
+}
+
+// Login user
+function loginUser(string $username, string $password): bool {
+    $db = Database::getConnection();
+    $stmt = $db->prepare("SELECT * FROM users WHERE username = ? AND is_active = 1");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
+
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+
+        // Update last login
+        $stmt = $db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+        $stmt->execute([$user['id']]);
+
+        return true;
+    }
+
+    return false;
+}
+
+// Logout user
+function logoutUser(): void {
+    unset($_SESSION['user_id']);
+    session_destroy();
+}
+
+// Get user initial for avatar
+function getUserInitial(?array $user = null): string {
+    if (!$user) {
+        $user = getCurrentUser();
+    }
+    if (!$user) {
+        return 'G';
+    }
+    return strtoupper(substr($user['name'], 0, 1));
+}
+
+// Get role badge class
+function getRoleBadgeClass(string $role): string {
+    return match($role) {
+        'admin' => 'bg-danger',
+        'editor' => 'bg-primary',
+        default => 'bg-secondary'
+    };
+}
+
+// Get role display name
+function getRoleDisplayName(string $role): string {
+    return match($role) {
+        'admin' => 'Administrator',
+        'editor' => 'Editor',
+        default => 'Viewer'
+    };
+}

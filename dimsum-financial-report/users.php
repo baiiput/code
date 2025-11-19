@@ -1,10 +1,10 @@
 <?php
 /**
- * Branch Management - Laporan Keuangan Dimsum
+ * User Management - Laporan Keuangan Dimsum
  */
 require_once 'config.php';
 
-// Only admin can manage branches
+// Only admin can access this page
 requireRole('admin');
 
 $db = Database::getConnection();
@@ -14,39 +14,47 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = sanitize($_POST['username']);
     $name = sanitize($_POST['name']);
-    $address = sanitize($_POST['address'] ?? '');
-    $phone = sanitize($_POST['phone'] ?? '');
+    $role = $_POST['role'];
+    $password = $_POST['password'] ?? '';
 
     if (isset($_POST['id']) && $_POST['id'] > 0) {
-        // Update
-        $stmt = $db->prepare("UPDATE branches SET name = ?, address = ?, phone = ? WHERE id = ?");
-        $stmt->execute([$name, $address, $phone, $_POST['id']]);
-        $_SESSION['message'] = ['type' => 'success', 'text' => 'Cabang berhasil diperbarui!'];
+        // Update user
+        if (!empty($password)) {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("UPDATE users SET username = ?, name = ?, role = ?, password = ? WHERE id = ?");
+            $stmt->execute([$username, $name, $role, $hashedPassword, $_POST['id']]);
+        } else {
+            $stmt = $db->prepare("UPDATE users SET username = ?, name = ?, role = ? WHERE id = ?");
+            $stmt->execute([$username, $name, $role, $_POST['id']]);
+        }
+        $_SESSION['message'] = ['type' => 'success', 'text' => 'User berhasil diperbarui!'];
     } else {
-        // Insert
-        $stmt = $db->prepare("INSERT INTO branches (name, address, phone) VALUES (?, ?, ?)");
-        $stmt->execute([$name, $address, $phone]);
-        $_SESSION['message'] = ['type' => 'success', 'text' => 'Cabang berhasil ditambahkan!'];
+        // Create new user
+        if (empty($password)) {
+            $_SESSION['message'] = ['type' => 'danger', 'text' => 'Password wajib diisi untuk user baru!'];
+        } else {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$username, $hashedPassword, $name, $role]);
+            $_SESSION['message'] = ['type' => 'success', 'text' => 'User berhasil ditambahkan!'];
+        }
     }
 
-    header('Location: branches.php');
+    header('Location: users.php');
     exit;
 }
 
-// Get all branches
-$branches = $db->query("SELECT b.*,
-                        (SELECT COUNT(*) FROM transactions WHERE branch_id = b.id) as transaction_count,
-                        (SELECT SUM(cash + qris + transfer + shopee_food + grab_food + go_food) FROM transactions WHERE branch_id = b.id) as total_income,
-                        (SELECT SUM(expenses) FROM transactions WHERE branch_id = b.id) as total_expenses
-                        FROM branches b ORDER BY b.name")->fetchAll();
+// Get all users
+$users = $db->query("SELECT * FROM users ORDER BY role, name")->fetchAll();
 
-// Get branch for editing
-$branch = null;
+// Get user for editing
+$user = null;
 if ($action === 'edit' && $id > 0) {
-    $stmt = $db->prepare("SELECT * FROM branches WHERE id = ?");
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$id]);
-    $branch = $stmt->fetch();
+    $user = $stmt->fetch();
 }
 ?>
 <!DOCTYPE html>
@@ -55,7 +63,8 @@ if ($action === 'edit' && $id > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-    <title>Kelola Cabang - <?= APP_NAME ?></title>
+    <title>Kelola User - <?= APP_NAME ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
@@ -75,19 +84,36 @@ if ($action === 'edit' && $id > 0) {
                         <a class="nav-link" href="index.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="transactions.php"><i class="bi bi-journal-text"></i> Transaksi</a>
+                        <a class="nav-link" href="transactions.php?action=add"><i class="bi bi-plus-circle"></i> Transaksi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="branches.php"><i class="bi bi-shop"></i> Cabang</a>
+                        <a class="nav-link" href="branches.php"><i class="bi bi-shop"></i> Cabang</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="reports.php"><i class="bi bi-file-earmark-bar-graph"></i> Laporan</a>
+                        <a class="nav-link" href="reports.php"><i class="bi bi-bar-chart-line"></i> Laporan</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="users.php"><i class="bi bi-people"></i> Users</a>
                     </li>
                 </ul>
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-outline-secondary btn-sm" id="themeToggle">
                         <i class="bi bi-moon-fill"></i>
                     </button>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-decoration-none p-0" data-bs-toggle="dropdown">
+                            <div class="user-menu">
+                                <div class="user-avatar"><?= getUserInitial($currentUser) ?></div>
+                                <div class="user-info">
+                                    <div class="name"><?= htmlspecialchars($currentUser['name']) ?></div>
+                                    <div class="role"><?= getRoleDisplayName($currentUser['role']) ?></div>
+                                </div>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,40 +132,46 @@ if ($action === 'edit' && $id > 0) {
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-<?= $branch ? 'pencil' : 'plus-lg' ?>"></i>
-                            <?= $branch ? 'Edit' : 'Tambah' ?> Cabang
-                        </h5>
+                        <h5><i class="bi bi-<?= $user ? 'pencil' : 'plus-lg' ?>"></i> <?= $user ? 'Edit' : 'Tambah' ?> User</h5>
                     </div>
                     <div class="card-body">
                         <form method="POST">
-                            <?php if ($branch): ?>
-                            <input type="hidden" name="id" value="<?= $branch['id'] ?>">
+                            <?php if ($user): ?>
+                            <input type="hidden" name="id" value="<?= $user['id'] ?>">
                             <?php endif; ?>
 
                             <div class="mb-3">
-                                <label class="form-label">Nama Cabang <span class="text-danger">*</span></label>
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" class="form-control" required
+                                       value="<?= $user ? htmlspecialchars($user['username']) : '' ?>"
+                                       placeholder="username">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control" required
-                                       value="<?= $branch ? htmlspecialchars($branch['name']) : '' ?>"
-                                       placeholder="Contoh: Cabang Senayan">
+                                       value="<?= $user ? htmlspecialchars($user['name']) : '' ?>"
+                                       placeholder="Nama Lengkap">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Alamat</label>
-                                <textarea name="address" class="form-control" rows="2"
-                                          placeholder="Alamat lengkap cabang"><?= $branch ? htmlspecialchars($branch['address']) : '' ?></textarea>
+                                <label class="form-label">Role <span class="text-danger">*</span></label>
+                                <select name="role" class="form-select" required>
+                                    <option value="viewer" <?= ($user && $user['role'] == 'viewer') ? 'selected' : '' ?>>Viewer (View Only)</option>
+                                    <option value="editor" <?= ($user && $user['role'] == 'editor') ? 'selected' : '' ?>>Editor (Add Transaction)</option>
+                                    <option value="admin" <?= ($user && $user['role'] == 'admin') ? 'selected' : '' ?>>Admin (Full Access)</option>
+                                </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Telepon</label>
-                                <input type="text" name="phone" class="form-control"
-                                       value="<?= $branch ? htmlspecialchars($branch['phone']) : '' ?>"
-                                       placeholder="08xxxxxxxxxx">
+                                <label class="form-label">Password <?= $user ? '' : '<span class="text-danger">*</span>' ?></label>
+                                <input type="password" name="password" class="form-control"
+                                       <?= $user ? '' : 'required' ?>
+                                       placeholder="<?= $user ? 'Kosongkan jika tidak ingin mengubah' : 'Password' ?>">
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-check-lg"></i> Simpan
                                 </button>
-                                <?php if ($branch): ?>
-                                <a href="branches.php" class="btn btn-secondary">
+                                <?php if ($user): ?>
+                                <a href="users.php" class="btn btn-secondary">
                                     <i class="bi bi-x-lg"></i> Batal
                                 </a>
                                 <?php endif; ?>
@@ -153,39 +185,34 @@ if ($action === 'edit' && $id > 0) {
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Daftar Cabang</h5>
+                        <h5><i class="bi bi-list-ul"></i> Daftar User</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
+                                        <th>Username</th>
                                         <th>Nama</th>
-                                        <th>Alamat</th>
-                                        <th>Telepon</th>
-                                        <th>Transaksi</th>
-                                        <th>Total Omset</th>
+                                        <th>Role</th>
+                                        <th>Login Terakhir</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($branches as $b): ?>
+                                    <?php foreach ($users as $u): ?>
                                     <tr>
-                                        <td><strong><?= htmlspecialchars($b['name']) ?></strong></td>
-                                        <td><?= htmlspecialchars($b['address']) ?: '-' ?></td>
-                                        <td><?= htmlspecialchars($b['phone']) ?: '-' ?></td>
-                                        <td><span class="badge bg-primary"><?= $b['transaction_count'] ?></span></td>
-                                        <td class="text-success"><?= formatRupiah($b['total_income'] ?? 0) ?></td>
+                                        <td><strong><?= htmlspecialchars($u['username']) ?></strong></td>
+                                        <td><?= htmlspecialchars($u['name']) ?></td>
+                                        <td><span class="badge <?= getRoleBadgeClass($u['role']) ?>"><?= getRoleDisplayName($u['role']) ?></span></td>
+                                        <td><?= $u['last_login'] ? formatDate($u['last_login']) : '-' ?></td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <a href="branches.php?action=edit&id=<?= $b['id'] ?>" class="btn btn-outline-primary" title="Edit">
+                                                <a href="users.php?action=edit&id=<?= $u['id'] ?>" class="btn btn-outline-primary" title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <a href="index.php?branch=<?= $b['id'] ?>" class="btn btn-outline-info" title="Lihat Transaksi">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <?php if ($b['transaction_count'] == 0): ?>
-                                                <button class="btn btn-outline-danger" onclick="deleteBranch(<?= $b['id'] ?>)" title="Hapus">
+                                                <?php if ($u['id'] != $currentUser['id']): ?>
+                                                <button class="btn btn-outline-danger" onclick="deleteUser(<?= $u['id'] ?>)" title="Hapus">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                                 <?php endif; ?>
@@ -193,11 +220,6 @@ if ($action === 'edit' && $id > 0) {
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
-                                    <?php if (empty($branches)): ?>
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted">Belum ada cabang</td>
-                                    </tr>
-                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -230,20 +252,20 @@ if ($action === 'edit' && $id > 0) {
             icon.className = theme === 'light' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
         }
 
-        // Delete branch
-        function deleteBranch(id) {
+        // Delete user
+        function deleteUser(id) {
             Swal.fire({
-                title: 'Hapus Cabang?',
-                text: 'Cabang yang dihapus tidak dapat dikembalikan!',
+                title: 'Hapus User?',
+                text: 'User yang dihapus tidak dapat dikembalikan!',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
                 confirmButtonText: 'Ya, Hapus!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch('api/branches.php', {
+                    fetch('api/users.php', {
                         method: 'DELETE',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({id: id})
@@ -251,7 +273,7 @@ if ($action === 'edit' && $id > 0) {
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            Swal.fire('Terhapus!', 'Cabang berhasil dihapus.', 'success')
+                            Swal.fire('Terhapus!', 'User berhasil dihapus.', 'success')
                                 .then(() => location.reload());
                         } else {
                             Swal.fire('Error!', data.message, 'error');

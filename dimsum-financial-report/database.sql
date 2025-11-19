@@ -56,6 +56,28 @@ INSERT INTO expense_categories (name) VALUES
 ('Transportasi'),
 ('Lain-lain');
 
+-- Tabel Users
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    role ENUM('admin', 'editor', 'viewer') NOT NULL DEFAULT 'viewer',
+    is_active TINYINT(1) DEFAULT 1,
+    last_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Insert sample branch
 INSERT INTO branches (name, address, phone) VALUES
 ('Cabang Pusat', 'Jl. Contoh No. 1', '081234567890');
+
+-- Insert default admin user (password: admin123)
+-- Generate new hash with: php -r "echo password_hash('admin123', PASSWORD_DEFAULT);"
+INSERT INTO users (username, password, name, role) VALUES
+('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin');
+
+-- Insert sample editor (password: editor123)
+INSERT INTO users (username, password, name, role) VALUES
+('editor', '$2y$10$8K1p/a0dL1LXMIgoEDFrwOfMQkLAi0LW0bXL0jnFlVbOk2qe7u.vW', 'Editor User', 'editor');

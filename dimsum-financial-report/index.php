@@ -6,6 +6,7 @@ require_once 'config.php';
 
 $db = Database::getConnection();
 $branches = getBranches();
+$currentUser = getCurrentUser();
 
 // Filter parameters
 $branchId = isset($_GET['branch']) ? (int)$_GET['branch'] : 0;
@@ -70,6 +71,7 @@ if ($branchId == 0) {
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <meta name="googlebot" content="noindex, nofollow">
     <title><?= APP_NAME ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -89,26 +91,75 @@ if ($branchId == 0) {
                     <li class="nav-item">
                         <a class="nav-link active" href="index.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
                     </li>
+                    <?php if (canAdd()): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="transactions.php"><i class="bi bi-journal-text"></i> Transaksi</a>
+                        <a class="nav-link" href="transactions.php?action=add"><i class="bi bi-plus-circle"></i> Transaksi</a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (canManageBranches()): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="branches.php"><i class="bi bi-shop"></i> Cabang</a>
                     </li>
+                    <?php endif; ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="reports.php"><i class="bi bi-file-earmark-bar-graph"></i> Laporan</a>
+                        <a class="nav-link" href="reports.php"><i class="bi bi-bar-chart-line"></i> Laporan</a>
                     </li>
+                    <?php if (canManageUsers()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="users.php"><i class="bi bi-people"></i> Users</a>
+                    </li>
+                    <?php endif; ?>
                 </ul>
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-outline-secondary btn-sm me-2" id="themeToggle">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" id="themeToggle">
                         <i class="bi bi-moon-fill"></i>
                     </button>
+
+                    <?php if ($currentUser): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-decoration-none p-0" data-bs-toggle="dropdown">
+                            <div class="user-menu">
+                                <div class="user-avatar"><?= getUserInitial($currentUser) ?></div>
+                                <div class="user-info">
+                                    <div class="name"><?= htmlspecialchars($currentUser['name']) ?></div>
+                                    <div class="role"><?= getRoleDisplayName($currentUser['role']) ?></div>
+                                </div>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text">
+                                <strong><?= htmlspecialchars($currentUser['name']) ?></strong><br>
+                                <small class="text-muted"><?= getRoleDisplayName($currentUser['role']) ?></small>
+                            </span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                    <?php else: ?>
+                    <a href="login.php" class="btn btn-primary btn-sm">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </nav>
 
     <div class="container-fluid py-4">
+        <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); endif; ?>
+
+        <?php if (isset($_SESSION['message'])): ?>
+        <div class="alert alert-<?= $_SESSION['message']['type'] ?> alert-dismissible fade show">
+            <?= $_SESSION['message']['text'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['message']); endif; ?>
+
         <!-- Filter Section -->
         <div class="card mb-4">
             <div class="card-body">
@@ -148,8 +199,8 @@ if ($branchId == 0) {
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-1">Total Pemasukan</h6>
-                                <h3 class="mb-0"><?= formatRupiah($totalIncome) ?></h3>
+                                <h6>Total Pemasukan</h6>
+                                <h3><?= formatRupiah($totalIncome) ?></h3>
                             </div>
                             <div class="stat-icon">
                                 <i class="bi bi-arrow-down-circle"></i>
@@ -163,8 +214,8 @@ if ($branchId == 0) {
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-1">Total Pengeluaran</h6>
-                                <h3 class="mb-0"><?= formatRupiah($totalExpenses) ?></h3>
+                                <h6>Total Pengeluaran</h6>
+                                <h3><?= formatRupiah($totalExpenses) ?></h3>
                             </div>
                             <div class="stat-icon">
                                 <i class="bi bi-arrow-up-circle"></i>
@@ -178,8 +229,8 @@ if ($branchId == 0) {
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-1">Saldo/Laba Bersih</h6>
-                                <h3 class="mb-0"><?= formatRupiah($netProfit) ?></h3>
+                                <h6>Saldo / Laba Bersih</h6>
+                                <h3><?= formatRupiah($netProfit) ?></h3>
                             </div>
                             <div class="stat-icon">
                                 <i class="bi bi-wallet2"></i>
@@ -195,11 +246,11 @@ if ($branchId == 0) {
             <div class="col-lg-8">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Rincian Pemasukan</h5>
+                        <h5><i class="bi bi-pie-chart"></i> Rincian Pemasukan</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <canvas id="incomeChart"></canvas>
                             </div>
                             <div class="col-md-6">
@@ -231,7 +282,7 @@ if ($branchId == 0) {
                                         </tr>
                                     </tbody>
                                     <tfoot>
-                                        <tr class="fw-bold">
+                                        <tr class="fw-semibold">
                                             <td>Total</td>
                                             <td class="text-end"><?= formatRupiah($totalIncome) ?></td>
                                         </tr>
@@ -245,13 +296,16 @@ if ($branchId == 0) {
             <div class="col-lg-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-building"></i> Per Cabang</h5>
+                        <h5><i class="bi bi-building"></i> Per Cabang</h5>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($branchSummary)): ?>
                         <canvas id="branchChart"></canvas>
                         <?php else: ?>
-                        <p class="text-muted text-center">Pilih "Semua Cabang" untuk melihat perbandingan</p>
+                        <div class="empty-state">
+                            <i class="bi bi-bar-chart"></i>
+                            <p>Pilih "Semua Cabang" untuk melihat perbandingan</p>
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -260,14 +314,16 @@ if ($branchId == 0) {
 
         <!-- Transaction Table -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-table"></i> Data Transaksi</h5>
-                <div>
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5><i class="bi bi-table"></i> Data Transaksi</h5>
+                <div class="d-flex gap-2 flex-wrap">
+                    <?php if (canAdd()): ?>
                     <a href="transactions.php?action=add" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-lg"></i> Tambah Transaksi
+                        <i class="bi bi-plus-lg"></i> Tambah
                     </a>
+                    <?php endif; ?>
                     <button class="btn btn-success btn-sm" onclick="exportExcel()">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                        <i class="bi bi-file-earmark-excel"></i> Export
                     </button>
                 </div>
             </div>
@@ -288,14 +344,15 @@ if ($branchId == 0) {
                                 <th>GoFood</th>
                                 <th>Pengeluaran</th>
                                 <th>Saldo</th>
+                                <?php if (canEdit() || canDelete()): ?>
                                 <th>Aksi</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
                             $no = 1;
                             $runningBalance = 0;
-                            // Reverse for running balance calculation
                             $reversedTransactions = array_reverse($transactions);
                             $balances = [];
                             foreach ($reversedTransactions as $t) {
@@ -319,19 +376,25 @@ if ($branchId == 0) {
                                 <td class="text-end"><?= $t['grab_food'] > 0 ? formatRupiah($t['grab_food']) : '-' ?></td>
                                 <td class="text-end"><?= $t['go_food'] > 0 ? formatRupiah($t['go_food']) : '-' ?></td>
                                 <td class="text-end text-danger"><?= $t['expenses'] > 0 ? formatRupiah($t['expenses']) : '-' ?></td>
-                                <td class="text-end fw-bold <?= $balances[$t['id']] >= 0 ? 'text-success' : 'text-danger' ?>">
+                                <td class="text-end fw-semibold <?= $balances[$t['id']] >= 0 ? 'text-success' : 'text-danger' ?>">
                                     <?= formatRupiah($balances[$t['id']]) ?>
                                 </td>
+                                <?php if (canEdit() || canDelete()): ?>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (canEdit()): ?>
                                         <a href="transactions.php?action=edit&id=<?= $t['id'] ?>" class="btn btn-outline-primary" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (canDelete()): ?>
                                         <button class="btn btn-outline-danger" onclick="deleteTransaction(<?= $t['id'] ?>)" title="Hapus">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
+                                <?php endif; ?>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -341,7 +404,7 @@ if ($branchId == 0) {
         </div>
     </div>
 
-    <footer class="footer mt-4 py-3">
+    <footer class="footer">
         <div class="container text-center">
             <span class="text-muted">&copy; <?= date('Y') ?> <?= APP_NAME ?> v<?= APP_VERSION ?></span>
         </div>
@@ -354,16 +417,18 @@ if ($branchId == 0) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Chart data
+        // Chart colors matching modern theme
+        const chartColors = ['#10b981', '#6366f1', '#06b6d4', '#f59e0b', '#ef4444', '#64748b'];
+
+        // Income pie chart
         const incomeData = {
             labels: ['Tunai', 'QRIS', 'Transfer', 'Shopee Food', 'Grab Food', 'Go Food'],
             datasets: [{
                 data: [<?= $totalCash ?>, <?= $totalQris ?>, <?= $totalTransfer ?>, <?= $totalShopee ?>, <?= $totalGrab ?>, <?= $totalGoFood ?>],
-                backgroundColor: ['#198754', '#0d6efd', '#0dcaf0', '#ffc107', '#dc3545', '#6c757d']
+                backgroundColor: chartColors
             }]
         };
 
-        // Income pie chart
         if (document.getElementById('incomeChart')) {
             new Chart(document.getElementById('incomeChart'), {
                 type: 'doughnut',
@@ -372,9 +437,11 @@ if ($branchId == 0) {
                     responsive: true,
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: { padding: 15, usePointStyle: true }
                         }
-                    }
+                    },
+                    cutout: '60%'
                 }
             });
         }
@@ -386,11 +453,11 @@ if ($branchId == 0) {
             datasets: [{
                 label: 'Pemasukan',
                 data: [<?= implode(',', array_map(fn($b) => $b['total_income'], $branchSummary)) ?>],
-                backgroundColor: '#198754'
+                backgroundColor: '#10b981'
             }, {
                 label: 'Pengeluaran',
                 data: [<?= implode(',', array_map(fn($b) => $b['total_expenses'], $branchSummary)) ?>],
-                backgroundColor: '#dc3545'
+                backgroundColor: '#ef4444'
             }]
         };
 
@@ -400,9 +467,11 @@ if ($branchId == 0) {
                 data: branchData,
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+                    scales: { y: { beginAtZero: true } },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, usePointStyle: true }
                         }
                     }
                 }
@@ -413,9 +482,7 @@ if ($branchId == 0) {
         // DataTable
         $(document).ready(function() {
             $('#transactionTable').DataTable({
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-                },
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json' },
                 order: [[1, 'desc']],
                 pageLength: 25
             });
@@ -424,8 +491,6 @@ if ($branchId == 0) {
         // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
         const html = document.documentElement;
-
-        // Load saved theme
         const savedTheme = localStorage.getItem('theme') || 'light';
         html.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
@@ -450,8 +515,8 @@ if ($branchId == 0) {
                 text: 'Data yang dihapus tidak dapat dikembalikan!',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
                 confirmButtonText: 'Ya, Hapus!',
                 cancelButtonText: 'Batal'
             }).then((result) => {

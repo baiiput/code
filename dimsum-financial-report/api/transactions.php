@@ -11,6 +11,11 @@ $db = Database::getConnection();
 
 switch ($method) {
     case 'DELETE':
+        // Check permission
+        if (!canDelete()) {
+            jsonResponse(['success' => false, 'message' => 'Hanya Admin yang dapat menghapus transaksi'], 403);
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
         $id = (int)($input['id'] ?? 0);
 

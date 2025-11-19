@@ -6,8 +6,22 @@ require_once 'config.php';
 
 $db = Database::getConnection();
 $branches = getBranches();
+$currentUser = getCurrentUser();
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+// Permission check
+if ($action === 'add' && !canAdd()) {
+    $_SESSION['error'] = 'Anda harus login sebagai Editor atau Admin untuk menambah transaksi.';
+    header('Location: login.php');
+    exit;
+}
+
+if ($action === 'edit' && !canEdit()) {
+    $_SESSION['error'] = 'Hanya Admin yang dapat mengedit transaksi.';
+    header('Location: index.php');
+    exit;
+}
 
 $transaction = null;
 if ($action === 'edit' && $id > 0) {
@@ -15,7 +29,7 @@ if ($action === 'edit' && $id > 0) {
     $stmt->execute([$id]);
     $transaction = $stmt->fetch();
     if (!$transaction) {
-        header('Location: transactions.php');
+        header('Location: index.php');
         exit;
     }
 }
@@ -64,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <title><?= $action === 'edit' ? 'Edit' : 'Tambah' ?> Transaksi - <?= APP_NAME ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
