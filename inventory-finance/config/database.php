@@ -34,7 +34,7 @@ function getDB() {
 // App Configuration
 define('APP_NAME', 'NetStock Pro');
 define('APP_VERSION', '1.0.0');
-define('BASE_URL', '/inventory-finance/');
+define('BASE_URL', '/finance/');
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 
 // Session Configuration
