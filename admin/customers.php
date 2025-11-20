@@ -59,6 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /admin/customers.php');
         exit;
     } elseif ($action === 'delete') {
+        // Staff tidak boleh hapus data
+        if (isStaff()) {
+            setFlashMessage('error', 'Staff tidak memiliki akses untuk menghapus data');
+            header('Location: /admin/customers.php');
+            exit;
+        }
+
         $id = $_POST['id'];
 
         // Check if customer has transactions
@@ -128,7 +135,9 @@ include '../includes/header.php';
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['username']); ?></td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick='openModal("edit", <?php echo json_encode($customer); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
+                                <?php if (!isStaff()): ?>
                                 <button onclick="confirmDelete(<?php echo $customer['id']; ?>, '<?php echo htmlspecialchars($customer['nama_lengkap']); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400">Hapus</button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endwhile; ?>

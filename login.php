@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Username dan password harus diisi';
     } else {
-        $stmt = $conn->prepare("SELECT id, username, password, role, customer_id FROM users WHERE username = ? AND is_active = 1");
+        $stmt = $conn->prepare("SELECT id, username, password, role, customer_id, user_level, full_name FROM users WHERE username = ? AND is_active = 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password'])) {
-                loginUser($user['id'], $user['username'], $user['role'], $user['customer_id']);
+                loginUser($user['id'], $user['username'], $user['role'], $user['customer_id'], $user['user_level'], $user['full_name']);
 
                 if ($user['role'] === 'admin') {
                     header('Location: /admin/index.php');
@@ -114,8 +114,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-                    <p>Default login admin:</p>
-                    <p class="font-mono">Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+                    <p class="mb-2 font-semibold">Default Login (Password: admin123):</p>
+                    <div class="space-y-1 font-mono text-xs">
+                        <p><strong>superadmin</strong> - Super Admin</p>
+                        <p><strong>manager</strong> - Manager</p>
+                        <p><strong>staff</strong> - Staff</p>
+                    </div>
                 </div>
             </div>
         </div>

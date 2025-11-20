@@ -39,6 +39,11 @@ $isAdminPage = isAdmin();
                         <a href="/admin/index.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Dashboard
                         </a>
+                        <?php if (isSuperAdmin()): ?>
+                        <a href="/admin/users.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Users
+                        </a>
+                        <?php endif; ?>
                         <a href="/admin/customers.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pelanggan
                         </a>
@@ -69,15 +74,21 @@ $isAdminPage = isAdmin();
                     <!-- User Menu -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                            <span class="text-sm font-medium"><?php echo htmlspecialchars($currentUser['username']); ?></span>
+                            <div class="text-right hidden md:block">
+                                <div class="text-sm font-medium"><?php echo htmlspecialchars($currentUser['full_name']); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo $currentUser['level_name']; ?></div>
+                            </div>
+                            <span class="text-sm font-medium md:hidden"><?php echo htmlspecialchars($currentUser['username']); ?></span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
 
-                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
-                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                <?php echo ucfirst($currentUser['role']); ?>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
+                            <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($currentUser['full_name']); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">@<?php echo htmlspecialchars($currentUser['username']); ?></div>
+                                <div class="text-xs text-blue-600 dark:text-blue-400 mt-1"><?php echo $currentUser['level_name']; ?></div>
                             </div>
                             <a href="/logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 Logout
@@ -95,6 +106,11 @@ $isAdminPage = isAdmin();
                 <a href="/admin/index.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Dashboard
                 </a>
+                <?php if (isSuperAdmin()): ?>
+                <a href="/admin/users.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Users
+                </a>
+                <?php endif; ?>
                 <a href="/admin/customers.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pelanggan
                 </a>

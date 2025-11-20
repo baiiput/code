@@ -4,18 +4,21 @@
 CREATE DATABASE IF NOT EXISTS koperasi_syariah DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE koperasi_syariah;
 
--- Table: users (untuk login admin & customer)
+-- Table: users (untuk login dengan multi level)
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'customer') NOT NULL DEFAULT 'customer',
+    user_level TINYINT(1) NOT NULL DEFAULT 4 COMMENT '1=Super Admin, 2=Manager, 3=Staff, 4=Customer',
+    full_name VARCHAR(255) NULL,
     customer_id INT NULL,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_username (username),
-    INDEX idx_customer_id (customer_id)
+    INDEX idx_customer_id (customer_id),
+    INDEX idx_user_level (user_level)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table: customers (data pelanggan lengkap)
@@ -64,13 +67,15 @@ CREATE TABLE transactions (
     status ENUM('aktif', 'lunas', 'batal') DEFAULT 'aktif',
     tanggal_akad DATE NOT NULL,
     keterangan TEXT NULL,
+    created_by INT NULL COMMENT 'User ID yang membuat transaksi',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     INDEX idx_customer (customer_id),
     INDEX idx_status (status),
-    INDEX idx_nomor_kontrak (nomor_kontrak)
+    INDEX idx_nomor_kontrak (nomor_kontrak),
+    INDEX idx_created_by (created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table: payments (riwayat pembayaran)
@@ -109,10 +114,12 @@ CREATE TABLE xendit_payments (
     INDEX idx_invoice_id (xendit_invoice_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default admin user
+-- Insert default users with levels
 -- Password: admin123 (hashed dengan password_hash)
-INSERT INTO users (username, password, role, customer_id) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', NULL);
+INSERT INTO users (username, password, role, user_level, full_name, customer_id) VALUES
+('superadmin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 1, 'Super Administrator', NULL),
+('manager', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 2, 'Manager User', NULL),
+('staff', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 3, 'Staff User', NULL);
 
 -- Sample data untuk testing (optional)
 INSERT INTO customers (nama_lengkap, nik, alamat, telepon, email) VALUES
