@@ -5,6 +5,26 @@ requireRole(['admin', 'staff_warehouse']);
 $conn = getDBConnection();
 $user = getCurrentUser();
 
+// Get warehouses for dropdown (filter by role)
+$warehouses = [];
+if ($user['role'] === 'staff_warehouse' && !empty($user['warehouse_id'])) {
+    // Staff warehouse can only access their warehouse
+    $stmt = $conn->prepare("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE warehouse_id = ? AND is_active = 1");
+    $stmt->bind_param("i", $user['warehouse_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
+    $stmt->close();
+} else {
+    // Admin can access all warehouses
+    $result = $conn->query("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE is_active = 1 ORDER BY warehouse_name");
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
+}
+
 // Get branches and items for dropdowns
 $branches = [];
 $result = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name");
@@ -13,7 +33,7 @@ while ($row = $result->fetch_assoc()) {
 }
 
 $items = [];
-$result = $conn->query("SELECT item_id, item_code, item_name, unit, current_stock, average_cost FROM items WHERE current_stock > 0 ORDER BY item_code");
+$result = $conn->query("SELECT item_id, item_code, item_name, unit FROM items ORDER BY item_code");
 while ($row = $result->fetch_assoc()) {
     $items[] = $row;
 }
@@ -24,9 +44,10 @@ $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
 $query = "
-    SELECT so.*, b.branch_name, u.full_name as created_by_name
+    SELECT so.*, b.branch_name, w.warehouse_name, u.full_name as created_by_name
     FROM stock_out so
     LEFT JOIN branches b ON so.branch_id = b.branch_id
+    LEFT JOIN warehouses w ON so.warehouse_id = w.warehouse_id
     LEFT JOIN users u ON so.created_by = u.user_id
     WHERE 1=1
 ";
@@ -108,24 +129,26 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
         <table class="data-table">
             <thead>
                 <tr>
-                    <th width="12%">Kode Transaksi</th>
-                    <th width="13%">Tanggal</th>
-                    <th width="15%">Cabang</th>
+                    <th width="11%">Kode Transaksi</th>
+                    <th width="11%">Tanggal</th>
+                    <th width="13%">Cabang</th>
+                    <th width="12%">Warehouse</th>
                     <th>Barang</th>
-                    <th width="12%" class="text-right">Total</th>
-                    <th width="10%">Dibuat Oleh</th>
-                    <th width="<?php echo hasRole('admin') ? '18%' : '10%'; ?>">Aksi</th>
+                    <th width="11%" class="text-right">Total</th>
+                    <th width="9%">Dibuat Oleh</th>
+                    <th width="<?php echo hasRole('admin') ? '14%' : '10%'; ?>">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($transactions)): ?>
-                <tr><td colspan="7" class="text-center">Belum ada distribusi stok keluar</td></tr>
+                <tr><td colspan="8" class="text-center">Belum ada distribusi stok keluar</td></tr>
                 <?php else: ?>
                 <?php foreach ($transactions as $trans): ?>
                 <tr>
                     <td><strong><?php echo $trans['transaction_code']; ?></strong></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($trans['transaction_date'])); ?></td>
                     <td><?php echo $trans['branch_name']; ?></td>
+                    <td><?php echo $trans['warehouse_name'] ?? '-'; ?></td>
                     <td><small><?php echo $trans['items']; ?></small></td>
                     <td class="text-right"><strong><?php echo formatRupiah($trans['total_amount']); ?></strong></td>
                     <td><?php echo $trans['created_by_name']; ?></td>
@@ -173,7 +196,17 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                     </select>
                 </div>
             </div>
-            
+
+            <div class="form-group">
+                <label><i class="fas fa-warehouse"></i> Warehouse Asal *</label>
+                <select name="warehouse_id" id="warehouseId" required>
+                    <option value="">Pilih Warehouse</option>
+                    <?php foreach ($warehouses as $wh): ?>
+                    <option value="<?php echo $wh['warehouse_id']; ?>"><?php echo $wh['warehouse_name']; ?> (<?php echo $wh['warehouse_code']; ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label><i class="fas fa-clipboard"></i> Catatan</label>
                 <textarea name="notes" rows="2" placeholder="Catatan distribusi (optional)"></textarea>
