@@ -95,6 +95,9 @@ function getStockStatus($current_stock, $min_stock) {
 
 // Sanitize input
 function clean($data) {
+    if ($data === null) {
+        return '';
+    }
     $data = trim($data);
     $data = stripslashes($data);
     $data = htmlspecialchars($data);

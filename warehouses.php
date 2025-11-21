@@ -13,14 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'add' || $action === 'edit') {
-        $warehouse_code = strtoupper(clean($_POST['warehouse_code']));
+        $warehouse_code = isset($_POST['warehouse_code']) ? strtoupper(clean($_POST['warehouse_code'])) : '';
         $warehouse_name = clean($_POST['warehouse_name']);
         $address = clean($_POST['address']);
         $phone = clean($_POST['phone']);
         $is_active = isset($_POST['is_active']) ? 1 : 0;
 
-        if (empty($warehouse_code) || empty($warehouse_name)) {
-            $error = 'Kode dan nama warehouse harus diisi';
+        if ($action === 'add' && empty($warehouse_code)) {
+            $error = 'Kode warehouse harus diisi';
+        } elseif (empty($warehouse_name)) {
+            $error = 'Nama warehouse harus diisi';
         } else {
             if ($action === 'add') {
                 // Check duplicate code

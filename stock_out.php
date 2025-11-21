@@ -25,18 +25,14 @@ if ($user['role'] === 'staff_warehouse' && !empty($user['warehouse_id'])) {
     }
 }
 
-// Get branches and items for dropdowns
+// Get branches for dropdowns
 $branches = [];
 $result = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name");
 while ($row = $result->fetch_assoc()) {
     $branches[] = $row;
 }
 
-$items = [];
-$result = $conn->query("SELECT item_id, item_code, item_name, unit FROM items ORDER BY item_code");
-while ($row = $result->fetch_assoc()) {
-    $items[] = $row;
-}
+// Items will be loaded via AJAX based on selected warehouse
 
 // Get stock out transactions with item details
 $search = $_GET['search'] ?? '';
@@ -199,7 +195,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
 
             <div class="form-group">
                 <label><i class="fas fa-warehouse"></i> Warehouse Asal *</label>
-                <select name="warehouse_id" id="warehouseId" required>
+                <select name="warehouse_id" id="warehouseId" required onchange="loadWarehouseItems()">
                     <option value="">Pilih Warehouse</option>
                     <?php foreach ($warehouses as $wh): ?>
                     <option value="<?php echo $wh['warehouse_id']; ?>"><?php echo $wh['warehouse_name']; ?> (<?php echo $wh['warehouse_code']; ?>)</option>
@@ -223,16 +219,8 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                     <div class="form-row" style="grid-template-columns: 2fr 1fr 1fr 1fr 60px; align-items: start; gap: 12px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label><i class="fas fa-box"></i> Barang</label>
-                            <select name="items[0][item_id]" class="item-select" required onchange="updateItemInfo(this, 0)">
-                                <option value="">Pilih Barang</option>
-                                <?php foreach ($items as $item): ?>
-                                <option value="<?php echo $item['item_id']; ?>" 
-                                    data-stock="<?php echo $item['current_stock']; ?>"
-                                    data-unit="<?php echo $item['unit']; ?>"
-                                    data-price="<?php echo $item['average_cost']; ?>">
-                                    <?php echo $item['item_code']; ?> - <?php echo $item['item_name']; ?> (Stok: <?php echo formatNumber($item['current_stock'], 0); ?>)
-                                </option>
-                                <?php endforeach; ?>
+                            <select name="items[0][item_id]" class="item-select" required onchange="updateItemInfo(this, 0)" disabled>
+                                <option value="">Pilih Warehouse terlebih dahulu</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
@@ -295,7 +283,66 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
 
 <script>
 let itemRowCount = 1;
-const itemsData = <?php echo json_encode($items); ?>;
+let itemsData = [];
+
+async function loadWarehouseItems() {
+    const warehouseId = document.getElementById('warehouseId').value;
+    const itemSelects = document.querySelectorAll('.item-select');
+
+    if (!warehouseId) {
+        itemSelects.forEach(select => {
+            select.innerHTML = '<option value="">Pilih Warehouse terlebih dahulu</option>';
+            select.disabled = true;
+        });
+        return;
+    }
+
+    itemSelects.forEach(select => {
+        select.innerHTML = '<option value="">Loading...</option>';
+        select.disabled = true;
+    });
+
+    try {
+        const response = await fetch(`get_warehouse_items.php?warehouse_id=${warehouseId}`);
+        const items = await response.json();
+        itemsData = items;
+
+        itemSelects.forEach((select, index) => {
+            const selectedValue = select.value;
+            select.innerHTML = '<option value="">Pilih Barang</option>';
+
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.item_id;
+                option.dataset.stock = item.current_stock;
+                option.dataset.unit = item.unit;
+                option.dataset.price = item.average_cost;
+                option.textContent = `${item.item_code} - ${item.item_name} (Stok: ${parseFloat(item.current_stock).toFixed(2)})`;
+                select.appendChild(option);
+            });
+
+            select.disabled = false;
+            if (selectedValue) {
+                select.value = selectedValue;
+            }
+        });
+
+        // Reset all item info when warehouse changes
+        document.querySelectorAll('.item-row').forEach((row, index) => {
+            row.querySelector('.stock-info').textContent = '';
+            row.querySelector('.item-price').value = '';
+            row.querySelector('.item-price-display').value = '';
+            row.querySelector('.item-qty').value = '';
+            row.querySelector('.item-subtotal').value = '';
+        });
+        calculateGrandTotal();
+    } catch (error) {
+        console.error('Error loading items:', error);
+        itemSelects.forEach(select => {
+            select.innerHTML = '<option value="">Error loading items</option>';
+        });
+    }
+}
 
 function showAddModal() {
     document.getElementById('transactionModal').style.display = 'block';
@@ -304,8 +351,22 @@ function showAddModal() {
 function closeModal() {
     document.getElementById('transactionModal').style.display = 'none';
     document.getElementById('transactionForm').reset();
-    document.getElementById('itemsContainer').innerHTML = document.querySelector('.item-row').outerHTML;
+
+    // Reset items container
+    const firstRow = document.querySelector('.item-row').cloneNode(true);
+    firstRow.querySelector('.item-select').innerHTML = '<option value="">Pilih Warehouse terlebih dahulu</option>';
+    firstRow.querySelector('.item-select').disabled = true;
+    firstRow.querySelector('.stock-info').textContent = '';
+    firstRow.querySelector('.item-price').value = '';
+    firstRow.querySelector('.item-price-display').value = '';
+    firstRow.querySelector('.item-qty').value = '';
+    firstRow.querySelector('.item-subtotal').value = '';
+
+    document.getElementById('itemsContainer').innerHTML = '';
+    document.getElementById('itemsContainer').appendChild(firstRow);
+
     itemRowCount = 1;
+    itemsData = [];
     calculateGrandTotal();
 }
 
@@ -316,20 +377,42 @@ function closeDetailModal() {
 function addItemRow() {
     const container = document.getElementById('itemsContainer');
     const newRow = document.querySelector('.item-row').cloneNode(true);
-    
+
     const inputs = newRow.querySelectorAll('select, input');
     inputs.forEach(input => {
         if (input.name) {
-            input.name = input.name.replace('[0]', `[${itemRowCount}]`);
+            input.name = input.name.replace(/\[\d+\]/, `[${itemRowCount}]`);
         }
         if (input.type !== 'button') {
             input.value = '';
         }
     });
-    
+
+    // Reset display fields
+    newRow.querySelector('.stock-info').textContent = '';
+    newRow.querySelector('.item-price-display').value = '';
+    newRow.querySelector('.item-subtotal').value = '';
+
     newRow.querySelector('.item-select').setAttribute('onchange', `updateItemInfo(this, ${itemRowCount})`);
     newRow.querySelector('.item-qty').setAttribute('onchange', `calculateRowTotal(${itemRowCount})`);
-    
+
+    // If warehouse already selected, populate items for new row
+    const warehouseId = document.getElementById('warehouseId').value;
+    if (warehouseId && itemsData.length > 0) {
+        const select = newRow.querySelector('.item-select');
+        select.innerHTML = '<option value="">Pilih Barang</option>';
+        itemsData.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.item_id;
+            option.dataset.stock = item.current_stock;
+            option.dataset.unit = item.unit;
+            option.dataset.price = item.average_cost;
+            option.textContent = `${item.item_code} - ${item.item_name} (Stok: ${parseFloat(item.current_stock).toFixed(2)})`;
+            select.appendChild(option);
+        });
+        select.disabled = false;
+    }
+
     container.appendChild(newRow);
     itemRowCount++;
 }

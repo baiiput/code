@@ -262,11 +262,20 @@ async function loadWarehouseItems() {
     if (!warehouseId) {
         itemSelect.innerHTML = '<option value="">Pilih Warehouse terlebih dahulu</option>';
         itemSelect.disabled = true;
+        // Reset fields
+        document.getElementById('oldStock').value = '';
+        document.getElementById('newStock').value = '';
+        document.getElementById('difference').textContent = '-';
         return;
     }
 
     itemSelect.innerHTML = '<option value="">Loading...</option>';
     itemSelect.disabled = true;
+
+    // Reset fields when warehouse changes
+    document.getElementById('oldStock').value = '';
+    document.getElementById('newStock').value = '';
+    document.getElementById('difference').textContent = '-';
 
     try {
         const response = await fetch(`get_warehouse_items.php?warehouse_id=${warehouseId}`);
