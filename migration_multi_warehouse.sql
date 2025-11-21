@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS warehouses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. Create warehouse_items table (stores stock per warehouse)
+-- Note: Foreign key constraints akan ditambahkan setelah semua tabel ready
 CREATE TABLE IF NOT EXISTS warehouse_items (
     warehouse_item_id INT PRIMARY KEY AUTO_INCREMENT,
     warehouse_id INT NOT NULL,
@@ -26,8 +27,6 @@ CREATE TABLE IF NOT EXISTS warehouse_items (
     average_cost DECIMAL(15,2) DEFAULT 0,
     min_stock DECIMAL(10,2) DEFAULT 0,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
     UNIQUE KEY unique_warehouse_item (warehouse_id, item_id),
     INDEX idx_warehouse (warehouse_id),
     INDEX idx_item (item_id),
@@ -62,10 +61,7 @@ CREATE TABLE IF NOT EXISTS stock_transfer_detail (
     transfer_id INT NOT NULL,
     item_id INT NOT NULL,
     quantity DECIMAL(10,2) NOT NULL,
-    unit_cost DECIMAL(15,2) NOT NULL,
-    subtotal DECIMAL(15,2) NOT NULL,
     FOREIGN KEY (transfer_id) REFERENCES stock_transfers(transfer_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES items(item_id),
     INDEX idx_transfer (transfer_id),
     INDEX idx_item (item_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -113,7 +109,13 @@ UPDATE stock_out SET warehouse_id = @default_warehouse_id WHERE warehouse_id IS 
 -- 14. Update existing stock_adjustment to use default warehouse
 UPDATE stock_adjustment SET warehouse_id = @default_warehouse_id WHERE warehouse_id IS NULL;
 
--- 15. Backup: Keep items table columns for now (can be removed later after verification)
+-- 15. Add foreign key constraints (optional - jika tabel items sudah ada dan kompatibel)
+-- Uncomment baris berikut jika ingin menambahkan foreign key constraints:
+-- ALTER TABLE warehouse_items ADD CONSTRAINT fk_warehouse_items_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id) ON DELETE CASCADE;
+-- ALTER TABLE warehouse_items ADD CONSTRAINT fk_warehouse_items_item FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE;
+-- ALTER TABLE stock_transfer_detail ADD CONSTRAINT fk_transfer_detail_item FOREIGN KEY (item_id) REFERENCES items(item_id);
+
+-- 16. Backup: Keep items table columns for now (can be removed later after verification)
 -- ALTER TABLE items DROP COLUMN current_stock;
 -- ALTER TABLE items DROP COLUMN average_cost;
 
