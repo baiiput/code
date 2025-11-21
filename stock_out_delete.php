@@ -15,7 +15,7 @@ $stock_out_id = intval($_GET['id']);
 
 $conn->begin_transaction();
 try {
-    // Get stock out data
+    // Get stock out data with warehouse_id
     $stmt = $conn->prepare("SELECT * FROM stock_out WHERE stock_out_id = ?");
     $stmt->bind_param("i", $stock_out_id);
     $stmt->execute();
@@ -28,6 +28,7 @@ try {
     }
 
     $transaction_code = $stock_out['transaction_code'];
+    $warehouse_id = $stock_out['warehouse_id'];
 
     // Get details to reverse stock
     $stmt = $conn->prepare("SELECT * FROM stock_out_detail WHERE stock_out_id = ?");
@@ -40,14 +41,14 @@ try {
     }
     $stmt->close();
 
-    // Reverse stock - add back to current stock
+    // Reverse stock - add back to warehouse_items current stock
     foreach ($details as $detail) {
         $item_id = $detail['item_id'];
         $quantity = $detail['quantity'];
 
-        // Update item stock (add back)
-        $stmt = $conn->prepare("UPDATE items SET current_stock = current_stock + ? WHERE item_id = ?");
-        $stmt->bind_param("di", $quantity, $item_id);
+        // Update warehouse_item stock (add back)
+        $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = current_stock + ? WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("dii", $quantity, $warehouse_id, $item_id);
         $stmt->execute();
         $stmt->close();
     }

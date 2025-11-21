@@ -12,10 +12,11 @@ if (!$stock_out_id) {
     exit();
 }
 
-// Get stock out data
-$query = "SELECT so.*, b.branch_name 
+// Get stock out data with warehouse
+$query = "SELECT so.*, b.branch_name, w.warehouse_name, w.warehouse_code
           FROM stock_out so
-          LEFT JOIN branches b ON so.branch_id = b.branch_id 
+          LEFT JOIN branches b ON so.branch_id = b.branch_id
+          LEFT JOIN warehouses w ON so.warehouse_id = w.warehouse_id
           WHERE so.stock_out_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $stock_out_id);
@@ -28,23 +29,54 @@ if (!$stock_out) {
     exit();
 }
 
-// Get stock out details
-$query = "SELECT sod.*, i.item_code, i.item_name, i.unit, i.current_stock, i.average_cost 
+// Get warehouses for dropdown (filter by role)
+$warehouses = [];
+if ($user['role'] === 'staff_warehouse' && !empty($user['warehouse_id'])) {
+    $stmt = $conn->prepare("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE warehouse_id = ? AND is_active = 1");
+    $stmt->bind_param("i", $user['warehouse_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
+    $stmt->close();
+} else {
+    $result = $conn->query("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE is_active = 1 ORDER BY warehouse_name");
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
+}
+
+// Get stock out details with warehouse_items stock
+$query = "SELECT sod.*, i.item_code, i.item_name, i.unit,
+                 COALESCE(wi.current_stock, 0) as current_stock,
+                 COALESCE(wi.average_cost, 0) as average_cost
           FROM stock_out_detail sod
-          LEFT JOIN items i ON sod.item_id = i.item_id 
+          LEFT JOIN items i ON sod.item_id = i.item_id
+          LEFT JOIN warehouse_items wi ON sod.item_id = wi.item_id AND wi.warehouse_id = ?
           WHERE sod.stock_out_id = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $stock_out_id);
+$stmt->bind_param("ii", $stock_out['warehouse_id'], $stock_out_id);
 $stmt->execute();
 $details = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
 // Get all branches for dropdown
 $branches = $conn->query("SELECT * FROM branches ORDER BY branch_name");
 
-// Get all items for dropdown
-$items_query = "SELECT item_id, item_code, item_name, unit, current_stock, average_cost 
-                FROM items WHERE current_stock > 0 ORDER BY item_name";
-$items = $conn->query($items_query);
+// Get all items from the selected warehouse for dropdown
+$items_query = "SELECT i.item_id, i.item_code, i.item_name, i.unit,
+                       COALESCE(wi.current_stock, 0) as current_stock,
+                       COALESCE(wi.average_cost, 0) as average_cost
+                FROM items i
+                LEFT JOIN warehouse_items wi ON i.item_id = wi.item_id AND wi.warehouse_id = ?
+                WHERE wi.current_stock > 0
+                ORDER BY i.item_name";
+$stmt = $conn->prepare($items_query);
+$stmt->bind_param("i", $stock_out['warehouse_id']);
+$stmt->execute();
+$items = $stmt->get_result();
+$stmt->close();
 
 $page_title = 'Edit Stock Out';
 include 'includes/header.php';
@@ -78,21 +110,35 @@ include 'includes/header.php';
 
             <div class="form-row">
                 <div class="form-group">
+                    <label><i class="fas fa-warehouse"></i> Warehouse Asal <span class="required">*</span></label>
+                    <select name="warehouse_id" class="form-control" required>
+                        <?php foreach ($warehouses as $wh): ?>
+                        <option value="<?php echo $wh['warehouse_id']; ?>"
+                                <?php echo ($wh['warehouse_id'] == $stock_out['warehouse_id']) ? 'selected' : ''; ?>>
+                            <?php echo $wh['warehouse_name']; ?> (<?php echo $wh['warehouse_code']; ?>)
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label><i class="fas fa-building"></i> Cabang Tujuan <span class="required">*</span></label>
                     <select name="branch_id" class="form-control" required>
                         <option value="">Pilih Cabang</option>
                         <?php while ($branch = $branches->fetch_assoc()): ?>
-                        <option value="<?php echo $branch['branch_id']; ?>" 
+                        <option value="<?php echo $branch['branch_id']; ?>"
                                 <?php echo ($branch['branch_id'] == $stock_out['branch_id']) ? 'selected' : ''; ?>>
                             <?php echo $branch['branch_name']; ?>
                         </option>
                         <?php endwhile; ?>
                     </select>
                 </div>
-                
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label><i class="fas fa-clipboard"></i> Catatan</label>
-                    <input type="text" name="notes" class="form-control" 
+                    <input type="text" name="notes" class="form-control"
                            value="<?php echo htmlspecialchars($stock_out['notes']); ?>"
                            placeholder="Catatan distribusi (optional)">
                 </div>

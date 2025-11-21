@@ -15,23 +15,30 @@ $conn->begin_transaction();
 try {
     $transaction_date = $_POST['transaction_date'];
     $branch_id = intval($_POST['branch_id']);
+    $warehouse_id = intval($_POST['warehouse_id']);
     $notes = clean($_POST['notes'] ?? '');
     $items = $_POST['items'] ?? [];
-    
-    if (empty($items) || $branch_id <= 0) {
+
+    if (empty($items) || $branch_id <= 0 || $warehouse_id <= 0) {
         throw new Exception('Data tidak lengkap');
     }
-    
-    // Validate stock availability
+
+    // Validate stock availability from warehouse_items
     foreach ($items as $item) {
         $item_id = intval($item['item_id']);
         $qty = floatval($item['quantity']);
-        
-        $result = $conn->query("SELECT current_stock, item_name FROM items WHERE item_id = $item_id");
+
+        $stmt = $conn->prepare("SELECT wi.current_stock, i.item_name FROM warehouse_items wi
+                               JOIN items i ON wi.item_id = i.item_id
+                               WHERE wi.warehouse_id = ? AND wi.item_id = ?");
+        $stmt->bind_param("ii", $warehouse_id, $item_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $stock = $result->fetch_assoc();
-        
-        if ($qty > $stock['current_stock']) {
-            throw new Exception("Stok {$stock['item_name']} tidak mencukupi!");
+        $stmt->close();
+
+        if (!$stock || $qty > $stock['current_stock']) {
+            throw new Exception("Stok {$stock['item_name']} di warehouse tidak mencukupi!");
         }
     }
     
@@ -44,30 +51,30 @@ try {
     }
     
     $transaction_code = generateTransactionCode('SO');
-    
-    // Insert stock_out header
-    $stmt = $conn->prepare("INSERT INTO stock_out (transaction_code, transaction_date, branch_id, total_amount, notes, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssidsi", $transaction_code, $transaction_date, $branch_id, $total_amount, $notes, $user['user_id']);
+
+    // Insert stock_out header with warehouse_id
+    $stmt = $conn->prepare("INSERT INTO stock_out (transaction_code, transaction_date, branch_id, warehouse_id, total_amount, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssiidsi", $transaction_code, $transaction_date, $branch_id, $warehouse_id, $total_amount, $notes, $user['user_id']);
     $stmt->execute();
     $stock_out_id = $conn->insert_id;
     $stmt->close();
     
-    // Insert details and update stock
+    // Insert details and update warehouse_items stock
     foreach ($items as $item) {
         $item_id = intval($item['item_id']);
         $quantity = floatval($item['quantity']);
         $unit_price = floatval($item['unit_price']);
         $subtotal = $quantity * $unit_price;
-        
+
         // Insert detail
         $stmt = $conn->prepare("INSERT INTO stock_out_detail (stock_out_id, item_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("iiddd", $stock_out_id, $item_id, $quantity, $unit_price, $subtotal);
         $stmt->execute();
         $stmt->close();
-        
-        // Update item stock (decrease)
-        $stmt = $conn->prepare("UPDATE items SET current_stock = current_stock - ? WHERE item_id = ?");
-        $stmt->bind_param("di", $quantity, $item_id);
+
+        // Update warehouse_items stock (decrease)
+        $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = current_stock - ? WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("dii", $quantity, $warehouse_id, $item_id);
         $stmt->execute();
         $stmt->close();
     }
