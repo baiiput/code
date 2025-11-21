@@ -443,6 +443,12 @@
                             <i class="fas fa-building"></i>
                             <span>Cabang</span>
                         </a>
+                        <?php if (hasRole('admin')): ?>
+                        <a href="warehouses.php" class="<?php echo $current_page === 'warehouses.php' ? 'active' : ''; ?>">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Warehouses</span>
+                        </a>
+                        <?php endif; ?>
                     </div>
                 </li>
                 
