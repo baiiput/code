@@ -43,6 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /admin/products.php');
         exit;
     } elseif ($action === 'delete') {
+        // Staff tidak boleh hapus data
+        if (isStaff()) {
+            setFlashMessage('error', 'Staff tidak memiliki akses untuk menghapus data');
+            header('Location: /admin/products.php');
+            exit;
+        }
+
         $id = $_POST['id'];
 
         // Check if product has transactions
@@ -126,7 +133,9 @@ include '../includes/header.php';
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick='openModal("edit", <?php echo json_encode($product); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
+                                <?php if (!isStaff()): ?>
                                 <button onclick="confirmDelete(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['nama_barang']); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400">Hapus</button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endwhile; ?>

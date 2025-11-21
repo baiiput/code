@@ -25,9 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $angsuran_perbulan = $total_harga / $tenor;
         $sisa_hutang = $total_harga;
         $nomor_kontrak = generateNomorKontrak();
+        $created_by = getCurrentUser()['id'];
 
-        $stmt = $conn->prepare("INSERT INTO transactions (nomor_kontrak, customer_id, product_id, harga_modal, margin, total_harga, tenor, angsuran_perbulan, sisa_hutang, tanggal_akad, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("siidddiidss", $nomor_kontrak, $customer_id, $product_id, $harga_modal, $margin, $total_harga, $tenor, $angsuran_perbulan, $sisa_hutang, $tanggal_akad, $keterangan);
+        $stmt = $conn->prepare("INSERT INTO transactions (nomor_kontrak, customer_id, product_id, harga_modal, margin, total_harga, tenor, angsuran_perbulan, sisa_hutang, tanggal_akad, keterangan, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("siidddiidssi", $nomor_kontrak, $customer_id, $product_id, $harga_modal, $margin, $total_harga, $tenor, $angsuran_perbulan, $sisa_hutang, $tanggal_akad, $keterangan, $created_by);
 
         if ($stmt->execute()) {
             setFlashMessage('success', "Transaksi cicilan berhasil dibuat. Nomor Kontrak: $nomor_kontrak");
@@ -39,6 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /admin/transactions.php');
         exit;
     } elseif ($action === 'update_status') {
+        // Staff tidak boleh update status (batalkan)
+        if (isStaff()) {
+            setFlashMessage('error', 'Staff tidak memiliki akses untuk mengubah status transaksi');
+            header('Location: /admin/transactions.php');
+            exit;
+        }
+
         $id = intval($_POST['id']);
         $status = sanitize($_POST['status']);
 
@@ -161,7 +169,7 @@ include '../includes/header.php';
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="/admin/transaction-detail.php?id=<?php echo $trans['id']; ?>" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Detail</a>
-                                <?php if ($trans['status'] === 'aktif'): ?>
+                                <?php if ($trans['status'] === 'aktif' && !isStaff()): ?>
                                 <form method="POST" class="inline">
                                     <input type="hidden" name="action" value="update_status">
                                     <input type="hidden" name="id" value="<?php echo $trans['id']; ?>">

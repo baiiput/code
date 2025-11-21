@@ -32,9 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Create user account
                 $username = strtolower(str_replace(' ', '', $nama_lengkap)) . $customer_id;
                 $password = password_hash('12345', PASSWORD_DEFAULT); // Default password
+                $user_level = USER_LEVEL_CUSTOMER; // Level 4
 
-                $stmt2 = $conn->prepare("INSERT INTO users (username, password, role, customer_id) VALUES (?, ?, 'customer', ?)");
-                $stmt2->bind_param("ssi", $username, $password, $customer_id);
+                $stmt2 = $conn->prepare("INSERT INTO users (username, password, role, customer_id, user_level, full_name) VALUES (?, ?, 'customer', ?, ?, ?)");
+                $stmt2->bind_param("ssiis", $username, $password, $customer_id, $user_level, $nama_lengkap);
                 $stmt2->execute();
                 $stmt2->close();
 
