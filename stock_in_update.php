@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $stock_in_id = intval($_POST['stock_in_id']);
 $transaction_date = $_POST['transaction_date'];
 $supplier_id = intval($_POST['supplier_id']);
+$new_warehouse_id = intval($_POST['warehouse_id']);
 $notes = clean($_POST['notes'] ?? '');
 $items = $_POST['items'] ?? [];
 
@@ -25,7 +26,9 @@ try {
     $stmt->execute();
     $old_transaction = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
+    $old_warehouse_id = $old_transaction['warehouse_id'];
+
     // 2. Get old details
     $stmt = $conn->prepare("SELECT * FROM stock_in_detail WHERE stock_in_id = ?");
     $stmt->bind_param("i", $stock_in_id);
@@ -36,33 +39,40 @@ try {
         $old_details[] = $row;
     }
     $stmt->close();
-    
-    // 3. REVERT old transaction effects
+
+    // 3. REVERT old transaction effects from old warehouse
     foreach ($old_details as $detail) {
         $item_id = $detail['item_id'];
         $old_qty = $detail['quantity'];
         $old_price = $detail['unit_price'];
-        
-        // Get current item data
-        $result = $conn->query("SELECT current_stock, average_cost FROM items WHERE item_id = $item_id");
-        $item = $result->fetch_assoc();
-        $current_stock = $item['current_stock'];
-        $current_avg = $item['average_cost'];
-        
-        // Recalculate: Remove this purchase from average
-        $new_stock = $current_stock - $old_qty;
-        if ($new_stock > 0) {
-            $total_value = ($current_stock * $current_avg) - ($old_qty * $old_price);
-            $new_avg = $total_value / $new_stock;
-        } else {
-            $new_avg = 0;
-        }
-        
-        // Update item
-        $stmt = $conn->prepare("UPDATE items SET current_stock = ?, average_cost = ? WHERE item_id = ?");
-        $stmt->bind_param("ddi", $new_stock, $new_avg, $item_id);
+
+        // Get current warehouse_item data
+        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("ii", $old_warehouse_id, $item_id);
         $stmt->execute();
+        $result = $stmt->get_result();
         $stmt->close();
+
+        if ($result->num_rows > 0) {
+            $wh_item = $result->fetch_assoc();
+            $current_stock = $wh_item['current_stock'];
+            $current_avg = $wh_item['average_cost'];
+
+            // Recalculate: Remove this purchase from average
+            $new_stock = $current_stock - $old_qty;
+            if ($new_stock > 0) {
+                $total_value = ($current_stock * $current_avg) - ($old_qty * $old_price);
+                $new_avg = $total_value / $new_stock;
+            } else {
+                $new_avg = 0;
+            }
+
+            // Update warehouse_item
+            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ?, average_cost = ? WHERE warehouse_id = ? AND item_id = ?");
+            $stmt->bind_param("ddii", $new_stock, $new_avg, $old_warehouse_id, $item_id);
+            $stmt->execute();
+            $stmt->close();
+        }
     }
     
     // Revert balance
@@ -91,41 +101,61 @@ try {
         $new_total += ($qty * $price);
     }
     
-    // 6. Update header
-    $stmt = $conn->prepare("UPDATE stock_in SET transaction_date=?, supplier_id=?, total_amount=?, notes=? WHERE stock_in_id=?");
-    $stmt->bind_param("sidsi", $transaction_date, $supplier_id, $new_total, $notes, $stock_in_id);
+    // 6. Update header with new warehouse_id
+    $stmt = $conn->prepare("UPDATE stock_in SET transaction_date=?, supplier_id=?, warehouse_id=?, total_amount=?, notes=? WHERE stock_in_id=?");
+    $stmt->bind_param("sisdsi", $transaction_date, $supplier_id, $new_warehouse_id, $new_total, $notes, $stock_in_id);
     $stmt->execute();
     $stmt->close();
-    
-    // 7. Insert new details and update stock
+
+    // 7. Insert new details and update warehouse_items stock
     foreach ($items as $item) {
         $item_id = intval($item['item_id']);
         $quantity = floatval($item['quantity']);
         $unit_price = floatval($item['unit_price']);
         $subtotal = $quantity * $unit_price;
-        
+
         // Insert detail
         $stmt = $conn->prepare("INSERT INTO stock_in_detail (stock_in_id, item_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("iiddd", $stock_in_id, $item_id, $quantity, $unit_price, $subtotal);
         $stmt->execute();
         $stmt->close();
-        
-        // Recalculate average cost
-        $result = $conn->query("SELECT current_stock, average_cost FROM items WHERE item_id = $item_id");
-        $current = $result->fetch_assoc();
-        $old_stock = $current['current_stock'];
-        $old_avg_cost = $current['average_cost'];
-        
-        $old_value = $old_stock * $old_avg_cost;
-        $new_value = $quantity * $unit_price;
-        $new_stock = $old_stock + $quantity;
-        $new_avg_cost = ($old_value + $new_value) / $new_stock;
-        
-        // Update item
-        $stmt = $conn->prepare("UPDATE items SET current_stock = ?, average_cost = ? WHERE item_id = ?");
-        $stmt->bind_param("ddi", $new_stock, $new_avg_cost, $item_id);
+
+        // Check if warehouse_item exists for NEW warehouse
+        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("ii", $new_warehouse_id, $item_id);
         $stmt->execute();
+        $result = $stmt->get_result();
         $stmt->close();
+
+        if ($result->num_rows > 0) {
+            // Exists - calculate weighted average
+            $current = $result->fetch_assoc();
+            $old_stock = $current['current_stock'];
+            $old_avg_cost = $current['average_cost'];
+
+            $old_value = $old_stock * $old_avg_cost;
+            $new_value = $quantity * $unit_price;
+            $new_stock = $old_stock + $quantity;
+            $new_avg_cost = ($old_value + $new_value) / $new_stock;
+
+            // Update warehouse_item
+            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ?, average_cost = ? WHERE warehouse_id = ? AND item_id = ?");
+            $stmt->bind_param("ddii", $new_stock, $new_avg_cost, $new_warehouse_id, $item_id);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            // Doesn't exist - create new
+            $result = $conn->query("SELECT min_stock FROM items WHERE item_id = $item_id");
+            $min_stock = 0;
+            if ($row = $result->fetch_assoc()) {
+                $min_stock = $row['min_stock'];
+            }
+
+            $stmt = $conn->prepare("INSERT INTO warehouse_items (warehouse_id, item_id, current_stock, average_cost, min_stock) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("iiddd", $new_warehouse_id, $item_id, $quantity, $unit_price, $min_stock);
+            $stmt->execute();
+            $stmt->close();
+        }
     }
     
     // 8. Update balance

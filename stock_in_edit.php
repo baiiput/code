@@ -15,9 +15,10 @@ if ($stock_in_id <= 0) {
 
 // Get transaction header
 $stmt = $conn->prepare("
-    SELECT si.*, s.supplier_name
+    SELECT si.*, s.supplier_name, w.warehouse_name
     FROM stock_in si
     LEFT JOIN suppliers s ON si.supplier_id = s.supplier_id
+    LEFT JOIN warehouses w ON si.warehouse_id = w.warehouse_id
     WHERE si.stock_in_id = ?
 ");
 $stmt->bind_param("i", $stock_in_id);
@@ -47,6 +48,13 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Get warehouses
+$warehouses = [];
+$result = $conn->query("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE is_active = 1 ORDER BY warehouse_name");
+while ($row = $result->fetch_assoc()) {
+    $warehouses[] = $row;
+}
+
 // Get suppliers
 $suppliers = [];
 $result = $conn->query("SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name");
@@ -56,7 +64,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Get items
 $items = [];
-$result = $conn->query("SELECT item_id, item_code, item_name, unit, current_stock, average_cost FROM items ORDER BY item_code");
+$result = $conn->query("SELECT item_id, item_code, item_name, unit FROM items ORDER BY item_code");
 while ($row = $result->fetch_assoc()) {
     $items[] = $row;
 }
@@ -102,7 +110,18 @@ include 'includes/header.php';
                 <?php endforeach; ?>
             </select>
         </div>
-        
+
+        <div class="form-group">
+            <label><i class="fas fa-warehouse"></i> Warehouse Tujuan *</label>
+            <select name="warehouse_id" required>
+                <?php foreach ($warehouses as $wh): ?>
+                <option value="<?php echo $wh['warehouse_id']; ?>" <?php echo $wh['warehouse_id'] == $transaction['warehouse_id'] ? 'selected' : ''; ?>>
+                    <?php echo $wh['warehouse_name']; ?> (<?php echo $wh['warehouse_code']; ?>)
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
         <div class="form-group">
             <label><i class="fas fa-clipboard"></i> Catatan</label>
             <textarea name="notes" rows="2"><?php echo $transaction['notes']; ?></textarea>
