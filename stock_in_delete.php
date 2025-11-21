@@ -28,6 +28,7 @@ try {
     }
 
     $transaction_code = $stock_in['transaction_code'];
+    $warehouse_id = $stock_in['warehouse_id'];
 
     // Get details to reverse stock
     $stmt = $conn->prepare("SELECT * FROM stock_in_detail WHERE stock_in_id = ?");
@@ -40,43 +41,45 @@ try {
     }
     $stmt->close();
 
-    // Reverse stock - reduce from current stock
+    // Reverse stock - reduce from warehouse_items
     foreach ($details as $detail) {
         $item_id = $detail['item_id'];
         $quantity = $detail['quantity'];
         $subtotal = $detail['subtotal'];
 
-        // Get current stock and average cost
-        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM items WHERE item_id = ?");
-        $stmt->bind_param("i", $item_id);
+        // Get current warehouse_item stock and average cost
+        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("ii", $warehouse_id, $item_id);
         $stmt->execute();
-        $item_result = $stmt->get_result();
-        $item = $item_result->fetch_assoc();
+        $wh_item_result = $stmt->get_result();
         $stmt->close();
 
-        $current_stock = $item['current_stock'];
-        $current_avg_cost = $item['average_cost'];
+        if ($wh_item_result->num_rows > 0) {
+            $wh_item = $wh_item_result->fetch_assoc();
+            $current_stock = $wh_item['current_stock'];
+            $current_avg_cost = $wh_item['average_cost'];
 
-        // Calculate new stock
-        $new_stock = $current_stock - $quantity;
+            // Calculate new stock
+            $new_stock = $current_stock - $quantity;
 
-        // Calculate new average cost (weighted average reversal)
-        $new_avg_cost = $current_avg_cost; // Keep current average cost
-        if ($new_stock > 0) {
-            // Recalculate average cost by removing this purchase
-            $total_value = $current_stock * $current_avg_cost;
-            $removed_value = $subtotal;
-            $new_total_value = $total_value - $removed_value;
-            $new_avg_cost = $new_total_value / $new_stock;
-        } else {
-            $new_avg_cost = 0;
+            // Calculate new average cost (weighted average reversal)
+            $new_avg_cost = $current_avg_cost;
+            if ($new_stock > 0) {
+                // Recalculate average cost by removing this purchase
+                $total_value = $current_stock * $current_avg_cost;
+                $removed_value = $subtotal;
+                $new_total_value = $total_value - $removed_value;
+                $new_avg_cost = $new_total_value / $new_stock;
+            } else {
+                $new_avg_cost = 0;
+            }
+
+            // Update warehouse_item stock and average cost
+            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ?, average_cost = ? WHERE warehouse_id = ? AND item_id = ?");
+            $stmt->bind_param("ddii", $new_stock, $new_avg_cost, $warehouse_id, $item_id);
+            $stmt->execute();
+            $stmt->close();
         }
-
-        // Update item stock and average cost
-        $stmt = $conn->prepare("UPDATE items SET current_stock = ?, average_cost = ? WHERE item_id = ?");
-        $stmt->bind_param("ddi", $new_stock, $new_avg_cost, $item_id);
-        $stmt->execute();
-        $stmt->close();
     }
 
     // Delete from stock_in_detail (CASCADE will handle this, but let's be explicit)
