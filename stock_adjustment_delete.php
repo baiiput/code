@@ -28,13 +28,14 @@ try {
     }
 
     $transaction_code = $adjustment['transaction_code'];
+    $warehouse_id = $adjustment['warehouse_id'];
     $item_id = $adjustment['item_id'];
     $old_stock = $adjustment['old_stock'];
     $new_stock = $adjustment['new_stock'];
 
-    // Reverse adjustment - set stock back to old_stock
-    $stmt = $conn->prepare("UPDATE items SET current_stock = ? WHERE item_id = ?");
-    $stmt->bind_param("di", $old_stock, $item_id);
+    // Reverse adjustment - set stock back to old_stock in warehouse_items
+    $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
+    $stmt->bind_param("dii", $old_stock, $warehouse_id, $item_id);
     $stmt->execute();
     $stmt->close();
 

@@ -5,12 +5,26 @@ requireRole(['admin', 'staff_warehouse']);
 $conn = getDBConnection();
 $user = getCurrentUser();
 
-// Get items
-$items = [];
-$result = $conn->query("SELECT item_id, item_code, item_name, unit, current_stock FROM items ORDER BY item_code");
-while ($row = $result->fetch_assoc()) {
-    $items[] = $row;
+// Get warehouses for dropdown (filter by role)
+$warehouses = [];
+if ($user['role'] === 'staff_warehouse' && !empty($user['warehouse_id'])) {
+    $stmt = $conn->prepare("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE warehouse_id = ? AND is_active = 1");
+    $stmt->bind_param("i", $user['warehouse_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
+    $stmt->close();
+} else {
+    $result = $conn->query("SELECT warehouse_id, warehouse_code, warehouse_name FROM warehouses WHERE is_active = 1 ORDER BY warehouse_name");
+    while ($row = $result->fetch_assoc()) {
+        $warehouses[] = $row;
+    }
 }
+
+// Get items - will be loaded via AJAX based on selected warehouse
+$items = [];
 
 // Get adjustments
 $search = $_GET['search'] ?? '';
@@ -18,10 +32,12 @@ $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
 $query = "
-    SELECT sa.*, i.item_code, i.item_name, i.unit, u.full_name as created_by_name
+    SELECT sa.*, i.item_code, i.item_name, i.unit, u.full_name as created_by_name,
+           w.warehouse_name, w.warehouse_code
     FROM stock_adjustment sa
     LEFT JOIN items i ON sa.item_id = i.item_id
     LEFT JOIN users u ON sa.created_by = u.user_id
+    LEFT JOIN warehouses w ON sa.warehouse_id = w.warehouse_id
     WHERE 1=1
 ";
 
@@ -90,24 +106,26 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
         <table class="data-table">
             <thead>
                 <tr>
-                    <th width="12%">Kode</th>
-                    <th width="13%">Tanggal</th>
+                    <th width="10%">Kode</th>
+                    <th width="12%">Tanggal</th>
+                    <th width="13%">Warehouse</th>
                     <th>Barang</th>
-                    <th width="10%" class="text-right">Stok Lama</th>
-                    <th width="10%" class="text-right">Stok Baru</th>
-                    <th width="10%" class="text-right">Selisih</th>
+                    <th width="8%" class="text-right">Stok Lama</th>
+                    <th width="8%" class="text-right">Stok Baru</th>
+                    <th width="8%" class="text-right">Selisih</th>
                     <th>Alasan</th>
                     <th width="<?php echo hasRole('admin') ? '12%' : '8%'; ?>">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($adjustments)): ?>
-                <tr><td colspan="8" class="text-center">Belum ada koreksi stok</td></tr>
+                <tr><td colspan="9" class="text-center">Belum ada koreksi stok</td></tr>
                 <?php else: ?>
                 <?php foreach ($adjustments as $adj): ?>
                 <tr>
                     <td><strong><?php echo $adj['transaction_code']; ?></strong></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($adj['adjustment_date'])); ?></td>
+                    <td><?php echo $adj['warehouse_name'] ?? '-'; ?></td>
                     <td><?php echo $adj['item_code']; ?> - <?php echo $adj['item_name']; ?></td>
                     <td class="text-right"><?php echo formatNumber($adj['old_stock'], 2); ?></td>
                     <td class="text-right"><strong><?php echo formatNumber($adj['new_stock'], 2); ?></strong></td>
@@ -152,16 +170,23 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                     <input type="datetime-local" name="adjustment_date" required value="<?php echo date('Y-m-d\TH:i'); ?>">
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-box"></i> Barang *</label>
-                    <select name="item_id" id="itemSelect" required onchange="updateCurrentStock()">
-                        <option value="">Pilih Barang</option>
-                        <?php foreach ($items as $item): ?>
-                        <option value="<?php echo $item['item_id']; ?>" 
-                            data-stock="<?php echo $item['current_stock']; ?>"
-                            data-unit="<?php echo $item['unit']; ?>">
-                            <?php echo $item['item_code']; ?> - <?php echo $item['item_name']; ?>
+                    <label><i class="fas fa-warehouse"></i> Warehouse *</label>
+                    <select name="warehouse_id" id="warehouseSelect" required onchange="loadWarehouseItems()">
+                        <option value="">Pilih Warehouse</option>
+                        <?php foreach ($warehouses as $wh): ?>
+                        <option value="<?php echo $wh['warehouse_id']; ?>">
+                            <?php echo $wh['warehouse_name']; ?> (<?php echo $wh['warehouse_code']; ?>)
                         </option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label><i class="fas fa-box"></i> Barang *</label>
+                    <select name="item_id" id="itemSelect" required onchange="updateCurrentStock()" disabled>
+                        <option value="">Pilih Warehouse terlebih dahulu</option>
                     </select>
                 </div>
             </div>
@@ -215,7 +240,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
 </div>
 
 <script>
-const itemsData = <?php echo json_encode($items); ?>;
+let itemsData = [];
 
 function showAddModal() {
     document.getElementById('adjustmentModal').style.display = 'block';
@@ -226,6 +251,42 @@ function closeModal() {
     document.getElementById('adjustmentForm').reset();
     document.getElementById('oldStock').value = '';
     document.getElementById('difference').textContent = '-';
+    document.getElementById('itemSelect').innerHTML = '<option value="">Pilih Warehouse terlebih dahulu</option>';
+    document.getElementById('itemSelect').disabled = true;
+}
+
+async function loadWarehouseItems() {
+    const warehouseId = document.getElementById('warehouseSelect').value;
+    const itemSelect = document.getElementById('itemSelect');
+
+    if (!warehouseId) {
+        itemSelect.innerHTML = '<option value="">Pilih Warehouse terlebih dahulu</option>';
+        itemSelect.disabled = true;
+        return;
+    }
+
+    itemSelect.innerHTML = '<option value="">Loading...</option>';
+    itemSelect.disabled = true;
+
+    try {
+        const response = await fetch(`get_warehouse_items.php?warehouse_id=${warehouseId}`);
+        const items = await response.json();
+        itemsData = items;
+
+        itemSelect.innerHTML = '<option value="">Pilih Barang</option>';
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.item_id;
+            option.dataset.stock = item.current_stock;
+            option.dataset.unit = item.unit;
+            option.textContent = `${item.item_code} - ${item.item_name} (Stok: ${parseFloat(item.current_stock).toFixed(2)})`;
+            itemSelect.appendChild(option);
+        });
+        itemSelect.disabled = false;
+    } catch (error) {
+        console.error('Error loading items:', error);
+        itemSelect.innerHTML = '<option value="">Error loading items</option>';
+    }
 }
 
 function closeDetailModal() {

@@ -12,16 +12,18 @@ if (!$adjustment_id) {
     exit();
 }
 
-// Get adjustment data
-$query = "SELECT sa.*, u.full_name 
+// Get adjustment data with warehouse
+$query = "SELECT sa.*, u.full_name, w.warehouse_name, w.warehouse_code
           FROM stock_adjustment sa
-          LEFT JOIN users u ON sa.created_by = u.user_id 
+          LEFT JOIN users u ON sa.created_by = u.user_id
+          LEFT JOIN warehouses w ON sa.warehouse_id = w.warehouse_id
           WHERE sa.adjustment_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $adjustment_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $adjustment = $result->fetch_assoc();
+$stmt->close();
 
 if (!$adjustment) {
     header("Location: stock_adjustment.php");
@@ -33,9 +35,18 @@ $adjustment['old_stock'] = $adjustment['old_stock'] ?? 0;
 $adjustment['new_stock'] = $adjustment['new_stock'] ?? 0;
 $adjustment['reason'] = $adjustment['reason'] ?? '';
 
-// Get all items for dropdown
-$items_query = "SELECT * FROM items ORDER BY item_name";
-$items = $conn->query($items_query);
+// Get items from warehouse_items for the warehouse
+$items_query = "SELECT i.item_id, i.item_code, i.item_name, i.unit,
+                       wi.current_stock, wi.average_cost
+                FROM warehouse_items wi
+                JOIN items i ON wi.item_id = i.item_id
+                WHERE wi.warehouse_id = ?
+                ORDER BY i.item_code";
+$stmt = $conn->prepare($items_query);
+$stmt->bind_param("i", $adjustment['warehouse_id']);
+$stmt->execute();
+$items = $stmt->get_result();
+$stmt->close();
 
 $page_title = 'Edit Stock Adjustment';
 include 'includes/header.php';
@@ -54,18 +65,26 @@ include 'includes/header.php';
             <form id="adjustmentForm" method="POST" action="stock_adjustment_update.php">
                 <input type="hidden" name="adjustment_id" value="<?php echo $adjustment_id; ?>">
                 
+                <input type="hidden" name="warehouse_id" value="<?php echo $adjustment['warehouse_id']; ?>">
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                     <div class="form-group">
                         <label>Kode Adjustment:</label>
-                        <input type="text" class="form-control" value="<?php echo $adjustment['transaction_code']; ?>" readonly 
+                        <input type="text" class="form-control" value="<?php echo $adjustment['transaction_code']; ?>" readonly
                                style="background: #f5f5f5;">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Tanggal: <span class="required">*</span></label>
-                        <input type="datetime-local" name="adjustment_date" class="form-control" 
+                        <input type="datetime-local" name="adjustment_date" class="form-control"
                                value="<?php echo date('Y-m-d\TH:i', strtotime($adjustment['adjustment_date'])); ?>" required>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-warehouse"></i> Warehouse</label>
+                    <input type="text" class="form-control" value="<?php echo $adjustment['warehouse_name']; ?> (<?php echo $adjustment['warehouse_code']; ?>)" readonly
+                           style="background: #f5f5f5;">
                 </div>
 
                 <div class="form-group">
@@ -73,7 +92,7 @@ include 'includes/header.php';
                     <select name="item_id" id="itemSelect" class="form-control" required onchange="updateCurrentStock()">
                         <option value="">Pilih Barang</option>
                         <?php while ($item = $items->fetch_assoc()): ?>
-                        <option value="<?php echo $item['item_id']; ?>" 
+                        <option value="<?php echo $item['item_id']; ?>"
                                 data-stock="<?php echo $item['current_stock']; ?>"
                                 data-unit="<?php echo $item['unit']; ?>"
                                 <?php echo ($item['item_id'] == $adjustment['item_id']) ? 'selected' : ''; ?>>
