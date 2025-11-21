@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tenor = intval($_POST['tenor']);
         $tanggal_akad = sanitize($_POST['tanggal_akad']);
         $keterangan = sanitize($_POST['keterangan']);
+        $funded_by_investor = intval($_POST['funded_by_investor'] ?? 1);
 
         // Calculate
         $total_harga = $harga_modal + $margin;
@@ -27,15 +28,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nomor_kontrak = generateNomorKontrak();
         $created_by = getCurrentUser()['id'];
 
-        $stmt = $conn->prepare("INSERT INTO transactions (nomor_kontrak, customer_id, product_id, harga_modal, margin, total_harga, tenor, angsuran_perbulan, sisa_hutang, tanggal_akad, keterangan, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("siidddiidssi", $nomor_kontrak, $customer_id, $product_id, $harga_modal, $margin, $total_harga, $tenor, $angsuran_perbulan, $sisa_hutang, $tanggal_akad, $keterangan, $created_by);
+        // Start transaction
+        $conn->begin_transaction();
 
-        if ($stmt->execute()) {
+        try {
+            // Insert transaction
+            $stmt = $conn->prepare("INSERT INTO transactions (nomor_kontrak, customer_id, product_id, harga_modal, margin, total_harga, tenor, angsuran_perbulan, sisa_hutang, tanggal_akad, keterangan, created_by, funded_by_investor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("siidddiidssii", $nomor_kontrak, $customer_id, $product_id, $harga_modal, $margin, $total_harga, $tenor, $angsuran_perbulan, $sisa_hutang, $tanggal_akad, $keterangan, $created_by, $funded_by_investor);
+            $stmt->execute();
+            $transaction_id = $stmt->insert_id;
+            $stmt->close();
+
+            // If funded by investor, process investor allocations
+            if ($funded_by_investor == 1 && isset($_POST['investors'])) {
+                $investors = $_POST['investors'];
+                $allocations = $_POST['allocations'];
+                $total_allocated = 0;
+
+                foreach ($investors as $index => $investor_id) {
+                    if (empty($investor_id) || empty($allocations[$index])) continue;
+
+                    $investor_id = intval($investor_id);
+                    $modal_dialokasi = floatval($allocations[$index]);
+                    $total_allocated += $modal_dialokasi;
+
+                    // Check investor modal tersedia
+                    $inv_check = $conn->query("SELECT modal_tersedia, minimal_alokasi, nama_investor FROM investors WHERE id = $investor_id AND status = 'aktif'");
+                    if ($inv_check->num_rows === 0) {
+                        throw new Exception("Investor ID $investor_id tidak ditemukan atau tidak aktif");
+                    }
+                    $inv = $inv_check->fetch_assoc();
+
+                    if ($modal_dialokasi < $inv['minimal_alokasi']) {
+                        throw new Exception("Alokasi untuk {$inv['nama_investor']} kurang dari minimal alokasi (Rp " . number_format($inv['minimal_alokasi'], 0, ',', '.') . ")");
+                    }
+
+                    if ($modal_dialokasi > $inv['modal_tersedia']) {
+                        throw new Exception("Modal tersedia {$inv['nama_investor']} tidak mencukupi (Tersedia: Rp " . number_format($inv['modal_tersedia'], 0, ',', '.') . ")");
+                    }
+                }
+
+                // Validate total allocation equals harga_modal
+                if (abs($total_allocated - $harga_modal) > 0.01) {
+                    throw new Exception("Total alokasi investor (Rp " . number_format($total_allocated, 0, ',', '.') . ") harus sama dengan harga modal (Rp " . number_format($harga_modal, 0, ',', '.') . ")");
+                }
+
+                // Insert investor allocations and update investor balances
+                foreach ($investors as $index => $investor_id) {
+                    if (empty($investor_id) || empty($allocations[$index])) continue;
+
+                    $investor_id = intval($investor_id);
+                    $modal_dialokasi = floatval($allocations[$index]);
+                    $proporsi = ($modal_dialokasi / $total_allocated) * 100;
+
+                    // Insert to transaction_investors
+                    $stmt = $conn->prepare("INSERT INTO transaction_investors (transaction_id, investor_id, modal_dialokasi, proporsi) VALUES (?, ?, ?, ?)");
+                    $stmt->bind_param("iidd", $transaction_id, $investor_id, $modal_dialokasi, $proporsi);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    // Update investor balance
+                    $conn->query("UPDATE investors SET modal_tersedia = modal_tersedia - $modal_dialokasi, modal_allocated = modal_allocated + $modal_dialokasi WHERE id = $investor_id");
+
+                    // Log to kas_transactions
+                    $inv_info = $conn->query("SELECT nama_investor FROM investors WHERE id = $investor_id")->fetch_assoc();
+                    $kas_before = floatval($conn->query("SELECT setting_value FROM kas_settings WHERE setting_key = 'modal_allocated'")->fetch_assoc()['setting_value']);
+                    $kas_after = $kas_before + $modal_dialokasi;
+                    $ket_kas = "Alokasi modal investor {$inv_info['nama_investor']} ke transaksi $nomor_kontrak";
+
+                    $stmt = $conn->prepare("INSERT INTO kas_transactions (tipe, kategori, nominal, saldo_before, saldo_after, referensi_type, referensi_id, keterangan, tanggal_transaksi, created_by) VALUES ('keluar', 'investor_allocation', ?, ?, ?, 'transaction', ?, ?, ?, ?)");
+                    $stmt->bind_param("dddissi", $modal_dialokasi, $kas_before, $kas_after, $transaction_id, $ket_kas, $tanggal_akad, $created_by);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+
+                // Update kas settings
+                $conn->query("UPDATE kas_settings SET setting_value = setting_value - $total_allocated WHERE setting_key = 'modal_tersedia'");
+                $conn->query("UPDATE kas_settings SET setting_value = setting_value + $total_allocated WHERE setting_key = 'modal_allocated'");
+            }
+
+            $conn->commit();
             setFlashMessage('success', "Transaksi cicilan berhasil dibuat. Nomor Kontrak: $nomor_kontrak");
-        } else {
-            setFlashMessage('error', 'Gagal membuat transaksi');
+        } catch (Exception $e) {
+            $conn->rollback();
+            setFlashMessage('error', 'Gagal membuat transaksi: ' . $e->getMessage());
         }
-        $stmt->close();
 
         header('Location: /admin/transactions.php');
         exit;
@@ -88,6 +165,9 @@ $transactions = $conn->query("
 // Get customers and products for dropdown
 $customers = $conn->query("SELECT id, nama_lengkap FROM customers ORDER BY nama_lengkap");
 $products = $conn->query("SELECT id, nama_barang, harga_modal FROM products WHERE is_active = 1 ORDER BY nama_barang");
+
+// Get active investors
+$investors_list = $conn->query("SELECT id, kode_investor, nama_investor, modal_tersedia, minimal_alokasi, nisbah_investor FROM investors WHERE status = 'aktif' ORDER BY nama_investor");
 
 include '../includes/header.php';
 ?>
@@ -277,6 +357,69 @@ include '../includes/header.php';
                     <label class="block text-gray-700 dark:text-gray-300 mb-2">Keterangan</label>
                     <textarea name="keterangan" rows="2" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
                 </div>
+
+                <!-- Investor Funding Section -->
+                <div class="border-t border-gray-300 dark:border-gray-600 pt-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="funded_by_investor" id="funded_by_investor" value="1" checked onchange="toggleInvestorSection()" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="ml-2 text-gray-700 dark:text-gray-300 font-medium">Dibiayai oleh Investor</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">Jika tidak dicentang, transaksi dibiayai dari kas koperasi</p>
+                </div>
+
+                <div id="investorAllocationSection" class="space-y-4">
+                    <div class="bg-yellow-50 dark:bg-yellow-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">Alokasi Modal Investor</h4>
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200">Pilih investor dan masukkan nominal alokasi. Total harus sama dengan Harga Modal.</p>
+                    </div>
+
+                    <div id="investorRows">
+                        <div class="investor-row grid grid-cols-12 gap-2 items-end mb-2">
+                            <div class="col-span-6">
+                                <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Investor</label>
+                                <select name="investors[]" class="investor-select w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" onchange="updateInvestorInfo(this)">
+                                    <option value="">Pilih Investor</option>
+                                    <?php while ($inv = $investors_list->fetch_assoc()): ?>
+                                        <option value="<?php echo $inv['id']; ?>"
+                                                data-modal="<?php echo $inv['modal_tersedia']; ?>"
+                                                data-min="<?php echo $inv['minimal_alokasi']; ?>"
+                                                data-nisbah="<?php echo $inv['nisbah_investor']; ?>">
+                                            <?php echo htmlspecialchars($inv['nama_investor']); ?> - Tersedia: <?php echo formatRupiah($inv['modal_tersedia']); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Nominal Alokasi</label>
+                                <input type="number" name="allocations[]" class="allocation-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" step="0.01" min="0" onkeyup="validateInvestorAllocation()">
+                            </div>
+                            <div class="col-span-2">
+                                <button type="button" onclick="removeInvestorRow(this)" class="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addInvestorRow()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition duration-200">
+                        + Tambah Investor
+                    </button>
+
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Total Alokasi:</span>
+                            <span id="totalAllocation" class="text-lg font-bold text-blue-600 dark:text-blue-400">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Harga Modal:</span>
+                            <span id="targetModal" class="text-lg font-bold text-gray-900 dark:text-white">Rp 0</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-700 dark:text-gray-300 font-medium">Selisih:</span>
+                                <span id="diffAllocation" class="text-lg font-bold">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-6 flex justify-end space-x-3">
@@ -292,8 +435,19 @@ include '../includes/header.php';
 </div>
 
 <script>
+// Investor options template (cached for cloning)
+let investorOptionsHtml = '';
+
 function openModal() {
     document.getElementById('transactionModal').classList.remove('hidden');
+
+    // Cache investor options from first select
+    if (!investorOptionsHtml) {
+        const firstSelect = document.querySelector('.investor-select');
+        if (firstSelect) {
+            investorOptionsHtml = firstSelect.innerHTML;
+        }
+    }
 }
 
 function closeModal() {
@@ -306,6 +460,7 @@ function updateHargaModal() {
     const hargaModal = option.getAttribute('data-modal') || 0;
     document.getElementById('harga_modal').value = hargaModal;
     calculateTotal();
+    validateInvestorAllocation();
 }
 
 function calculateTotal() {
@@ -318,10 +473,83 @@ function calculateTotal() {
 
     document.getElementById('display_total').textContent = formatRupiah(total);
     document.getElementById('display_angsuran').textContent = formatRupiah(angsuran);
+    document.getElementById('targetModal').textContent = formatRupiah(hargaModal);
 }
 
 function formatRupiah(amount) {
     return 'Rp ' + amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function toggleInvestorSection() {
+    const checkbox = document.getElementById('funded_by_investor');
+    const section = document.getElementById('investorAllocationSection');
+
+    if (checkbox.checked) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+function addInvestorRow() {
+    const container = document.getElementById('investorRows');
+    const newRow = document.createElement('div');
+    newRow.className = 'investor-row grid grid-cols-12 gap-2 items-end mb-2';
+    newRow.innerHTML = `
+        <div class="col-span-6">
+            <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Investor</label>
+            <select name="investors[]" class="investor-select w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" onchange="updateInvestorInfo(this)">
+                ${investorOptionsHtml}
+            </select>
+        </div>
+        <div class="col-span-4">
+            <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Nominal Alokasi</label>
+            <input type="number" name="allocations[]" class="allocation-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" step="0.01" min="0" onkeyup="validateInvestorAllocation()">
+        </div>
+        <div class="col-span-2">
+            <button type="button" onclick="removeInvestorRow(this)" class="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg">Hapus</button>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+function removeInvestorRow(button) {
+    const rows = document.querySelectorAll('.investor-row');
+    if (rows.length > 1) {
+        button.closest('.investor-row').remove();
+        validateInvestorAllocation();
+    } else {
+        alert('Minimal harus ada 1 investor');
+    }
+}
+
+function updateInvestorInfo(select) {
+    validateInvestorAllocation();
+}
+
+function validateInvestorAllocation() {
+    const hargaModal = parseFloat(document.getElementById('harga_modal').value) || 0;
+    const allocationInputs = document.querySelectorAll('.allocation-input');
+
+    let totalAllocation = 0;
+    allocationInputs.forEach(input => {
+        totalAllocation += parseFloat(input.value) || 0;
+    });
+
+    const diff = hargaModal - totalAllocation;
+
+    document.getElementById('totalAllocation').textContent = formatRupiah(totalAllocation);
+    document.getElementById('targetModal').textContent = formatRupiah(hargaModal);
+    document.getElementById('diffAllocation').textContent = formatRupiah(Math.abs(diff));
+
+    const diffElement = document.getElementById('diffAllocation');
+    if (Math.abs(diff) < 0.01) {
+        diffElement.className = 'text-lg font-bold text-green-600 dark:text-green-400';
+    } else if (diff > 0) {
+        diffElement.className = 'text-lg font-bold text-red-600 dark:text-red-400';
+    } else {
+        diffElement.className = 'text-lg font-bold text-orange-600 dark:text-orange-400';
+    }
 }
 
 function validateForm() {
@@ -330,8 +558,72 @@ function validateForm() {
         alert('Margin harus lebih dari 0');
         return false;
     }
+
+    // Validate investor allocation if funded by investor
+    const fundedByInvestor = document.getElementById('funded_by_investor').checked;
+    if (fundedByInvestor) {
+        const hargaModal = parseFloat(document.getElementById('harga_modal').value) || 0;
+        const allocationInputs = document.querySelectorAll('.allocation-input');
+        const investorSelects = document.querySelectorAll('.investor-select');
+
+        let totalAllocation = 0;
+        let hasEmptyInvestor = false;
+        let hasEmptyAllocation = false;
+
+        investorSelects.forEach((select, index) => {
+            if (select.value === '') {
+                hasEmptyInvestor = true;
+            }
+            const allocation = parseFloat(allocationInputs[index].value) || 0;
+            if (allocation <= 0) {
+                hasEmptyAllocation = true;
+            }
+            totalAllocation += allocation;
+        });
+
+        if (hasEmptyInvestor) {
+            alert('Semua investor harus dipilih. Hapus baris yang tidak digunakan.');
+            return false;
+        }
+
+        if (hasEmptyAllocation) {
+            alert('Semua nominal alokasi harus lebih dari 0');
+            return false;
+        }
+
+        const diff = Math.abs(hargaModal - totalAllocation);
+        if (diff > 0.01) {
+            alert(`Total alokasi investor (${formatRupiah(totalAllocation)}) harus sama dengan harga modal (${formatRupiah(hargaModal)}). Selisih: ${formatRupiah(diff)}`);
+            return false;
+        }
+
+        // Check investor modal tersedia and minimal alokasi
+        for (let i = 0; i < investorSelects.length; i++) {
+            const select = investorSelects[i];
+            const option = select.options[select.selectedIndex];
+            const modalTersedia = parseFloat(option.getAttribute('data-modal')) || 0;
+            const minimalAlokasi = parseFloat(option.getAttribute('data-min')) || 0;
+            const allocation = parseFloat(allocationInputs[i].value) || 0;
+
+            if (allocation > modalTersedia) {
+                alert(`Alokasi untuk ${option.text.split(' - ')[0]} melebihi modal tersedia (${formatRupiah(modalTersedia)})`);
+                return false;
+            }
+
+            if (allocation < minimalAlokasi) {
+                alert(`Alokasi untuk ${option.text.split(' - ')[0]} kurang dari minimal alokasi (${formatRupiah(minimalAlokasi)})`);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleInvestorSection();
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>

@@ -56,6 +56,14 @@ $isAdminPage = isAdmin();
                         <a href="/admin/payments.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pembayaran
                         </a>
+                        <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
+                        <a href="/admin/investors.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Investor
+                        </a>
+                        <a href="/admin/kas_transactions.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Kas
+                        </a>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -123,6 +131,14 @@ $isAdminPage = isAdmin();
                 <a href="/admin/payments.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pembayaran
                 </a>
+                <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
+                <a href="/admin/investors.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Investor
+                </a>
+                <a href="/admin/kas_transactions.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Kas
+                </a>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>

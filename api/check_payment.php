@@ -84,6 +84,14 @@ if ($status === 'PAID' || $status === 'SETTLED') {
                 $new_sisa_hutang = 0;
                 $new_status = 'lunas';
                 $conn->query("UPDATE transactions SET total_dibayar = $new_total_dibayar, sisa_hutang = $new_sisa_hutang, status = '$new_status' WHERE id = $transaction_id");
+
+                // Distribute profit to investors automatically
+                try {
+                    distributeInvestorProfit($transaction_id, $conn);
+                } catch (Exception $e) {
+                    // Log error but don't fail the payment
+                    error_log("Profit distribution error for transaction $transaction_id: " . $e->getMessage());
+                }
             } else {
                 $conn->query("UPDATE transactions SET total_dibayar = $new_total_dibayar, sisa_hutang = $new_sisa_hutang WHERE id = $transaction_id");
             }
