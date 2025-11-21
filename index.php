@@ -46,6 +46,12 @@ if ($row = $result->fetch_assoc()) {
     $stats['total_branches'] = $row['total'];
 }
 
+// Total warehouses
+$result = $conn->query("SELECT COUNT(*) as total FROM warehouses WHERE is_active = 1");
+if ($row = $result->fetch_assoc()) {
+    $stats['total_warehouses'] = $row['total'];
+}
+
 // Recent transactions (last 5) with item details
 $recent_transactions = [];
 
@@ -163,12 +169,21 @@ include 'includes/header.php';
                 <div class="stat-value"><?php echo number_format($stats['total_suppliers']); ?></div>
             </div>
         </div>
-        
-        <div class="stat-card">
+
+        <div class="stat-card dual-info">
             <div class="stat-icon"><i class="fas fa-building"></i></div>
             <div class="stat-info">
-                <div class="stat-label">Cabang</div>
-                <div class="stat-value"><?php echo number_format($stats['total_branches']); ?></div>
+                <div class="dual-stats">
+                    <div class="dual-stat-item">
+                        <div class="stat-label">Warehouse</div>
+                        <div class="stat-value"><?php echo number_format($stats['total_warehouses']); ?></div>
+                    </div>
+                    <div class="dual-divider"></div>
+                    <div class="dual-stat-item">
+                        <div class="stat-label">Cabang</div>
+                        <div class="stat-value"><?php echo number_format($stats['total_branches']); ?></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -361,6 +376,38 @@ include 'includes/header.php';
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+/* Dual info card styles */
+.stat-card.dual-info .stat-info {
+    width: 100%;
+}
+
+.dual-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.dual-stat-item {
+    flex: 1;
+    text-align: center;
+}
+
+.dual-divider {
+    width: 1px;
+    height: 35px;
+    background: var(--border-color);
+}
+
+.dual-stat-item .stat-label {
+    font-size: 10px;
+}
+
+.dual-stat-item .stat-value {
+    font-size: 20px;
 }
 
 .content-grid {
