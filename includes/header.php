@@ -472,6 +472,10 @@
                             <i class="fas fa-wrench"></i>
                             <span>Opname</span>
                         </a>
+                        <a href="stock_transfer.php" class="<?php echo $current_page === 'stock_transfer.php' ? 'active' : ''; ?>">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Transfer Stok</span>
+                        </a>
                     </div>
                 </li>
                 <?php endif; ?>
