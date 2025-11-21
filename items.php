@@ -83,14 +83,18 @@ while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
 }
 
-// Get items list with category
+// Get items list with category and total stock from all warehouses
 $search = $_GET['search'] ?? '';
 $category_filter = $_GET['category'] ?? '';
 
 $query = "
-    SELECT i.*, c.category_name 
+    SELECT i.*, c.category_name,
+           COALESCE(SUM(wi.current_stock), 0) as total_stock,
+           COALESCE(AVG(wi.average_cost), 0) as avg_cost,
+           COUNT(DISTINCT wi.warehouse_id) as warehouse_count
     FROM items i
     LEFT JOIN categories c ON i.category_id = c.category_id
+    LEFT JOIN warehouse_items wi ON i.item_id = wi.item_id
     WHERE 1=1
 ";
 
@@ -102,7 +106,7 @@ if (!empty($category_filter)) {
     $query .= " AND i.category_id = " . intval($category_filter);
 }
 
-$query .= " ORDER BY i.item_code ASC";
+$query .= " GROUP BY i.item_id ORDER BY i.item_code ASC";
 
 $items = [];
 $result = $conn->query($query);
@@ -171,17 +175,24 @@ include 'includes/header.php';
                     <td colspan="9" class="text-center">Belum ada data barang</td>
                 </tr>
                 <?php else: ?>
-                <?php foreach ($items as $item): 
-                    $status = getStockStatus($item['current_stock'], $item['min_stock']);
+                <?php foreach ($items as $item):
+                    $status = getStockStatus($item['total_stock'], $item['min_stock']);
                 ?>
                 <tr>
                     <td><strong><?php echo $item['item_code']; ?></strong></td>
                     <td><?php echo $item['item_name']; ?></td>
                     <td><?php echo $item['category_name'] ?? '-'; ?></td>
-                    <td class="text-right"><strong><?php echo number_format($item['current_stock'], 0); ?></strong></td>
+                    <td class="text-right">
+                        <strong><?php echo number_format($item['total_stock'], 0); ?></strong>
+                        <?php if ($item['warehouse_count'] > 0): ?>
+                        <button class="btn-xs btn-info" onclick="showStockDetail(<?php echo $item['item_id']; ?>, '<?php echo addslashes($item['item_name']); ?>')" style="margin-left: 4px;">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <?php endif; ?>
+                    </td>
                     <td class="text-center"><?php echo $item['unit']; ?></td>
                     <td class="text-right"><?php echo formatNumber($item['min_stock'], 0); ?></td>
-                    <td class="text-right"><?php echo formatRupiah($item['average_cost']); ?></td>
+                    <td class="text-right"><?php echo formatRupiah($item['avg_cost']); ?></td>
                     <td class="text-center">
                         <span class="badge badge-<?php echo $status['class']; ?>">
                             <?php echo $status['status']; ?>
@@ -587,10 +598,100 @@ function closeModal() {
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('itemModal');
+    const stockModal = document.getElementById('stockDetailModal');
     if (event.target == modal) {
         closeModal();
+    } else if (event.target == stockModal) {
+        closeStockDetailModal();
     }
 }
+
+// Stock Detail functions
+function showStockDetail(itemId, itemName) {
+    document.getElementById('stockDetailItemName').textContent = itemName;
+    document.getElementById('stockDetailContent').innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    document.getElementById('stockDetailModal').style.display = 'block';
+
+    // Fetch stock details
+    fetch('get_stock_detail.php?item_id=' + itemId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = '<table class="data-table"><thead><tr><th>Warehouse</th><th class="text-right">Stok</th><th class="text-right">Harga Avg</th><th class="text-right">Nilai</th></tr></thead><tbody>';
+
+                if (data.stocks.length === 0) {
+                    html += '<tr><td colspan="4" class="text-center">Tidak ada stok di warehouse manapun</td></tr>';
+                } else {
+                    data.stocks.forEach(stock => {
+                        html += '<tr>';
+                        html += '<td><strong>' + stock.warehouse_name + '</strong><br><small style="color: var(--text-secondary);">' + stock.warehouse_code + '</small></td>';
+                        html += '<td class="text-right"><strong>' + parseFloat(stock.current_stock).toLocaleString('id-ID') + ' ' + stock.unit + '</strong></td>';
+                        html += '<td class="text-right">' + formatRupiahJS(stock.average_cost) + '</td>';
+                        html += '<td class="text-right"><strong>' + formatRupiahJS(stock.current_stock * stock.average_cost) + '</strong></td>';
+                        html += '</tr>';
+                    });
+
+                    // Total row
+                    html += '<tr style="background: var(--bg-primary); font-weight: bold;">';
+                    html += '<td>TOTAL</td>';
+                    html += '<td class="text-right">' + parseFloat(data.total_stock).toLocaleString('id-ID') + ' ' + data.unit + '</td>';
+                    html += '<td class="text-right">-</td>';
+                    html += '<td class="text-right">' + formatRupiahJS(data.total_value) + '</td>';
+                    html += '</tr>';
+                }
+
+                html += '</tbody></table>';
+                document.getElementById('stockDetailContent').innerHTML = html;
+            } else {
+                document.getElementById('stockDetailContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger-color);">Error: ' + data.message + '</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('stockDetailContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger-color);">Error loading data</div>';
+        });
+}
+
+function closeStockDetailModal() {
+    document.getElementById('stockDetailModal').style.display = 'none';
+}
+
+function formatRupiahJS(amount) {
+    return 'Rp ' + parseFloat(amount).toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
 </script>
+
+<!-- Stock Detail Modal -->
+<div id="stockDetailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-warehouse"></i> Detail Stok: <span id="stockDetailItemName"></span></h2>
+            <span class="close" onclick="closeStockDetailModal()">&times;</span>
+        </div>
+        <div id="stockDetailContent" style="padding: 20px;">
+            <!-- Content will be loaded via AJAX -->
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-xs {
+    padding: 2px 6px;
+    font-size: 11px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.btn-info {
+    background: var(--info-color);
+    color: white;
+}
+
+.btn-info:hover {
+    background: #0891b2;
+}
+</style>
 
 <?php include 'includes/footer.php'; ?>
