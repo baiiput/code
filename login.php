@@ -1,14 +1,15 @@
 <?php
 require_once 'config/database.php';
+require_once 'config/base_path.php';
 require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
     if (isAdmin()) {
-        header('Location: /admin/index.php');
+        redirectTo('admin/index.php');
     } else {
-        header('Location: /customer/index.php');
+        redirectTo('customer/index.php');
     }
     exit;
 }
@@ -34,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 loginUser($user['id'], $user['username'], $user['role'], $user['customer_id'], $user['user_level'], $user['full_name']);
 
                 if ($user['role'] === 'admin') {
-                    header('Location: /admin/index.php');
+                    redirectTo('admin/index.php');
                 } else {
-                    header('Location: /customer/index.php');
+                    redirectTo('customer/index.php');
                 }
                 exit;
             } else {

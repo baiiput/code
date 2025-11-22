@@ -4,6 +4,9 @@
  * Koperasi Syariah Online
  */
 
+// Load base path config
+require_once __DIR__ . '/../config/base_path.php';
+
 // Start session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -41,8 +44,7 @@ function isCustomer() {
  */
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: /login.php');
-        exit;
+        redirectTo('login.php');
     }
 }
 
@@ -52,8 +54,7 @@ function requireLogin() {
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
-        header('Location: /customer/index.php');
-        exit;
+        redirectTo('customer/index.php');
     }
 }
 
@@ -63,8 +64,7 @@ function requireAdmin() {
 function requireCustomer() {
     requireLogin();
     if (!isCustomer()) {
-        header('Location: /admin/index.php');
-        exit;
+        redirectTo('admin/index.php');
     }
 }
 
@@ -124,12 +124,11 @@ function getUserLevelName($level = null) {
 /**
  * Require specific user level
  */
-function requireLevel($requiredLevel, $redirect = '/admin/index.php') {
+function requireLevel($requiredLevel, $redirect = 'admin/index.php') {
     requireLogin();
     if (!hasPermission($requiredLevel)) {
         setFlashMessage('error', 'Anda tidak memiliki akses ke halaman ini');
-        header('Location: ' . $redirect);
-        exit;
+        redirectTo($redirect);
     }
 }
 
@@ -140,8 +139,7 @@ function requireSuperAdmin() {
     requireLogin();
     if (!isSuperAdmin()) {
         setFlashMessage('error', 'Hanya Super Admin yang dapat mengakses halaman ini');
-        header('Location: /admin/index.php');
-        exit;
+        redirectTo('admin/index.php');
     }
 }
 

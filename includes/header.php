@@ -29,38 +29,38 @@ $isAdminPage = isAdmin();
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="<?php echo $isAdminPage ? '/admin/index.php' : '/customer/index.php'; ?>" class="flex items-center">
+                    <a href="<?php echo baseUrl($isAdminPage ? 'admin/index.php' : 'customer/index.php'); ?>" class="flex items-center">
                         <span class="text-xl font-bold text-blue-600 dark:text-blue-400">Koperasi Syariah</span>
                     </a>
 
                     <?php if ($isAdminPage): ?>
                     <!-- Admin Menu -->
                     <div class="hidden md:ml-6 md:flex md:space-x-4">
-                        <a href="/admin/index.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/index.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Dashboard
                         </a>
                         <?php if (isSuperAdmin()): ?>
-                        <a href="/admin/users.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/users.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Users
                         </a>
                         <?php endif; ?>
-                        <a href="/admin/customers.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/customers.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pelanggan
                         </a>
-                        <a href="/admin/products.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/products.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Barang
                         </a>
-                        <a href="/admin/transactions.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/transactions.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Transaksi
                         </a>
-                        <a href="/admin/payments.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/payments.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pembayaran
                         </a>
                         <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
-                        <a href="/admin/investors.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/investors.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Investor
                         </a>
-                        <a href="/admin/kas_transactions.php" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Kas
                         </a>
                         <?php endif; ?>
@@ -98,7 +98,7 @@ $isAdminPage = isAdmin();
                                 <div class="text-xs text-gray-500 dark:text-gray-400">@<?php echo htmlspecialchars($currentUser['username']); ?></div>
                                 <div class="text-xs text-blue-600 dark:text-blue-400 mt-1"><?php echo $currentUser['level_name']; ?></div>
                             </div>
-                            <a href="/logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="<?php echo baseUrl('logout.php'); ?>" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 Logout
                             </a>
                         </div>
@@ -111,31 +111,31 @@ $isAdminPage = isAdmin();
         <?php if ($isAdminPage): ?>
         <div class="md:hidden border-t border-gray-200 dark:border-gray-700">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="/admin/index.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/index.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Dashboard
                 </a>
                 <?php if (isSuperAdmin()): ?>
-                <a href="/admin/users.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/users.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Users
                 </a>
                 <?php endif; ?>
-                <a href="/admin/customers.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/customers.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pelanggan
                 </a>
-                <a href="/admin/products.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/products.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Barang
                 </a>
-                <a href="/admin/transactions.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/transactions.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Transaksi
                 </a>
-                <a href="/admin/payments.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/payments.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pembayaran
                 </a>
                 <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
-                <a href="/admin/investors.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/investors.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Investor
                 </a>
-                <a href="/admin/kas_transactions.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Kas
                 </a>
                 <?php endif; ?>
