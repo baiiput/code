@@ -7,10 +7,10 @@ require_once 'config.php';
 $db = Database::getConnection();
 $branches = getBranches();
 $currentUser = getCurrentUser();
-$action = isset($_GET['action']) ? $_GET['action'] : 'list';
+$action = isset($_GET['action']) ? $_GET['action'] : 'add';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Permission check
+// Permission check - this page is only for add/edit, need at least Editor role
 if ($action === 'add' && !canAdd()) {
     $_SESSION['error'] = 'Anda harus login sebagai Editor atau Admin untuk menambah transaksi.';
     header('Location: login.php');
@@ -19,6 +19,12 @@ if ($action === 'add' && !canAdd()) {
 
 if ($action === 'edit' && !canEdit()) {
     $_SESSION['error'] = 'Hanya Admin yang dapat mengedit transaksi.';
+    header('Location: index.php');
+    exit;
+}
+
+// If accessed without valid action, redirect
+if (!in_array($action, ['add', 'edit'])) {
     header('Location: index.php');
     exit;
 }
