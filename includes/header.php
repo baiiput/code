@@ -51,6 +51,9 @@ $isAdminPage = isAdmin();
                         <a href="<?php echo baseUrl('admin/payments.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pembayaran
                         </a>
+                        <a href="<?php echo baseUrl('admin/verify_payments.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Verifikasi
+                        </a>
                         <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
                         <a href="<?php echo baseUrl('admin/investors.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Investor
@@ -125,6 +128,9 @@ $isAdminPage = isAdmin();
                 </a>
                 <a href="<?php echo baseUrl('admin/payments.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pembayaran
+                </a>
+                <a href="<?php echo baseUrl('admin/verify_payments.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Verifikasi
                 </a>
                 <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
                 <a href="<?php echo baseUrl('admin/investors.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">

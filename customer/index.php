@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../config/base_path.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 
@@ -148,9 +149,14 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <a href="/customer/payment.php?id=<?php echo $trans['id']; ?>" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
-                        Bayar Cicilan
-                    </a>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="<?php echo baseUrl('customer/payment.php?id=' . $trans['id']); ?>" class="text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                            Bayar Online
+                        </a>
+                        <a href="<?php echo baseUrl('customer/upload_bukti.php?id=' . $trans['id']); ?>" class="text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                            Upload Bukti
+                        </a>
+                    </div>
                 </div>
             <?php endwhile; ?>
         </div>
