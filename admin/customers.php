@@ -129,11 +129,11 @@ include '../includes/header.php';
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nama_lengkap']); ?></div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($customer['email']); ?></div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($customer['email'] ?? '-'); ?></div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nik']); ?></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['telepon']); ?></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['username']); ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nik'] ?? '-'); ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['telepon'] ?? '-'); ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['username'] ?? '-'); ?></td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick='openModal("edit", <?php echo json_encode($customer); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
                                 <?php if (!isStaff()): ?>
@@ -153,7 +153,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Modal Add/Edit -->
-<div id="customerModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+<div id="customerModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="flex justify-between items-center mb-4">
             <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Tambah Pelanggan</h3>

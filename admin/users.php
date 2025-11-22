@@ -221,7 +221,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Modal Add/Edit -->
-<div id="userModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+<div id="userModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="flex justify-between items-center mb-4">
             <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Tambah User Admin</h3>

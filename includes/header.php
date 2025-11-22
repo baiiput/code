@@ -39,11 +39,6 @@ $isAdminPage = isAdmin();
                         <a href="<?php echo baseUrl('admin/index.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Dashboard
                         </a>
-                        <?php if (isSuperAdmin()): ?>
-                        <a href="<?php echo baseUrl('admin/users.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            Users
-                        </a>
-                        <?php endif; ?>
                         <a href="<?php echo baseUrl('admin/customers.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Pelanggan
                         </a>
@@ -62,6 +57,11 @@ $isAdminPage = isAdmin();
                         </a>
                         <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             Kas
+                        </a>
+                        <?php endif; ?>
+                        <?php if (isSuperAdmin()): ?>
+                        <a href="<?php echo baseUrl('admin/users.php'); ?>" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            Users
                         </a>
                         <?php endif; ?>
                     </div>
@@ -114,11 +114,6 @@ $isAdminPage = isAdmin();
                 <a href="<?php echo baseUrl('admin/index.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Dashboard
                 </a>
-                <?php if (isSuperAdmin()): ?>
-                <a href="<?php echo baseUrl('admin/users.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Users
-                </a>
-                <?php endif; ?>
                 <a href="<?php echo baseUrl('admin/customers.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Pelanggan
                 </a>
@@ -137,6 +132,11 @@ $isAdminPage = isAdmin();
                 </a>
                 <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Kas
+                </a>
+                <?php endif; ?>
+                <?php if (isSuperAdmin()): ?>
+                <a href="<?php echo baseUrl('admin/users.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Users
                 </a>
                 <?php endif; ?>
             </div>
