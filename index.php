@@ -4,6 +4,6 @@
  * Koperasi Syariah Online
  */
 
-header('Location: /login.php');
-exit;
+require_once 'config/base_path.php';
+redirectTo('login.php');
 ?>
