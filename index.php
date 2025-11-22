@@ -15,8 +15,14 @@ $stats = [
     'total_branches' => 0
 ];
 
-// Total items and stock value
-$result = $conn->query("SELECT COUNT(*) as total, SUM(current_stock * average_cost) as stock_value FROM items");
+// Total items and stock value from warehouse_items (multi-warehouse)
+$result = $conn->query("
+    SELECT COUNT(DISTINCT wi.item_id) as total,
+           SUM(wi.current_stock * wi.average_cost) as stock_value
+    FROM warehouse_items wi
+    JOIN warehouses w ON wi.warehouse_id = w.warehouse_id
+    WHERE w.is_active = 1
+");
 if ($row = $result->fetch_assoc()) {
     $stats['total_items'] = $row['total'];
     $stats['total_stock_value'] = $row['stock_value'] ?? 0;
@@ -28,8 +34,13 @@ if ($row = $result->fetch_assoc()) {
     $stats['warehouse_balance'] = $row['balance_amount'];
 }
 
-// Low stock items
-$result = $conn->query("SELECT COUNT(*) as total FROM items WHERE current_stock <= min_stock");
+// Low stock items (count items where any warehouse has low stock)
+$result = $conn->query("
+    SELECT COUNT(DISTINCT wi.item_id) as total
+    FROM warehouse_items wi
+    JOIN warehouses w ON wi.warehouse_id = w.warehouse_id
+    WHERE wi.current_stock <= wi.min_stock AND w.is_active = 1
+");
 if ($row = $result->fetch_assoc()) {
     $stats['low_stock_count'] = $row['total'];
 }
@@ -107,14 +118,20 @@ while ($row = $result->fetch_assoc()) {
     $recent_transactions[] = $row;
 }
 
-// Low stock items
+// Low stock items (aggregate from all warehouses)
 $low_stock_items = [];
 $query = "
-    SELECT i.item_code, i.item_name, i.current_stock, i.min_stock, i.unit, c.category_name
-    FROM items i
+    SELECT i.item_code, i.item_name, i.unit, c.category_name,
+           SUM(wi.current_stock) as current_stock,
+           MIN(wi.min_stock) as min_stock
+    FROM warehouse_items wi
+    JOIN items i ON wi.item_id = i.item_id
     LEFT JOIN categories c ON i.category_id = c.category_id
-    WHERE i.current_stock <= i.min_stock
-    ORDER BY i.current_stock ASC
+    JOIN warehouses w ON wi.warehouse_id = w.warehouse_id
+    WHERE w.is_active = 1
+    GROUP BY i.item_id
+    HAVING SUM(wi.current_stock) <= MIN(wi.min_stock)
+    ORDER BY current_stock ASC
     LIMIT 10
 ";
 $result = $conn->query($query);
