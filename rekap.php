@@ -15,6 +15,14 @@ if ($year < 2020 || $year > 2099) {
 
 $aktivitas = getAktivitasUser($_SESSION['user_id'], $month, $year);
 $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
+
+// Add daily bonus info to each activity
+foreach ($aktivitas as &$item) {
+    $daily = getDailyBonus($_SESSION['user_id'], $item['tanggal']);
+    $item['daily_level'] = $daily['level'];
+    $item['daily_bonus'] = $daily['bonus'];
+}
+unset($item); // break reference
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -454,8 +462,11 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
             const modal = document.getElementById('detailModal');
             const content = document.getElementById('detailContent');
 
-            const levelBadgeClass = getLevelBadgeClass(item.level);
-            const levelColor = getLevelColor(item.level);
+            // Use daily level and bonus (not per-activity)
+            const dailyLevel = item.daily_level || item.level;
+            const dailyBonus = item.daily_bonus || item.bonus;
+            const levelBadgeClass = getLevelBadgeClass(dailyLevel);
+            const levelColor = getLevelColor(dailyLevel);
 
             let photosHtml = '<span style="color: #9ca3af;">Tidak ada foto</span>';
             if (item.foto_bukti) {
@@ -472,25 +483,25 @@ $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
             }
 
             content.innerHTML = '<div style="display: grid; gap: 8px; font-size: 13px;">' +
-                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                '<div style="display: grid; grid-template-columns: 120px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
                     '<span style="font-weight: 600; color: #e2e8f0;">Tanggal</span>' +
                     '<span style="color: #f1f5f9;">' + formatDate(item.tanggal) + '</span>' +
                 '</div>' +
-                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                '<div style="display: grid; grid-template-columns: 120px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
                     '<span style="font-weight: 600; color: #e2e8f0;">Jam Kerja</span>' +
                     '<span style="color: #f1f5f9;">' + (item.jam_mulai ? item.jam_mulai.substring(0, 5) + ' - ' + item.jam_selesai.substring(0, 5) : '-') + '</span>' +
                 '</div>' +
-                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                '<div style="display: grid; grid-template-columns: 120px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
                     '<span style="font-weight: 600; color: #e2e8f0;">Durasi</span>' +
                     '<span style="color: #f1f5f9;">' + item.durasi_jam + ' jam</span>' +
                 '</div>' +
-                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
-                    '<span style="font-weight: 600; color: #e2e8f0;">Level</span>' +
-                    '<span><span class="badge badge-' + levelBadgeClass + '" style="background: ' + levelColor + ';">Level ' + item.level + '</span></span>' +
+                '<div style="display: grid; grid-template-columns: 120px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Level Harian</span>' +
+                    '<span><span class="badge badge-' + levelBadgeClass + '" style="background: ' + levelColor + ';">Level ' + dailyLevel + '</span></span>' +
                 '</div>' +
-                '<div style="display: grid; grid-template-columns: 100px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
-                    '<span style="font-weight: 600; color: #e2e8f0;">Bonus</span>' +
-                    '<span style="color: #10b981; font-weight: bold;">Rp ' + parseInt(item.bonus).toLocaleString('id-ID') + '</span>' +
+                '<div style="display: grid; grid-template-columns: 120px 1fr; padding: 8px 0; border-bottom: 1px solid #475569;">' +
+                    '<span style="font-weight: 600; color: #e2e8f0;">Bonus Harian</span>' +
+                    '<span style="color: #10b981; font-weight: bold;">Rp ' + parseInt(dailyBonus).toLocaleString('id-ID') + '</span>' +
                 '</div>' +
                 '<div style="padding: 8px 0; border-bottom: 1px solid #475569;">' +
                     '<div style="font-weight: 600; margin-bottom: 6px; color: #e2e8f0;">Aktivitas</div>' +
