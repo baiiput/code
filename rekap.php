@@ -75,8 +75,8 @@ unset($group);
 
         .accordion-header {
             display: grid;
-            grid-template-columns: 150px 120px 100px 140px 60px;
-            gap: 15px;
+            grid-template-columns: 140px 100px 150px 120px 100px 130px 50px;
+            gap: 12px;
             padding: 16px 20px;
             cursor: pointer;
             background: var(--card-bg);
@@ -438,27 +438,58 @@ unset($group);
                             'Sunday' => 'Minggu'
                         ];
                         $activity_count = count($group['activities']);
+
+                        // Get time range (earliest start to latest end)
+                        $earliest_start = null;
+                        $latest_end = null;
+                        foreach ($group['activities'] as $act) {
+                            if (!empty($act['jam_mulai']) && ($earliest_start === null || $act['jam_mulai'] < $earliest_start)) {
+                                $earliest_start = $act['jam_mulai'];
+                            }
+                            if (!empty($act['jam_selesai']) && ($latest_end === null || $act['jam_selesai'] > $latest_end)) {
+                                $latest_end = $act['jam_selesai'];
+                            }
+                        }
+                        $time_range = ($earliest_start && $latest_end) ? substr($earliest_start, 0, 5) . ' - ' . substr($latest_end, 0, 5) : '-';
                     ?>
                     <div class="accordion-item">
                         <div class="accordion-header" onclick="toggleAccordion(this)">
                             <div class="accordion-date">
-                                <div><?php echo $date_formatted; ?></div>
-                                <div style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">
-                                    <?php echo $day_name_id[$day_name]; ?> • <?php echo $activity_count; ?> aktivitas
+                                <div style="font-weight: 600;"><?php echo $date_formatted; ?></div>
+                                <div style="font-size: 11px; color: var(--text-secondary); font-weight: normal; margin-top: 2px;">
+                                    <?php echo $day_name_id[$day_name]; ?>
                                 </div>
                             </div>
-                            <div class="accordion-duration">
-                                ⏱️ <?php echo number_format($group['total_durasi'], 1); ?> jam
+                            <div style="text-align: center;">
+                                <div style="font-size: 13px; color: var(--text-secondary);">Aktivitas</div>
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-top: 2px;">
+                                    <?php echo $activity_count; ?>x
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 2px;">Waktu Kerja</div>
+                                <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">
+                                    <?php echo $time_range; ?>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 2px;">Total Durasi</div>
+                                <div style="font-size: 13px; color: var(--text-primary); font-weight: 600;">
+                                    <?php echo number_format($group['total_durasi'], 1); ?> jam
+                                </div>
                             </div>
                             <div class="accordion-level">
                                 <span class="badge badge-<?php echo getLevelBadgeClass($group['level']); ?>">
                                     Level <?php echo $group['level']; ?>
                                 </span>
                             </div>
-                            <div class="accordion-bonus">
-                                <?php echo formatRupiah($group['bonus']); ?>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 2px;">Bonus Harian</div>
+                                <div class="accordion-bonus">
+                                    <?php echo formatRupiah($group['bonus']); ?>
+                                </div>
                             </div>
-                            <div class="accordion-toggle">
+                            <div class="accordion-toggle" style="justify-self: end;">
                                 ▼
                             </div>
                         </div>
