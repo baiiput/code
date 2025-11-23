@@ -16,13 +16,35 @@ if ($year < 2020 || $year > 2099) {
 $aktivitas = getAktivitasUser($_SESSION['user_id'], $month, $year);
 $salary = getMonthlySalary($_SESSION['user_id'], $month, $year);
 
-// Add daily bonus info to each activity
-foreach ($aktivitas as &$item) {
-    $daily = getDailyBonus($_SESSION['user_id'], $item['tanggal']);
-    $item['daily_level'] = $daily['level'];
-    $item['daily_bonus'] = $daily['bonus'];
+// Group activities by date
+$grouped_activities = [];
+foreach ($aktivitas as $item) {
+    $date = $item['tanggal'];
+    if (!isset($grouped_activities[$date])) {
+        $grouped_activities[$date] = [
+            'tanggal' => $date,
+            'activities' => [],
+            'total_durasi' => 0
+        ];
+    }
+    $grouped_activities[$date]['activities'][] = $item;
+    $grouped_activities[$date]['total_durasi'] += floatval($item['durasi_jam']);
 }
-unset($item); // break reference
+
+// Add daily bonus and level info for each date
+foreach ($grouped_activities as &$group) {
+    $daily = getDailyBonus($_SESSION['user_id'], $group['tanggal']);
+    $group['level'] = $daily['level'];
+    $group['bonus'] = $daily['bonus'];
+
+    // Also add daily level and bonus to each activity item for detail modal
+    foreach ($group['activities'] as &$item) {
+        $item['daily_level'] = $daily['level'];
+        $item['daily_bonus'] = $daily['bonus'];
+    }
+    unset($item);
+}
+unset($group);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -32,6 +54,137 @@ unset($item); // break reference
     <title>Rekap Aktivitas</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
+        /* Accordion Styles */
+        .accordion-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+            transition: all 0.3s;
+        }
+
+        .accordion-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .accordion-header {
+            display: grid;
+            grid-template-columns: 150px 120px 100px 140px 60px;
+            gap: 15px;
+            padding: 16px 20px;
+            cursor: pointer;
+            background: var(--card-bg);
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .accordion-header:hover {
+            background: var(--hover-bg);
+        }
+
+        .accordion-header.active {
+            background: var(--hover-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .accordion-date {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .accordion-duration {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .accordion-level {
+            display: flex;
+            align-items: center;
+        }
+
+        .accordion-bonus {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .accordion-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: transform 0.3s;
+        }
+
+        .accordion-toggle.active {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .accordion-content.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .activity-list {
+            padding: 0 20px 20px 20px;
+        }
+
+        .activity-item {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: var(--hover-bg);
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+            align-items: center;
+        }
+
+        .activity-time {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .activity-desc {
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .activity-detail-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .activity-detail-btn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
         /* Modal Gallery Styles */
         .modal {
             display: none;
@@ -260,80 +413,90 @@ unset($item); // break reference
                 </form>
             </div>
 
-            <!-- Activities Table -->
+            <!-- Activities Accordion -->
             <div class="card">
                 <div class="card-header">
                     <h2>📅 Daftar Aktivitas - <?php echo date('F Y', strtotime("$year-$month-01")); ?></h2>
                 </div>
-                
-                <?php if (count($aktivitas) > 0): ?>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Jam Kerja</th>
-                                <th>Aktivitas</th>
-                                <th>Level</th>
-                                <th>Bonus Harian</th>
-                                <th>Detail</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            // Group activities by date to find last activity per day
-                            $activities_by_date = [];
-                            foreach ($aktivitas as $item) {
-                                $activities_by_date[$item['tanggal']][] = $item['id'];
-                            }
-                            
-                            foreach ($aktivitas as $item): 
-                                // Check if this is the last activity of the day
-                                $date_activities = $activities_by_date[$item['tanggal']];
-                                $is_last_activity = ($item['id'] == end($date_activities));
-                            ?>
-                            <tr>
-                                <td><?php echo date('d/m/Y', strtotime($item['tanggal'])); ?></td>
-                                <td class="jam-kerja">
-                                    <?php 
-                                    if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
-                                        echo substr($item['jam_mulai'], 0, 5) . ' - ' . substr($item['jam_selesai'], 0, 5);
-                                    } else {
-                                        echo '-';
-                                    }
-                                    ?>
-                                </td>
-                                <td class="description-cell">
-                                    <div class="description-text"><?php echo htmlspecialchars($item['aktivitas']); ?></div>
-                                    <?php if (strlen($item['aktivitas']) > 50): ?>
-                                    <span class="view-more-btn" onclick="showFullDescription(<?php echo htmlspecialchars(json_encode($item['aktivitas']), ENT_QUOTES, 'UTF-8'); ?>)">Lihat</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="badge badge-<?php echo getLevelBadgeClass($item['level']); ?>">
-                                        Level <?php echo $item['level']; ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <?php
-                                    // Only show bonus on last activity of the day
-                                    if ($is_last_activity) {
-                                        $daily = getDailyBonus($_SESSION['user_id'], $item['tanggal']);
-                                        echo '<strong style="color: #10b981;">' . formatRupiah($daily['bonus']) . '</strong>';
-                                    } else {
-                                        echo '<span style="color: #9ca3af;">-</span>';
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <a href="#" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8'); ?>); return false;" class="view-detail-btn">
-                                        👁️ Lihat
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+
+                <?php if (count($grouped_activities) > 0): ?>
+                <div class="accordion-container" style="padding: 20px;">
+                    <?php
+                    // Sort by date descending (newest first)
+                    krsort($grouped_activities);
+
+                    foreach ($grouped_activities as $date => $group):
+                        $date_formatted = date('d/m/Y', strtotime($date));
+                        $day_name = date('l', strtotime($date));
+                        $day_name_id = [
+                            'Monday' => 'Senin',
+                            'Tuesday' => 'Selasa',
+                            'Wednesday' => 'Rabu',
+                            'Thursday' => 'Kamis',
+                            'Friday' => 'Jumat',
+                            'Saturday' => 'Sabtu',
+                            'Sunday' => 'Minggu'
+                        ];
+                        $activity_count = count($group['activities']);
+                    ?>
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-date">
+                                <div><?php echo $date_formatted; ?></div>
+                                <div style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">
+                                    <?php echo $day_name_id[$day_name]; ?> • <?php echo $activity_count; ?> aktivitas
+                                </div>
+                            </div>
+                            <div class="accordion-duration">
+                                ⏱️ <?php echo number_format($group['total_durasi'], 1); ?> jam
+                            </div>
+                            <div class="accordion-level">
+                                <span class="badge badge-<?php echo getLevelBadgeClass($group['level']); ?>">
+                                    Level <?php echo $group['level']; ?>
+                                </span>
+                            </div>
+                            <div class="accordion-bonus">
+                                <?php echo formatRupiah($group['bonus']); ?>
+                            </div>
+                            <div class="accordion-toggle">
+                                ▼
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="activity-list">
+                                <?php foreach ($group['activities'] as $item): ?>
+                                <div class="activity-item">
+                                    <div class="activity-time">
+                                        <?php
+                                        if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
+                                            echo substr($item['jam_mulai'], 0, 5) . ' - ' . substr($item['jam_selesai'], 0, 5);
+                                            echo '<div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">(' . $item['durasi_jam'] . ' jam)</div>';
+                                        } else {
+                                            echo '-';
+                                        }
+                                        ?>
+                                    </div>
+                                    <div class="activity-desc">
+                                        <?php
+                                        $desc = htmlspecialchars($item['aktivitas']);
+                                        if (strlen($desc) > 120) {
+                                            echo substr($desc, 0, 120) . '...';
+                                        } else {
+                                            echo $desc;
+                                        }
+                                        ?>
+                                    </div>
+                                    <div>
+                                        <button class="activity-detail-btn" onclick="openDetail(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8'); ?>)">
+                                            👁️ Detail
+                                        </button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
                 <?php else: ?>
                 <div style="text-align: center; padding: 40px; color: #6b7280;">
@@ -365,6 +528,31 @@ unset($item); // break reference
     </div>
 
     <script>
+        // Accordion Toggle Function
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.accordion-toggle');
+            const isActive = content.classList.contains('active');
+
+            // Close all accordions
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.accordion-header').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.accordion-toggle').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Open clicked accordion if it wasn't active
+            if (!isActive) {
+                content.classList.add('active');
+                header.classList.add('active');
+                toggle.classList.add('active');
+            }
+        }
+
         let currentPhotos = [];
         let currentIndex = 0;
         let openedFromDetail = false;
