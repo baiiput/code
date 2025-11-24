@@ -54,11 +54,28 @@ try {
     }
     $stmt->close();
 
-    // 2.5. VALIDATE stock availability in destination warehouse BEFORE reverting
+    // 2.5. SMART VALIDATION - Check if we can revert based on NET CHANGE
+    // If user reduces quantity (60→50), we only need to revert the difference (10)
+    // If user increases quantity (60→70), we need full revert (60) + add more (10)
+
     $insufficient_items = [];
+
+    // Build map of new quantities by item_id
+    $new_qty_map = [];
+    foreach ($items as $item) {
+        $item_id = intval($item['item_id']);
+        $new_qty_map[$item_id] = floatval($item['quantity']);
+    }
+
     foreach ($old_details as $detail) {
         $item_id = $detail['item_id'];
         $old_qty = $detail['quantity'];
+        $new_qty = $new_qty_map[$item_id] ?? 0;
+
+        // Calculate NET change that needs to be reverted from destination
+        // If new_qty < old_qty: we need to revert (old_qty - new_qty)
+        // If new_qty >= old_qty: we need to revert full old_qty then add new
+        $qty_to_revert = ($new_qty < $old_qty) ? ($old_qty - $new_qty) : $old_qty;
 
         // Check current stock in old destination warehouse
         $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
@@ -70,25 +87,31 @@ try {
         if ($result->num_rows > 0) {
             $current_stock = $result->fetch_assoc()['current_stock'];
 
-            // If current stock is less than what we need to revert, record it
-            if ($current_stock < $old_qty) {
+            // Check if we have enough to revert
+            if ($current_stock < $qty_to_revert) {
                 $insufficient_items[] = [
                     'item_code' => $detail['item_code'],
                     'item_name' => $detail['item_name'],
-                    'required' => $old_qty,
+                    'old_qty' => $old_qty,
+                    'new_qty' => $new_qty,
+                    'required' => $qty_to_revert,
                     'available' => $current_stock,
-                    'shortage' => $old_qty - $current_stock
+                    'shortage' => $qty_to_revert - $current_stock
                 ];
             }
         } else {
             // Item doesn't exist in warehouse anymore
-            $insufficient_items[] = [
-                'item_code' => $detail['item_code'],
-                'item_name' => $detail['item_name'],
-                'required' => $old_qty,
-                'available' => 0,
-                'shortage' => $old_qty
-            ];
+            if ($qty_to_revert > 0) {
+                $insufficient_items[] = [
+                    'item_code' => $detail['item_code'],
+                    'item_name' => $detail['item_name'],
+                    'old_qty' => $old_qty,
+                    'new_qty' => $new_qty,
+                    'required' => $qty_to_revert,
+                    'available' => 0,
+                    'shortage' => $qty_to_revert
+                ];
+            }
         }
     }
 
@@ -101,55 +124,71 @@ try {
 
         foreach ($insufficient_items as $item) {
             $error_msg .= "• {$item['item_code']} - {$item['item_name']}\n";
-            $error_msg .= "  Dibutuhkan: " . number_format($item['required'], 2) . "\n";
-            $error_msg .= "  Tersedia: " . number_format($item['available'], 2) . "\n";
+            $error_msg .= "  Transfer Lama: " . number_format($item['old_qty'], 2) . "\n";
+            $error_msg .= "  Transfer Baru: " . number_format($item['new_qty'], 2) . "\n";
+            $error_msg .= "  Perlu Revert: " . number_format($item['required'], 2) . "\n";
+            $error_msg .= "  Stok Tersedia: " . number_format($item['available'], 2) . "\n";
             $error_msg .= "  Kekurangan: " . number_format($item['shortage'], 2) . "\n\n";
         }
 
         $error_msg .= "SOLUSI:\n";
         $error_msg .= "1. Batalkan distribusi/transaksi keluar dari warehouse tujuan terlebih dahulu\n";
-        $error_msg .= "2. Atau gunakan Stock Adjustment untuk memperbaiki stok";
+        $error_msg .= "2. Atau gunakan Stock Adjustment untuk memperbaiki stok\n";
+        $error_msg .= "3. Atau kurangi quantity lebih banyak lagi agar sesuai dengan stok tersedia";
 
         throw new Exception($error_msg);
     }
 
-    // 3. REVERT old transfer effects (now safe because we validated above)
+    // 3. INCREMENTAL UPDATE - Apply delta instead of full revert
+    // This is safer when stock has been distributed
     foreach ($old_details as $detail) {
         $item_id = $detail['item_id'];
         $old_qty = $detail['quantity'];
+        $new_qty = $new_qty_map[$item_id] ?? 0;
 
-        // Add back to from_warehouse
-        $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
-        $stmt->bind_param("ii", $old_from_warehouse, $item_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
+        // Calculate delta (difference between new and old)
+        $delta = $new_qty - $old_qty;
 
-        if ($result->num_rows > 0) {
-            $wh_item = $result->fetch_assoc();
-            $new_stock = $wh_item['current_stock'] + $old_qty;
+        if ($delta != 0) {
+            // Apply delta to from_warehouse (opposite of transfer direction)
+            // If delta is negative (reduced): add back to source
+            // If delta is positive (increased): remove more from source
+            $from_delta = -$delta;
 
-            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
-            $stmt->bind_param("dii", $new_stock, $old_from_warehouse, $item_id);
+            $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+            $stmt->bind_param("ii", $old_from_warehouse, $item_id);
             $stmt->execute();
+            $result = $stmt->get_result();
             $stmt->close();
-        }
 
-        // Remove from to_warehouse
-        $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
-        $stmt->bind_param("ii", $old_to_warehouse, $item_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
+            if ($result->num_rows > 0) {
+                $wh_item = $result->fetch_assoc();
+                $new_stock = $wh_item['current_stock'] + $from_delta;
 
-        if ($result->num_rows > 0) {
-            $wh_item = $result->fetch_assoc();
-            $new_stock = $wh_item['current_stock'] - $old_qty;
+                $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
+                $stmt->bind_param("dii", $new_stock, $old_from_warehouse, $item_id);
+                $stmt->execute();
+                $stmt->close();
+            }
 
-            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
-            $stmt->bind_param("dii", $new_stock, $old_to_warehouse, $item_id);
+            // Apply delta to to_warehouse (same as transfer direction)
+            // If delta is negative (reduced): remove from destination
+            // If delta is positive (increased): add more to destination
+            $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+            $stmt->bind_param("ii", $old_to_warehouse, $item_id);
             $stmt->execute();
+            $result = $stmt->get_result();
             $stmt->close();
+
+            if ($result->num_rows > 0) {
+                $wh_item = $result->fetch_assoc();
+                $new_stock = $wh_item['current_stock'] + $delta;
+
+                $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
+                $stmt->bind_param("dii", $new_stock, $old_to_warehouse, $item_id);
+                $stmt->execute();
+                $stmt->close();
+            }
         }
     }
 
@@ -165,7 +204,7 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // 6. Insert new details and update warehouse_items
+    // 6. Insert new details (stock already updated via incremental approach above)
     foreach ($items as $item) {
         $item_id = intval($item['item_id']);
         $quantity = floatval($item['quantity']);
@@ -175,72 +214,6 @@ try {
         $stmt->bind_param("iid", $transfer_id, $item_id, $quantity);
         $stmt->execute();
         $stmt->close();
-
-        // Deduct from from_warehouse
-        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
-        $stmt->bind_param("ii", $from_warehouse_id, $item_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-
-        if ($result->num_rows > 0) {
-            $wh_item = $result->fetch_assoc();
-            $new_stock = $wh_item['current_stock'] - $quantity;
-
-            if ($new_stock < 0) {
-                throw new Exception("Stok tidak cukup untuk item ID: $item_id di warehouse asal");
-            }
-
-            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
-            $stmt->bind_param("dii", $new_stock, $from_warehouse_id, $item_id);
-            $stmt->execute();
-            $stmt->close();
-        } else {
-            throw new Exception("Item ID: $item_id tidak ditemukan di warehouse asal");
-        }
-
-        // Add to to_warehouse
-        $stmt = $conn->prepare("SELECT current_stock, average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
-        $stmt->bind_param("ii", $to_warehouse_id, $item_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-
-        if ($result->num_rows > 0) {
-            // Item exists in destination warehouse
-            $wh_item = $result->fetch_assoc();
-            $new_stock = $wh_item['current_stock'] + $quantity;
-
-            $stmt = $conn->prepare("UPDATE warehouse_items SET current_stock = ? WHERE warehouse_id = ? AND item_id = ?");
-            $stmt->bind_param("dii", $new_stock, $to_warehouse_id, $item_id);
-            $stmt->execute();
-            $stmt->close();
-        } else {
-            // Item doesn't exist in destination warehouse - create new
-            // Get average_cost from source warehouse
-            $stmt = $conn->prepare("SELECT average_cost FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
-            $stmt->bind_param("ii", $from_warehouse_id, $item_id);
-            $stmt->execute();
-            $avg_cost_result = $stmt->get_result();
-            $stmt->close();
-
-            $avg_cost = 0;
-            if ($avg_cost_result->num_rows > 0) {
-                $avg_cost = $avg_cost_result->fetch_assoc()['average_cost'];
-            }
-
-            // Get min_stock from items table
-            $result = $conn->query("SELECT min_stock FROM items WHERE item_id = $item_id");
-            $min_stock = 0;
-            if ($row = $result->fetch_assoc()) {
-                $min_stock = $row['min_stock'];
-            }
-
-            $stmt = $conn->prepare("INSERT INTO warehouse_items (warehouse_id, item_id, current_stock, average_cost, min_stock) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("iiddd", $to_warehouse_id, $item_id, $quantity, $avg_cost, $min_stock);
-            $stmt->execute();
-            $stmt->close();
-        }
     }
 
     $conn->commit();
