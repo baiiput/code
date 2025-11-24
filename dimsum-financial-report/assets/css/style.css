@@ -255,6 +255,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
     margin: 0;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .stat-icon {
@@ -338,14 +339,20 @@ textarea::placeholder {
     font-size: 0.875rem;
 }
 
+.input-group {
+    flex-wrap: nowrap !important;
+}
+
 .input-group > .form-control {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    min-width: 0;
 }
 
 .input-group > .input-group-text {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    white-space: nowrap;
 }
 
 /* ===== Buttons ===== */
@@ -516,6 +523,12 @@ textarea::placeholder {
     border-bottom: 1px solid var(--border-light);
     vertical-align: middle;
     color: var(--text-primary);
+}
+
+/* Prevent Rupiah text from wrapping */
+.table tbody td.text-end,
+.table tfoot td.text-end {
+    white-space: nowrap;
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) > * {
@@ -976,8 +989,18 @@ textarea::placeholder {
 .bg-primary-soft { background: rgba(99, 102, 241, 0.1) !important; }
 
 .fw-semibold { font-weight: 600; }
-.text-end { font-variant-numeric: tabular-nums; }
+.text-end {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
 .cursor-pointer { cursor: pointer; }
+
+/* Prevent Rupiah formatting from breaking into multiple lines */
+.alert strong,
+.alert span,
+.badge {
+    white-space: nowrap;
+}
 
 /* Empty state */
 .empty-state {
