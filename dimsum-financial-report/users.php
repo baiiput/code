@@ -96,16 +96,17 @@ if ($action === 'edit' && $id > 0) {
                     <li class="nav-item">
                         <a class="nav-link" href="reports.php"><i class="bi bi-bar-chart-line"></i> Laporan</a>
                     </li>
-                    <?php if (canManageUsers()): ?>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="users.php"><i class="bi bi-people"></i> Users</a>
-                    </li>
-                    <?php endif; ?>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-outline-secondary btn-sm" id="themeToggle">
                         <i class="bi bi-moon-fill"></i>
                     </button>
+
+                    <?php if (canManageUsers()): ?>
+                    <a href="users.php" class="btn btn-outline-secondary btn-sm active" title="Kelola Users">
+                        <i class="bi bi-people-fill"></i>
+                    </a>
+                    <?php endif; ?>
 
                     <?php if ($currentUser): ?>
                     <div class="dropdown">
