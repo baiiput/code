@@ -1,44 +1,15 @@
-# ===========================================
-# WAREHOUSE MANAGEMENT SECURITY
-# Apache 2.2 Compatible Version
-# ===========================================
-
-# Enable URL rewriting
+# Minimal .htaccess - only URL rewriting
 RewriteEngine On
 RewriteBase /
 
-# Exclude /reports/ and /assets/ from all rewrite rules
-RewriteRule ^(reports|assets)/ - [L]
+# Exclude directories from URL rewriting
+RewriteRule ^(reports|assets|includes)/ - [L]
 
-# Remove .php extension from URL
+# Remove .php extension
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^(.*)$ $1.php [L]
 
-# Redirect .php URLs to non-.php URLs
+# Redirect .php to non-.php
 RewriteCond %{THE_REQUEST} ^GET\ /[^?\s]+\.php
 RewriteRule ^(.*)\.php$ /$1 [R=301,L]
-
-# Protect .htaccess
-<Files .htaccess>
-    Order allow,deny
-    Deny from all
-</Files>
-
-# Protect sensitive files
-<FilesMatch "\.(env|ini|log|sh|sql|bak|config)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-# Protect warehouse.sql
-<Files warehouse.sql>
-    Order allow,deny
-    Deny from all
-</Files>
-
-# Protect reset SQL files
-<FilesMatch "reset.*\.sql$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
