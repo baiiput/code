@@ -1,99 +1,44 @@
 # ===========================================
-# WAREHOUSE MANAGEMENT SECURITY CONFIGURATION
-# Simplified version for maximum compatibility
+# WAREHOUSE MANAGEMENT SECURITY
+# Apache 2.2 Compatible Version
 # ===========================================
 
-# ============================================
-# 1. DISABLE DIRECTORY BROWSING
-# ============================================
+# Disable directory browsing
 Options -Indexes
 
-# ============================================
-# 2. REMOVE .PHP EXTENSION FROM URL
-# ============================================
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+# Enable URL rewriting
+RewriteEngine On
+RewriteBase /
 
-    # Remove .php extension from URL
-    # If the request is for a .php file, redirect to non-.php URL
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME}\.php -f
-    RewriteRule ^(.*)$ $1.php [L]
+# Remove .php extension from URL
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
 
-    # Redirect .php URLs to non-.php URLs
-    RewriteCond %{THE_REQUEST} ^GET\ /[^?\s]+\.php
-    RewriteRule ^(.*)\.php$ /$1 [R=301,L]
-</IfModule>
+# Redirect .php URLs to non-.php URLs
+RewriteCond %{THE_REQUEST} ^GET\ /[^?\s]+\.php
+RewriteRule ^(.*)\.php$ /$1 [R=301,L]
 
-# ============================================
-# 3. PROTECT SENSITIVE FILES
-# ============================================
-# Deny access to .htaccess and .htpasswd
-<Files ~ "^\.ht">
-    Require all denied
+# Protect .htaccess
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
 </Files>
 
-# Protect config files
+# Protect sensitive files
 <FilesMatch "\.(env|ini|log|sh|sql|bak|config)$">
-    Require all denied
+    Order allow,deny
+    Deny from all
 </FilesMatch>
 
 # Protect warehouse.sql
-<Files "warehouse.sql">
-    Require all denied
+<Files warehouse.sql>
+    Order allow,deny
+    Deny from all
 </Files>
 
 # Protect reset SQL files
 <FilesMatch "reset.*\.sql$">
-    Require all denied
+    Order allow,deny
+    Deny from all
 </FilesMatch>
-
-# ============================================
-# 4. SECURITY HEADERS (OPTIONAL)
-# ============================================
-# Uncomment if your server supports mod_headers
-# <IfModule mod_headers.c>
-#     Header always set X-Frame-Options "SAMEORIGIN"
-#     Header always set X-Content-Type-Options "nosniff"
-#     Header always set X-XSS-Protection "1; mode=block"
-#     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-# </IfModule>
-
-# ============================================
-# 5. BLOCK COMMON ATTACK PATTERNS (OPTIONAL)
-# ============================================
-# Uncomment if needed - these might be too strict for some applications
-# <IfModule mod_rewrite.c>
-#     # Block SQL injection attempts
-#     RewriteCond %{QUERY_STRING} (union|select|insert|cast|set|declare|drop|update|md5|benchmark) [NC]
-#     RewriteRule ^(.*)$ - [F,L]
-#
-#     # Block XSS attempts
-#     RewriteCond %{QUERY_STRING} (<script>|<iframe>|<object>|javascript:) [NC]
-#     RewriteRule ^(.*)$ - [F,L]
-#
-#     # Block file inclusion attempts
-#     RewriteCond %{QUERY_STRING} (\.\.\/|boot\.ini|etc/passwd|self/environ) [NC]
-#     RewriteRule ^(.*)$ - [F,L]
-# </IfModule>
-
-# ============================================
-# 6. PHP SETTINGS (OPTIONAL)
-# ============================================
-# Uncomment if your hosting allows php_flag in .htaccess
-# <IfModule mod_php7.c>
-#     php_flag display_errors Off
-#     php_flag log_errors On
-#     php_flag session.cookie_httponly On
-#     php_flag session.use_only_cookies On
-#     php_value session.cookie_lifetime 0
-# </IfModule>
-
-# ============================================
-# 7. FORCE HTTPS (OPTIONAL - UNCOMMENT IF USING SSL)
-# ============================================
-# <IfModule mod_rewrite.c>
-#     RewriteCond %{HTTPS} off
-#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-# </IfModule>
