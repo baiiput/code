@@ -44,7 +44,7 @@ try {
     $old_to_warehouse = $old_transfer['to_warehouse_id'];
 
     // 2. Get old details
-    $stmt = $conn->prepare("SELECT * FROM stock_transfer_detail WHERE transfer_id = ?");
+    $stmt = $conn->prepare("SELECT std.*, i.item_code, i.item_name FROM stock_transfer_detail std JOIN items i ON std.item_id = i.item_id WHERE std.transfer_id = ?");
     $stmt->bind_param("i", $transfer_id);
     $stmt->execute();
     $old_details = [];
@@ -54,7 +54,66 @@ try {
     }
     $stmt->close();
 
-    // 3. REVERT old transfer effects
+    // 2.5. VALIDATE stock availability in destination warehouse BEFORE reverting
+    $insufficient_items = [];
+    foreach ($old_details as $detail) {
+        $item_id = $detail['item_id'];
+        $old_qty = $detail['quantity'];
+
+        // Check current stock in old destination warehouse
+        $stmt = $conn->prepare("SELECT current_stock FROM warehouse_items WHERE warehouse_id = ? AND item_id = ?");
+        $stmt->bind_param("ii", $old_to_warehouse, $item_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+
+        if ($result->num_rows > 0) {
+            $current_stock = $result->fetch_assoc()['current_stock'];
+
+            // If current stock is less than what we need to revert, record it
+            if ($current_stock < $old_qty) {
+                $insufficient_items[] = [
+                    'item_code' => $detail['item_code'],
+                    'item_name' => $detail['item_name'],
+                    'required' => $old_qty,
+                    'available' => $current_stock,
+                    'shortage' => $old_qty - $current_stock
+                ];
+            }
+        } else {
+            // Item doesn't exist in warehouse anymore
+            $insufficient_items[] = [
+                'item_code' => $detail['item_code'],
+                'item_name' => $detail['item_name'],
+                'required' => $old_qty,
+                'available' => 0,
+                'shortage' => $old_qty
+            ];
+        }
+    }
+
+    // If there are insufficient items, throw detailed error
+    if (!empty($insufficient_items)) {
+        $error_msg = "TIDAK DAPAT UPDATE TRANSFER!\n\n";
+        $error_msg .= "Stok di warehouse tujuan tidak mencukupi untuk di-revert.\n";
+        $error_msg .= "Kemungkinan stok sudah didistribusikan/digunakan.\n\n";
+        $error_msg .= "Detail item yang tidak mencukupi:\n\n";
+
+        foreach ($insufficient_items as $item) {
+            $error_msg .= "• {$item['item_code']} - {$item['item_name']}\n";
+            $error_msg .= "  Dibutuhkan: " . number_format($item['required'], 2) . "\n";
+            $error_msg .= "  Tersedia: " . number_format($item['available'], 2) . "\n";
+            $error_msg .= "  Kekurangan: " . number_format($item['shortage'], 2) . "\n\n";
+        }
+
+        $error_msg .= "SOLUSI:\n";
+        $error_msg .= "1. Batalkan distribusi/transaksi keluar dari warehouse tujuan terlebih dahulu\n";
+        $error_msg .= "2. Atau gunakan Stock Adjustment untuk memperbaiki stok";
+
+        throw new Exception($error_msg);
+    }
+
+    // 3. REVERT old transfer effects (now safe because we validated above)
     foreach ($old_details as $detail) {
         $item_id = $detail['item_id'];
         $old_qty = $detail['quantity'];

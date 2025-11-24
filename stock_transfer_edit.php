@@ -34,14 +34,16 @@ if (!$transfer) {
     exit;
 }
 
-// Get transfer details
+// Get transfer details with current stock in destination warehouse
 $stmt = $conn->prepare("
-    SELECT std.*, i.item_code, i.item_name, i.unit
+    SELECT std.*, i.item_code, i.item_name, i.unit,
+           COALESCE(wi.current_stock, 0) as current_stock_in_dest
     FROM stock_transfer_detail std
     JOIN items i ON std.item_id = i.item_id
+    LEFT JOIN warehouse_items wi ON wi.item_id = std.item_id AND wi.warehouse_id = ?
     WHERE std.transfer_id = ?
 ");
-$stmt->bind_param("i", $transfer_id);
+$stmt->bind_param("ii", $transfer['to_warehouse_id'], $transfer_id);
 $stmt->execute();
 $details = [];
 $result = $stmt->get_result();
@@ -80,6 +82,40 @@ include 'includes/header.php';
         <i class="fas fa-exclamation-triangle"></i>
         <strong>Perhatian!</strong> Edit transfer akan otomatis recalculate stok di kedua warehouse. Pastikan data yang diinput benar.
     </div>
+
+    <?php
+    // Check if any item has insufficient stock in destination warehouse
+    $has_insufficient_stock = false;
+    $insufficient_details = [];
+    foreach ($details as $detail) {
+        if ($detail['current_stock_in_dest'] < $detail['quantity']) {
+            $has_insufficient_stock = true;
+            $insufficient_details[] = $detail;
+        }
+    }
+
+    if ($has_insufficient_stock):
+    ?>
+    <div class="alert alert-danger">
+        <i class="fas fa-ban"></i>
+        <strong>PERINGATAN!</strong> Beberapa item tidak dapat di-edit/revert karena stok di warehouse tujuan tidak mencukupi.
+        <br><br>
+        <strong>Item yang bermasalah:</strong>
+        <ul style="margin-top: 10px; margin-bottom: 0;">
+            <?php foreach ($insufficient_details as $detail): ?>
+            <li>
+                <strong><?php echo $detail['item_code']; ?> - <?php echo $detail['item_name']; ?></strong>
+                <br>
+                Transfer: <?php echo number_format($detail['quantity'], 2); ?> <?php echo $detail['unit']; ?>
+                | Tersedia: <?php echo number_format($detail['current_stock_in_dest'], 2); ?> <?php echo $detail['unit']; ?>
+                | <span style="color: #dc2626;">Kekurangan: <?php echo number_format($detail['quantity'] - $detail['current_stock_in_dest'], 2); ?> <?php echo $detail['unit']; ?></span>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <br>
+        <strong>Solusi:</strong> Batalkan distribusi/transaksi keluar dari warehouse tujuan terlebih dahulu, atau gunakan Stock Adjustment untuk memperbaiki stok.
+    </div>
+    <?php endif; ?>
 
     <form method="POST" action="stock_transfer_update.php">
         <input type="hidden" name="transfer_id" value="<?php echo $transfer_id; ?>">
