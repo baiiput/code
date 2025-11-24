@@ -321,6 +321,9 @@ if ($branchId == 0) {
                     <a href="transactions.php?action=add" class="btn btn-primary btn-sm">
                         <i class="bi bi-plus-lg"></i> Tambah
                     </a>
+                    <a href="import.php" class="btn btn-info btn-sm">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
+                    </a>
                     <?php endif; ?>
                     <button class="btn btn-success btn-sm" onclick="exportExcel()">
                         <i class="bi bi-file-earmark-excel"></i> Export

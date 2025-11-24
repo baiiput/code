@@ -394,6 +394,28 @@ textarea::placeholder {
     color: white;
 }
 
+.btn-info {
+    background: var(--gradient-info);
+    color: white;
+}
+
+.btn-info:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+    color: white;
+}
+
+.btn-warning {
+    background: var(--gradient-warning);
+    color: white;
+}
+
+.btn-warning:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    color: white;
+}
+
 .btn-secondary {
     background: var(--bg-badge);
     border: 1px solid var(--border-color);
@@ -440,6 +462,18 @@ textarea::placeholder {
     background: var(--danger);
     color: white;
     border-color: var(--danger);
+}
+
+.btn-outline-info {
+    border: 1px solid var(--info);
+    color: var(--info);
+    background: transparent;
+}
+
+.btn-outline-info:hover {
+    background: var(--info);
+    color: white;
+    border-color: var(--info);
 }
 
 .btn-sm {
