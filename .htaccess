@@ -7,12 +7,17 @@
 RewriteEngine On
 RewriteBase /
 
+# Allow direct access to reports directory and its files
+RewriteCond %{REQUEST_URI} ^/reports/ [NC]
+RewriteRule ^ - [L]
+
 # Remove .php extension from URL
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^(.*)$ $1.php [L]
 
-# Redirect .php URLs to non-.php URLs
+# Redirect .php URLs to non-.php URLs (skip for reports directory)
+RewriteCond %{REQUEST_URI} !^/reports/ [NC]
 RewriteCond %{THE_REQUEST} ^GET\ /[^?\s]+\.php
 RewriteRule ^(.*)\.php$ /$1 [R=301,L]
 
