@@ -167,48 +167,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <label class="form-label">Tunai</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="cash" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['cash'] : '0' ?>">
+                                        <input type="text" name="cash" class="form-control money-input" data-name="cash"
+                                               value="<?= $transaction ? number_format($transaction['cash'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">QRIS</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="qris" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['qris'] : '0' ?>">
+                                        <input type="text" name="qris" class="form-control money-input" data-name="qris"
+                                               value="<?= $transaction ? number_format($transaction['qris'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Transfer</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="transfer" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['transfer'] : '0' ?>">
+                                        <input type="text" name="transfer" class="form-control money-input" data-name="transfer"
+                                               value="<?= $transaction ? number_format($transaction['transfer'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Shopee Food</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="shopee_food" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['shopee_food'] : '0' ?>">
+                                        <input type="text" name="shopee_food" class="form-control money-input" data-name="shopee_food"
+                                               value="<?= $transaction ? number_format($transaction['shopee_food'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Grab Food</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="grab_food" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['grab_food'] : '0' ?>">
+                                        <input type="text" name="grab_food" class="form-control money-input" data-name="grab_food"
+                                               value="<?= $transaction ? number_format($transaction['grab_food'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Go Food</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="go_food" class="form-control income-input" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['go_food'] : '0' ?>">
+                                        <input type="text" name="go_food" class="form-control money-input" data-name="go_food"
+                                               value="<?= $transaction ? number_format($transaction['go_food'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
 
@@ -227,8 +227,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <label class="form-label">Jumlah Pengeluaran</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
-                                        <input type="number" name="expenses" class="form-control" id="expenseInput" min="0" step="1000"
-                                               value="<?= $transaction ? $transaction['expenses'] : '0' ?>">
+                                        <input type="text" name="expenses" class="form-control money-input" data-name="expenses"
+                                               value="<?= $transaction ? number_format($transaction['expenses'], 0, ',', '.') : '0' ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -265,16 +265,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Calculate totals
-        function calculateTotals() {
-            const incomeInputs = document.querySelectorAll('.income-input');
-            let totalIncome = 0;
-            incomeInputs.forEach(input => {
-                totalIncome += parseFloat(input.value) || 0;
+        // Format number with thousand separator (without decimal)
+        function formatNumber(num) {
+            // Remove non-numeric characters
+            const numStr = String(num).replace(/[^\d]/g, '');
+            const number = parseInt(numStr) || 0;
+
+            // Format with thousand separator
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Parse formatted number to integer
+        function parseFormattedNumber(str) {
+            const cleaned = String(str).replace(/\./g, '');
+            return parseInt(cleaned) || 0;
+        }
+
+        // Format Rupiah display
+        function formatRupiah(num) {
+            return 'Rp ' + formatNumber(num);
+        }
+
+        // Auto-format money inputs
+        document.querySelectorAll('.money-input').forEach(input => {
+            // Format on input
+            input.addEventListener('input', function(e) {
+                const cursorPos = this.selectionStart;
+                const oldLength = this.value.length;
+                const oldValue = this.value;
+
+                // Get numeric value
+                const numericValue = this.value.replace(/[^\d]/g, '');
+
+                // Format with separator
+                const formatted = formatNumber(numericValue);
+                this.value = formatted;
+
+                // Adjust cursor position
+                const newLength = formatted.length;
+                const diff = newLength - oldLength;
+                this.setSelectionRange(cursorPos + diff, cursorPos + diff);
+
+                // Calculate totals
+                calculateTotals();
             });
 
-            const expenses = parseFloat(document.getElementById('expenseInput').value) || 0;
-            const netBalance = totalIncome - expenses;
+            // Format on blur
+            input.addEventListener('blur', function() {
+                if (this.value === '' || this.value === '0') {
+                    this.value = '0';
+                }
+            });
+
+            // Select all on focus
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+
+        // Calculate totals
+        function calculateTotals() {
+            const moneyInputs = document.querySelectorAll('.money-input');
+            let totalIncome = 0;
+            let totalExpenses = 0;
+
+            moneyInputs.forEach(input => {
+                const value = parseFormattedNumber(input.value);
+                const name = input.getAttribute('data-name');
+
+                if (name === 'expenses') {
+                    totalExpenses = value;
+                } else {
+                    totalIncome += value;
+                }
+            });
+
+            const netBalance = totalIncome - totalExpenses;
 
             document.getElementById('totalIncome').textContent = formatRupiah(totalIncome);
             document.getElementById('netBalance').textContent = formatRupiah(netBalance);
@@ -284,13 +350,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             balanceEl.className = netBalance >= 0 ? 'text-success' : 'text-danger';
         }
 
-        function formatRupiah(num) {
-            return 'Rp ' + num.toLocaleString('id-ID');
-        }
-
-        // Add event listeners
-        document.querySelectorAll('.income-input, #expenseInput').forEach(input => {
-            input.addEventListener('input', calculateTotals);
+        // Convert formatted values back to numbers before submit
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            document.querySelectorAll('.money-input').forEach(input => {
+                const numericValue = parseFormattedNumber(input.value);
+                input.value = numericValue;
+            });
         });
 
         // Initial calculation
