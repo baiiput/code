@@ -3,9 +3,6 @@
 # Apache 2.2 Compatible Version
 # ===========================================
 
-# Disable directory browsing
-Options -Indexes
-
 # Enable URL rewriting
 RewriteEngine On
 RewriteBase /
