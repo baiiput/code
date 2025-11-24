@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Username dan password harus diisi';
     } else {
         $conn = getDBConnection();
-        $stmt = $conn->prepare("SELECT user_id, username, password, full_name, role, cabang_id, is_active FROM users WHERE username = ?");
+        $stmt = $conn->prepare("SELECT user_id, username, password, full_name, role, cabang_id, warehouse_id, is_active FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -34,7 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['cabang_id'] = $user['cabang_id'];
-                
+                $_SESSION['warehouse_id'] = $user['warehouse_id'];
+
+                // Log activity
+                logActivity('LOGIN', 'auth', 'User logged in successfully');
+
                 header('Location: index.php');
                 exit;
             } else {

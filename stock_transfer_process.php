@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin', 'staff_warehouse']);
+requireRole(['admin', 'manager', 'staff_warehouse']);
 
 $conn = getDBConnection();
 $user = getCurrentUser();
@@ -122,6 +122,9 @@ try {
     }
 
     $conn->commit();
+
+    // Log activity
+    logActivity('CREATE', 'stock_transfer', "Created stock transfer: $transaction_code");
 
     $_SESSION['success_message'] = "Transfer stok berhasil diproses. Kode: $transaction_code";
     header('Location: stock_transfer.php');

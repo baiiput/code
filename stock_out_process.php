@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin', 'staff_warehouse']);
+requireRole(['admin', 'manager', 'staff_warehouse']);
 
 $conn = getDBConnection();
 $user = getCurrentUser();
@@ -97,7 +97,10 @@ try {
     $stmt->close();
     
     $conn->commit();
-    
+
+    // Log activity
+    logActivity('CREATE', 'stock_out', "Created stock out transaction: $transaction_code");
+
     $_SESSION['success_message'] = "Distribusi stok berhasil disimpan. Kode: $transaction_code";
     header('Location: stock_out.php');
     exit;

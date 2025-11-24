@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin', 'staff_warehouse']);
+requireRole(['admin', 'manager', 'staff_warehouse']);
 
 $conn = getDBConnection();
 $user = getCurrentUser();
@@ -53,7 +53,10 @@ try {
     $stmt->close();
     
     $conn->commit();
-    
+
+    // Log activity
+    logActivity('CREATE', 'stock_adjustment', "Created stock adjustment: $transaction_code (Difference: $difference)");
+
     $_SESSION['success_message'] = "Koreksi stok berhasil disimpan. Kode: $transaction_code";
     header('Location: stock_adjustment.php');
     exit;

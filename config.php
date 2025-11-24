@@ -44,7 +44,8 @@ function getCurrentUser() {
         'username' => $_SESSION['username'] ?? null,
         'full_name' => $_SESSION['full_name'] ?? null,
         'role' => $_SESSION['role'] ?? null,
-        'cabang_id' => $_SESSION['cabang_id'] ?? null
+        'cabang_id' => $_SESSION['cabang_id'] ?? null,
+        'warehouse_id' => $_SESSION['warehouse_id'] ?? null
     ];
 }
 
@@ -102,6 +103,41 @@ function clean($data) {
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
+}
+
+// Get client IP address
+function getClientIP() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        return $_SERVER['REMOTE_ADDR'] ?? '';
+    }
+}
+
+// Get user agent
+function getUserAgent() {
+    return $_SERVER['HTTP_USER_AGENT'] ?? '';
+}
+
+// Log user activity
+function logActivity($action, $module, $description = '') {
+    if (!isLoggedIn()) {
+        return false;
+    }
+
+    $conn = getDBConnection();
+    $user_id = $_SESSION['user_id'];
+    $ip_address = getClientIP();
+    $user_agent = getUserAgent();
+
+    $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action, module, description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssss", $user_id, $action, $module, $description, $ip_address, $user_agent);
+    $result = $stmt->execute();
+    $stmt->close();
+
+    return $result;
 }
 
 // Set timezone

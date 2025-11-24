@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin', 'staff_warehouse']);
+requireRole(['admin', 'manager', 'staff_warehouse']);
 
 $conn = getDBConnection();
 $user = getCurrentUser();

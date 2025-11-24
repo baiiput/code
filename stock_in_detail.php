@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin', 'staff_warehouse', 'staff_keuangan']);
+requireRole(['admin', 'manager', 'staff_warehouse', 'staff_keuangan']);
 
 $conn = getDBConnection();
 $id = intval($_GET['id'] ?? 0);

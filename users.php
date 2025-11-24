@@ -23,7 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, email, phone, role, cabang_id, warehouse_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssssssiis", $username, $password, $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active);
-            $success = $stmt->execute() ? 'User berhasil ditambahkan' : 'Gagal menambahkan user';
+            if ($stmt->execute()) {
+                logActivity('CREATE', 'user', "Created user: $username ($full_name) with role: $role");
+                $success = 'User berhasil ditambahkan';
+            } else {
+                $success = 'Gagal menambahkan user';
+            }
         } else {
             $user_id = intval($_POST['user_id']);
             if (!empty($_POST['password'])) {
@@ -34,7 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $conn->prepare("UPDATE users SET full_name=?, email=?, phone=?, role=?, cabang_id=?, warehouse_id=?, is_active=? WHERE user_id=?");
                 $stmt->bind_param("ssssiiis", $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active, $user_id);
             }
-            $success = $stmt->execute() ? 'User berhasil diupdate' : 'Gagal mengupdate user';
+            if ($stmt->execute()) {
+                logActivity('UPDATE', 'user', "Updated user: $username ($full_name)");
+                $success = 'User berhasil diupdate';
+            } else {
+                $success = 'Gagal mengupdate user';
+            }
         }
         $_SESSION['success_message'] = $success;
         header('Location: users.php');
@@ -107,7 +117,7 @@ unset($_SESSION['success_message']);
                     <td>
                         <span class="badge badge-primary">
                             <?php
-                            $roles = ['admin' => 'Admin', 'staff_warehouse' => 'Staff WH', 'staff_keuangan' => 'Keuangan', 'cabang' => 'Cabang'];
+                            $roles = ['admin' => 'Admin', 'manager' => 'Manager', 'staff_warehouse' => 'Staff WH', 'staff_keuangan' => 'Keuangan', 'cabang' => 'Cabang'];
                             echo $roles[$u['role']] ?? $u['role'];
                             ?>
                         </span>
@@ -188,6 +198,7 @@ unset($_SESSION['success_message']);
                 <select name="role" id="role" required onchange="toggleAssignment()">
                     <option value="">Pilih Role</option>
                     <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
                     <option value="staff_warehouse">Staff Warehouse</option>
                     <option value="staff_keuangan">Staff Keuangan</option>
                     <option value="cabang">Cabang</option>

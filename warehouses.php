@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-requireRole(['admin']);
+requireRole(['admin', 'manager']);
 
 $conn = getDBConnection();
 $user = getCurrentUser();
@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare("INSERT INTO warehouses (warehouse_code, warehouse_name, address, phone, is_active) VALUES (?, ?, ?, ?, ?)");
                     $stmt->bind_param("ssssi", $warehouse_code, $warehouse_name, $address, $phone, $is_active);
                     if ($stmt->execute()) {
+                        logActivity('CREATE', 'warehouse', "Created warehouse: $warehouse_code - $warehouse_name");
                         $success = 'Warehouse berhasil ditambahkan';
                     } else {
                         $error = 'Gagal menambahkan warehouse';
@@ -46,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $conn->prepare("UPDATE warehouses SET warehouse_name = ?, address = ?, phone = ?, is_active = ? WHERE warehouse_id = ?");
                 $stmt->bind_param("sssii", $warehouse_name, $address, $phone, $is_active, $warehouse_id);
                 if ($stmt->execute()) {
+                    logActivity('UPDATE', 'warehouse', "Updated warehouse: $warehouse_name");
                     $success = 'Warehouse berhasil diupdate';
                 } else {
                     $error = 'Gagal mengupdate warehouse';
@@ -77,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute();
 
                 $conn->commit();
+                logActivity('DELETE', 'warehouse', "Deleted warehouse ID: $warehouse_id");
                 $success = 'Warehouse berhasil dihapus';
             } catch (Exception $e) {
                 $conn->rollback();

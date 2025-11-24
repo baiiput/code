@@ -418,7 +418,7 @@
                     </a>
                 </li>
                 
-                <?php if (hasRole(['admin', 'staff_warehouse'])): ?>
+                <?php if (hasRole(['admin', 'manager', 'staff_warehouse'])): ?>
                 <!-- Master Data Dropdown -->
                 <li class="dropdown">
                     <button class="menu-dropdown-btn" onclick="toggleDropdown(this)">
@@ -443,7 +443,7 @@
                             <i class="fas fa-building"></i>
                             <span>Cabang</span>
                         </a>
-                        <?php if (hasRole('admin')): ?>
+                        <?php if (hasRole(['admin', 'manager'])): ?>
                         <a href="warehouses.php" class="<?php echo $current_page === 'warehouses.php' ? 'active' : ''; ?>">
                             <i class="fas fa-warehouse"></i>
                             <span>Warehouses</span>
@@ -480,7 +480,7 @@
                 </li>
                 <?php endif; ?>
                 
-                <?php if (hasRole(['admin', 'staff_keuangan'])): ?>
+                <?php if (hasRole(['admin', 'manager', 'staff_keuangan'])): ?>
                 <!-- Keuangan -->
                 <li>
                     <a href="finance.php" class="<?php echo $current_page === 'finance.php' ? 'active' : ''; ?>">
@@ -489,8 +489,8 @@
                     </a>
                 </li>
                 <?php endif; ?>
-                
-                <?php if (hasRole(['admin', 'staff_warehouse', 'staff_keuangan'])): ?>
+
+                <?php if (hasRole(['admin', 'manager', 'staff_warehouse', 'staff_keuangan'])): ?>
                 <!-- Laporan -->
                 <li>
                     <a href="reports.php" class="<?php echo $current_page === 'reports.php' ? 'active' : ''; ?>">
@@ -499,9 +499,19 @@
                     </a>
                 </li>
                 <?php endif; ?>
-                
+
+                <?php if (hasRole(['admin', 'manager'])): ?>
+                <!-- Activity Logs -->
+                <li>
+                    <a href="activity_logs.php" class="<?php echo $current_page === 'activity_logs.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-history"></i>
+                        <span>Log Aktivitas</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
                 <?php if (hasRole('admin')): ?>
-                <!-- Users -->
+                <!-- Users (Admin Only) -->
                 <li>
                     <a href="users.php" class="<?php echo $current_page === 'users.php' ? 'active' : ''; ?>">
                         <i class="fas fa-users"></i>
@@ -524,9 +534,10 @@
             <div class="navbar-actions">
                 <div class="user-info">
                     <span class="user-name"><?php echo $user['full_name']; ?></span>
-                    <span class="user-role"><?php 
+                    <span class="user-role"><?php
                         $role_names = [
                             'admin' => 'Admin',
+                            'manager' => 'Manager',
                             'staff_warehouse' => 'Staff',
                             'staff_keuangan' => 'Keuangan',
                             'cabang' => 'Cabang'
