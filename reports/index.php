@@ -1,12 +1,9 @@
 <?php
-session_start();
-require_once '../includes/auth.php';
+require_once '../config.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
-    header('Location: ../login.php');
-    exit;
-}
+// Check if user is logged in (config.php handles this)
+// Most report pages should be accessible to all logged-in users
+// Add requireRole('admin') here if you want to restrict to admin only
 
 $page_title = 'Reports';
 $current_page = 'reports';
