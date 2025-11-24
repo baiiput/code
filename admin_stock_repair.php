@@ -99,10 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt->close();
 
             // 5. Get adjustment total (positive and negative)
-            $query = "SELECT COALESCE(SUM(sad.quantity_difference), 0) as total
-                     FROM stock_adjustment_detail sad
-                     JOIN stock_adjustments sa ON sad.adjustment_id = sa.adjustment_id
-                     WHERE sa.warehouse_id = ? AND sad.item_id = ?";
+            $query = "SELECT COALESCE(SUM(sa.difference), 0) as total
+                     FROM stock_adjustment sa
+                     WHERE sa.warehouse_id = ? AND sa.item_id = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("ii", $warehouse_id, $item_id);
             $stmt->execute();
@@ -203,10 +202,9 @@ $query = "
                   JOIN stock_transfers st ON std.transfer_id = st.transfer_id
                   WHERE st.from_warehouse_id = wi.warehouse_id AND std.item_id = wi.item_id), 0) as transfer_out,
 
-        COALESCE((SELECT SUM(sad.quantity_difference)
-                  FROM stock_adjustment_detail sad
-                  JOIN stock_adjustments sa ON sad.adjustment_id = sa.adjustment_id
-                  WHERE sa.warehouse_id = wi.warehouse_id AND sad.item_id = wi.item_id), 0) as adjustment
+        COALESCE((SELECT SUM(sa.difference)
+                  FROM stock_adjustment sa
+                  WHERE sa.warehouse_id = wi.warehouse_id AND sa.item_id = wi.item_id), 0) as adjustment
     FROM warehouse_items wi
     JOIN items i ON wi.item_id = i.item_id
     JOIN warehouses w ON wi.warehouse_id = w.warehouse_id
