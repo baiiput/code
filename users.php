@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'add' || $action === 'edit') {
-        $username = clean($_POST['username']);
         $full_name = clean($_POST['full_name']);
         $email = clean($_POST['email']);
         $phone = clean($_POST['phone']);
@@ -20,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_active = isset($_POST['is_active']) ? 1 : 0;
 
         if ($action === 'add') {
+            $username = clean($_POST['username']);
             $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, email, phone, role, cabang_id, warehouse_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssssssiis", $username, $password, $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active);
@@ -31,13 +31,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             $user_id = intval($_POST['user_id']);
+
+            // Get username for logging
+            $stmt_username = $conn->prepare("SELECT username FROM users WHERE user_id = ?");
+            $stmt_username->bind_param("i", $user_id);
+            $stmt_username->execute();
+            $result_username = $stmt_username->get_result();
+            $username = $result_username->fetch_assoc()['username'];
+            $stmt_username->close();
+
             if (!empty($_POST['password'])) {
                 $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("UPDATE users SET full_name=?, email=?, phone=?, role=?, cabang_id=?, warehouse_id=?, is_active=?, password=? WHERE user_id=?");
                 $stmt->bind_param("ssssiiisi", $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active, $password, $user_id);
             } else {
                 $stmt = $conn->prepare("UPDATE users SET full_name=?, email=?, phone=?, role=?, cabang_id=?, warehouse_id=?, is_active=? WHERE user_id=?");
-                $stmt->bind_param("ssssiiis", $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active, $user_id);
+                $stmt->bind_param("ssssiiii", $full_name, $email, $phone, $role, $cabang_id, $warehouse_id, $is_active, $user_id);
             }
             if ($stmt->execute()) {
                 logActivity('UPDATE', 'user', "Updated user: $username ($full_name)");
