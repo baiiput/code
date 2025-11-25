@@ -691,29 +691,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Save draft to localStorage
         function saveDraft() {
-            if (!isMultipleMode) return; // Only save in multiple mode
-
             const draft = {
-                branch_id: document.getElementById('globalBranch')?.value || '',
-                transaction_date: document.getElementById('globalDate')?.value || '',
+                mode: isMultipleMode ? 'multiple' : 'single',
+                timestamp: Date.now(),
+                branch_id: '',
+                transaction_date: '',
                 transactions: []
             };
 
-            document.querySelectorAll('.transaction-form').forEach(form => {
-                const index = form.getAttribute('data-index');
-                const transaction = {
-                    description: form.querySelector(`input[name="transactions[${index}][description]"]`)?.value || '',
-                    cash: form.querySelector(`input[name="transactions[${index}][cash]"]`)?.value || '0',
-                    qris: form.querySelector(`input[name="transactions[${index}][qris]"]`)?.value || '0',
-                    transfer: form.querySelector(`input[name="transactions[${index}][transfer]"]`)?.value || '0',
-                    shopee_food: form.querySelector(`input[name="transactions[${index}][shopee_food]"]`)?.value || '0',
-                    grab_food: form.querySelector(`input[name="transactions[${index}][grab_food]"]`)?.value || '0',
-                    go_food: form.querySelector(`input[name="transactions[${index}][go_food]"]`)?.value || '0',
-                    expenses: form.querySelector(`input[name="transactions[${index}][expenses]"]`)?.value || '0',
-                    expense_description: form.querySelector(`input[name="transactions[${index}][expense_description]"]`)?.value || ''
-                };
-                draft.transactions.push(transaction);
-            });
+            if (isMultipleMode) {
+                // Multiple mode: save global fields and all transactions
+                draft.branch_id = document.getElementById('globalBranch')?.value || '';
+                draft.transaction_date = document.getElementById('globalDate')?.value || '';
+
+                document.querySelectorAll('.transaction-form').forEach(form => {
+                    const index = form.getAttribute('data-index');
+                    const transaction = {
+                        description: form.querySelector(`input[name="transactions[${index}][description]"]`)?.value || '',
+                        cash: form.querySelector(`input[name="transactions[${index}][cash]"]`)?.value || '0',
+                        qris: form.querySelector(`input[name="transactions[${index}][qris]"]`)?.value || '0',
+                        transfer: form.querySelector(`input[name="transactions[${index}][transfer]"]`)?.value || '0',
+                        shopee_food: form.querySelector(`input[name="transactions[${index}][shopee_food]"]`)?.value || '0',
+                        grab_food: form.querySelector(`input[name="transactions[${index}][grab_food]"]`)?.value || '0',
+                        go_food: form.querySelector(`input[name="transactions[${index}][go_food]"]`)?.value || '0',
+                        expenses: form.querySelector(`input[name="transactions[${index}][expenses]"]`)?.value || '0',
+                        expense_description: form.querySelector(`input[name="transactions[${index}][expense_description]"]`)?.value || ''
+                    };
+                    draft.transactions.push(transaction);
+                });
+            } else {
+                // Single mode: save the one transaction form
+                const form = document.querySelector('.transaction-form');
+                if (form) {
+                    draft.branch_id = form.querySelector('select[name="branch_id"]')?.value || '';
+                    draft.transaction_date = form.querySelector('input[name="transaction_date"]')?.value || '';
+
+                    const transaction = {
+                        description: form.querySelector('input[name="description"]')?.value || '',
+                        cash: form.querySelector('input[name="cash"]')?.value || '0',
+                        qris: form.querySelector('input[name="qris"]')?.value || '0',
+                        transfer: form.querySelector('input[name="transfer"]')?.value || '0',
+                        shopee_food: form.querySelector('input[name="shopee_food"]')?.value || '0',
+                        grab_food: form.querySelector('input[name="grab_food"]')?.value || '0',
+                        go_food: form.querySelector('input[name="go_food"]')?.value || '0',
+                        expenses: form.querySelector('input[name="expenses"]')?.value || '0',
+                        expense_description: form.querySelector('input[name="expense_description"]')?.value || ''
+                    };
+                    draft.transactions.push(transaction);
+                }
+            }
 
             localStorage.setItem('transactionDraft', JSON.stringify(draft));
         }
@@ -726,40 +752,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 const draft = JSON.parse(draftJson);
 
-                // Set global fields
-                const globalBranch = document.getElementById('globalBranch');
-                const globalDate = document.getElementById('globalDate');
-                if (globalBranch) globalBranch.value = draft.branch_id;
-                if (globalDate) globalDate.value = draft.transaction_date;
+                // Check if draft has any meaningful data
+                const hasData = draft.transactions.some(trans =>
+                    trans.description ||
+                    (trans.cash && trans.cash !== '0') ||
+                    (trans.qris && trans.qris !== '0') ||
+                    (trans.transfer && trans.transfer !== '0') ||
+                    (trans.shopee_food && trans.shopee_food !== '0') ||
+                    (trans.grab_food && trans.grab_food !== '0') ||
+                    (trans.go_food && trans.go_food !== '0') ||
+                    (trans.expenses && trans.expenses !== '0')
+                );
 
-                // Load each transaction
-                draft.transactions.forEach((trans, idx) => {
-                    if (idx > 0) {
-                        // Add more forms if needed
-                        addTransaction();
+                if (!hasData) return false;
+
+                // If draft mode doesn't match current mode, return false
+                const draftMode = draft.mode || 'single';
+                const currentMode = isMultipleMode ? 'multiple' : 'single';
+                if (draftMode !== currentMode) return false;
+
+                if (isMultipleMode) {
+                    // Set global fields
+                    const globalBranch = document.getElementById('globalBranch');
+                    const globalDate = document.getElementById('globalDate');
+                    if (globalBranch) globalBranch.value = draft.branch_id;
+                    if (globalDate) globalDate.value = draft.transaction_date;
+
+                    // Load each transaction
+                    draft.transactions.forEach((trans, idx) => {
+                        if (idx > 0) {
+                            addTransaction();
+                        }
+
+                        const form = document.querySelector(`[data-index="${idx}"]`);
+                        if (!form) return;
+
+                        const setInputValue = (name, value) => {
+                            const input = form.querySelector(`input[name="transactions[${idx}][${name}]"]`);
+                            if (input) input.value = value;
+                        };
+
+                        setInputValue('description', trans.description);
+                        setInputValue('cash', trans.cash);
+                        setInputValue('qris', trans.qris);
+                        setInputValue('transfer', trans.transfer);
+                        setInputValue('shopee_food', trans.shopee_food);
+                        setInputValue('grab_food', trans.grab_food);
+                        setInputValue('go_food', trans.go_food);
+                        setInputValue('expenses', trans.expenses);
+                        setInputValue('expense_description', trans.expense_description);
+
+                        calculateTransactionTotal(form);
+                    });
+                } else {
+                    // Single mode: load into the one form
+                    const form = document.querySelector('.transaction-form');
+                    if (form && draft.transactions.length > 0) {
+                        const trans = draft.transactions[0];
+
+                        const branchSelect = form.querySelector('select[name="branch_id"]');
+                        if (branchSelect) branchSelect.value = draft.branch_id;
+
+                        const dateInput = form.querySelector('input[name="transaction_date"]');
+                        if (dateInput) dateInput.value = draft.transaction_date;
+
+                        const setInputValue = (name, value) => {
+                            const input = form.querySelector(`input[name="${name}"]`);
+                            if (input) input.value = value;
+                        };
+
+                        setInputValue('description', trans.description);
+                        setInputValue('cash', trans.cash);
+                        setInputValue('qris', trans.qris);
+                        setInputValue('transfer', trans.transfer);
+                        setInputValue('shopee_food', trans.shopee_food);
+                        setInputValue('grab_food', trans.grab_food);
+                        setInputValue('go_food', trans.go_food);
+                        setInputValue('expenses', trans.expenses);
+                        setInputValue('expense_description', trans.expense_description);
+
+                        calculateTransactionTotal(form);
                     }
-
-                    const form = document.querySelector(`[data-index="${idx}"]`);
-                    if (!form) return;
-
-                    // Set values
-                    const setInputValue = (name, value) => {
-                        const input = form.querySelector(`input[name="transactions[${idx}][${name}]"]`);
-                        if (input) input.value = value;
-                    };
-
-                    setInputValue('description', trans.description);
-                    setInputValue('cash', trans.cash);
-                    setInputValue('qris', trans.qris);
-                    setInputValue('transfer', trans.transfer);
-                    setInputValue('shopee_food', trans.shopee_food);
-                    setInputValue('grab_food', trans.grab_food);
-                    setInputValue('go_food', trans.go_food);
-                    setInputValue('expenses', trans.expenses);
-                    setInputValue('expense_description', trans.expense_description);
-
-                    calculateTransactionTotal(form);
-                });
+                }
 
                 return true;
             } catch (e) {
@@ -771,6 +845,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Clear draft from localStorage
         function clearDraft() {
             localStorage.removeItem('transactionDraft');
+        }
+
+        // Show draft notification
+        function showDraftNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-info alert-dismissible fade show';
+            notification.style.position = 'fixed';
+            notification.style.top = '80px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.maxWidth = '400px';
+            notification.innerHTML = `
+                <i class="bi bi-info-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
         }
 
         // Toggle multiple mode
@@ -805,20 +896,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Add first transaction form
                         addTransaction();
 
-                        // Try to load draft
+                        // Try to load draft (only if mode matches)
                         const draftLoaded = loadDraft();
-
-                        if (draftLoaded) {
-                            // Show notification
-                            const notification = document.createElement('div');
-                            notification.className = 'alert alert-info alert-dismissible fade show mt-2';
-                            notification.innerHTML = `
-                                <i class="bi bi-info-circle"></i> Draft berhasil dimuat!
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            `;
-                            globalFields.parentElement.insertBefore(notification, globalFields);
-                            setTimeout(() => notification.remove(), 3000);
-                        }
 
                         // Fade in animations
                         setTimeout(() => {
@@ -834,6 +913,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         // Add single transaction form
                         addTransaction();
+
+                        // Try to load draft (only if mode matches)
+                        const draftLoaded = loadDraft();
                     }
 
                     // Fade in container
@@ -843,8 +925,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }, 300);
             });
 
-            // Initialize with single mode
+            // Initialize with single mode and try to restore draft
             addTransaction();
+
+            // Try to restore draft on page load
+            setTimeout(() => {
+                const draftLoaded = loadDraft();
+                if (draftLoaded) {
+                    showDraftNotification('Draft berhasil dimuat! Data Anda telah dipulihkan.');
+                }
+            }, 100);
 
             // Add autosave listener for global fields
             document.getElementById('globalBranch')?.addEventListener('change', saveDraft);
