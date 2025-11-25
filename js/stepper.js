@@ -580,30 +580,35 @@ function updateLocalPreview() {
     const tanggalIndonesiaEl = document.getElementById('tanggalIndonesia');
     const clientNameTextEl = document.getElementById('clientNameText');
     const tipePembayaranEl = document.getElementById('tipePembayaran');
-    const nominalInputEl = document.getElementById('nominal');
-    
+
+    // 🆕 NEW: Get selected KITs from window scope (set by app.js)
+    const selectedKitsData = window.selectedKits || [];
+
     console.log('📋 Elements found:', {
         tanggalIndonesia: !!tanggalIndonesiaEl,
         clientNameText: !!clientNameTextEl,
         tipePembayaran: !!tipePembayaranEl,
-        nominal: !!nominalInputEl
+        selectedKitsData: selectedKitsData.length
     });
-    
+
     const tanggalIndonesia = tanggalIndonesiaEl?.textContent || '-';
     const clientNameText = clientNameTextEl?.textContent || '-';
     const tipePembayaran = tipePembayaranEl?.value || '-';
-    const nominalInput = nominalInputEl?.value || '-';
-    
+
+    // 🆕 NEW: Calculate total nominal from selectedKits
+    const totalNominal = selectedKitsData.reduce((sum, kit) => sum + (kit.nominal || 0), 0);
+    const nominalFormatted = totalNominal > 0 ? `Rp ${totalNominal.toLocaleString('id-ID')}` : 'Rp 0';
+
     console.log('📋 Data retrieved:', {
         tanggal: tanggalIndonesia,
         client: clientNameText,
         tipe: tipePembayaran,
-        nominal: nominalInput
+        nominal: nominalFormatted,
+        totalNominal: totalNominal,
+        selectedKitsCount: selectedKitsData.length
     });
-    
-    // Get selected KITs
-    const selectedKits = document.querySelectorAll('.kit-checkbox:checked');
-    const kitCount = selectedKits.length;
+
+    const kitCount = selectedKitsData.length;
     
     console.log('📋 Selected KITs:', kitCount);
     
@@ -620,46 +625,29 @@ function updateLocalPreview() {
         return;
     }
     
-    // Build KIT details HTML - Extract from rendered DOM
+    // 🆕 NEW: Build KIT details HTML from window.selectedKits data
     let kitDetailsHTML = '';
     if (kitCount > 0) {
         kitDetailsHTML = '<div style="background:#0f172a;padding:15px;border-radius:8px;border:1px solid #475569;margin-top:15px;"><h4 style="color:#94a3b8;font-size:14px;margin-bottom:12px;">📦 Detail KIT yang Dipilih:</h4><div style="display:flex;flex-direction:column;gap:8px;">';
-        
-        selectedKits.forEach((checkbox, index) => {
-            // Get KIT info from parent element's text content
-            const kitItem = checkbox.closest('.kit-item');
-            let kitNumber = 'Unknown';
-            let kitPackage = 'Unknown';
-            
-            if (kitItem) {
-                // Extract KIT number from .kit-number span
-                const kitNumberEl = kitItem.querySelector('.kit-number');
-                if (kitNumberEl) {
-                    // Remove emoji and "Nomor KIT:" prefix, trim whitespace
-                    kitNumber = kitNumberEl.textContent
-                        .replace(/🛰️/g, '')
-                        .replace(/Nomor KIT:/gi, '')
-                        .replace(/\(Serial:.*?\)/g, '') // Remove serial number
-                        .trim();
-                }
-                
-                // Extract package from .kit-package span
-                const kitPackageEl = kitItem.querySelector('.kit-package');
-                if (kitPackageEl) {
-                    kitPackage = kitPackageEl.textContent.trim();
-                }
-            }
-            
-            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage});
-            
+
+        selectedKitsData.forEach((kit, index) => {
+            const kitNumber = kit.kitNumber || 'Unknown';
+            const kitPackage = kit.paket || 'Unknown';
+            const kitNominal = kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'Rp 0';
+
+            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage, nominal: kitNominal});
+
             kitDetailsHTML += `
                 <div style="display:flex;justify-content:space-between;padding:10px;background:#334155;border-radius:6px;border:1px solid #475569;">
-                    <span style="color:#f1f5f9;font-size:13px;font-weight:600;">${index + 1}. ${kitNumber}</span>
-                    <span style="color:#94a3b8;font-size:12px;background:#475569;padding:3px 8px;border-radius:4px;">${kitPackage}</span>
+                    <div style="flex: 1;">
+                        <span style="color:#f1f5f9;font-size:13px;font-weight:600;">${index + 1}. ${kitNumber}</span>
+                        <div style="color:#94a3b8;font-size:11px;margin-top:2px;">${kitPackage}</div>
+                    </div>
+                    <span style="color:#10b981;font-size:12px;font-weight:600;padding:3px 8px;border-radius:4px;background:#064e3b;">${kitNominal}</span>
                 </div>
             `;
         });
-        
+
         kitDetailsHTML += '</div></div>';
     }
     
@@ -690,15 +678,15 @@ function updateLocalPreview() {
             
             <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
                 <span style="font-weight:600;color:#94a3b8;font-size:14px;">💰 Nominal Total:</span>
-                <span style="font-weight:700;color:#10b981;font-size:16px;">${nominalInput}</span>
+                <span style="font-weight:700;color:#10b981;font-size:16px;">${nominalFormatted}</span>
             </div>
         </div>
-        
+
         ${kitDetailsHTML}
-        
+
         <div style="margin-top:20px;padding:15px;background:linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);border-radius:8px;text-align:center;color:white;border:2px solid #3b82f6;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);">
             <p style="font-size:13px;margin-bottom:5px;opacity:0.9;">📊 Total Pembayaran</p>
-            <p style="font-size:24px;font-weight:700;margin:0;">${nominalInput}</p>
+            <p style="font-size:24px;font-weight:700;margin:0;">${nominalFormatted}</p>
         </div>
         
         <div style="margin-top:15px;padding:12px;background:rgba(16, 185, 129, 0.1);border-radius:8px;border:1px solid #10b981;text-align:center;">
