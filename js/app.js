@@ -1965,25 +1965,31 @@ function initializeModernPaymentDropdown() {
             const icon = this.querySelector('.payment-icon').textContent;
             const title = this.querySelector('.payment-title').textContent;
             const subtitle = this.querySelector('.payment-subtitle').textContent;
-            
+
             selectedElement.querySelector('.payment-icon').textContent = icon;
             selectedElement.querySelector('.payment-title').textContent = title;
             selectedElement.querySelector('.payment-subtitle').textContent = subtitle;
-            
+
             selectedElement.classList.remove('empty');
-            
+
             hiddenInput.value = value;
-            
+
             options.forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
-            
+
             selectedElement.classList.remove('active');
             optionsElement.classList.remove('show');
             isOpen = false;
-            
+
             hiddenInput.dispatchEvent(new Event('change'));
             updatePreview();
-            
+
+            // 🔍 DEBUG: Trigger stepper navigation update
+            if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
+                console.log('🔄 Payment type selected, triggering stepper validation:', value);
+                window.stepperNav.updateNavigationButtons();
+            }
+
             CONFIG.log('Payment type selected:', value);
         });
         
