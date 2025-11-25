@@ -512,34 +512,40 @@ if ($branchId == 0) {
             html += '<div class="row g-3">';
 
             if (data.cash > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-cash-stack text-success"></i> Tunai:</span>';
-                html += '<strong>' + formatRupiah(data.cash) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-cash-stack text-success"></i> Tunai:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.cash) + '</strong>';
+                html += '</div>';
             }
             if (data.qris > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-qr-code text-primary"></i> QRIS:</span>';
-                html += '<strong>' + formatRupiah(data.qris) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-qr-code text-primary"></i> QRIS:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.qris) + '</strong>';
+                html += '</div>';
             }
             if (data.transfer > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-bank text-info"></i> Transfer:</span>';
-                html += '<strong>' + formatRupiah(data.transfer) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-bank text-info"></i> Transfer:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.transfer) + '</strong>';
+                html += '</div>';
             }
             if (data.shopee_food > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-bag text-warning"></i> Shopee Food:</span>';
-                html += '<strong>' + formatRupiah(data.shopee_food) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-bag text-warning"></i> Shopee Food:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.shopee_food) + '</strong>';
+                html += '</div>';
             }
             if (data.grab_food > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-bag text-danger"></i> Grab Food:</span>';
-                html += '<strong>' + formatRupiah(data.grab_food) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-bag text-danger"></i> Grab Food:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.grab_food) + '</strong>';
+                html += '</div>';
             }
             if (data.go_food > 0) {
-                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
-                html += '<span><i class="bi bi-bag text-secondary"></i> Go Food:</span>';
-                html += '<strong>' + formatRupiah(data.go_food) + '</strong></div></div>';
+                html += '<div class="col-md-4 col-sm-6">';
+                html += '<span class="text-muted"><i class="bi bi-bag text-secondary"></i> Go Food:</span> ';
+                html += '<strong class="ms-2">' + formatRupiah(data.go_food) + '</strong>';
+                html += '</div>';
             }
 
             html += '</div></div>';
@@ -548,26 +554,15 @@ if ($branchId == 0) {
 
         // DataTable
         $(document).ready(function() {
-            console.log('Document ready, initializing DataTable...');
-
             // Function to toggle detail row
             function toggleDetailRow(tr, table) {
-                console.log('toggleDetailRow called');
                 const row = table.row(tr);
-
-                // Use getAttribute for more reliable data reading
                 const hasDetails = tr.getAttribute('data-has-details') === '1';
 
-                console.log('Toggle clicked, hasDetails:', hasDetails);
-
-                if (!hasDetails) {
-                    console.log('No details to show');
-                    return;
-                }
+                if (!hasDetails) return;
 
                 if (row.child.isShown()) {
                     // Close this row
-                    console.log('Closing detail row');
                     row.child.hide();
                     tr.classList.remove('shown');
                     const icon = tr.querySelector('.dt-control i');
@@ -578,12 +573,10 @@ if ($branchId == 0) {
                 } else {
                     // Open this row
                     const detailDataStr = tr.getAttribute('data-detail');
-                    console.log('Detail data string:', detailDataStr);
 
                     if (detailDataStr) {
                         try {
                             const detailData = JSON.parse(detailDataStr);
-                            console.log('Parsed detail data:', detailData);
                             row.child(createDetailRow(detailData)).show();
                             tr.classList.add('shown');
                             const icon = tr.querySelector('.dt-control i');
@@ -600,7 +593,6 @@ if ($branchId == 0) {
 
             // Apply cursor styling function
             function applyCursorStyling() {
-                console.log('Applying cursor styling...');
                 $('#transactionTable tbody tr.main-row').each(function() {
                     const hasDetails = this.getAttribute('data-has-details') === '1';
                     if (hasDetails) {
@@ -618,42 +610,30 @@ if ($branchId == 0) {
                     { width: '30px', targets: 0 }
                 ],
                 initComplete: function() {
-                    console.log('DataTable initialized');
-
                     // Apply cursor styling after init
                     applyCursorStyling();
 
                     // Attach event handler AFTER DataTables is fully initialized
                     $('#transactionTable tbody').off('click').on('click', 'tr', function(e) {
-                        console.log('Row clicked! Target:', e.target);
-
                         // Check if this is a main row
                         if (!$(this).hasClass('main-row')) {
-                            console.log('Not a main-row, ignoring');
                             return;
                         }
 
                         // Don't toggle if clicking on action buttons or links
                         if ($(e.target).closest('a, button').length > 0) {
-                            console.log('Clicked on button/link, ignoring');
                             return;
                         }
 
-                        console.log('Valid row click, toggling...');
                         toggleDetailRow(this, table);
                     });
-
-                    console.log('Event handlers attached');
                 }
             });
 
             // Re-apply cursor styling after table redraws
             table.on('draw', function() {
-                console.log('Table redrawn, reapplying cursor styling');
                 applyCursorStyling();
             });
-
-            console.log('Setup complete');
         });
 
         // Theme toggle
