@@ -561,52 +561,79 @@ if ($branchId == 0) {
             // Function to toggle detail row
             function toggleDetailRow(tr) {
                 const row = table.row(tr);
-                const hasDetails = $(tr).data('has-details') === '1';
+
+                // Use getAttribute for more reliable data reading
+                const hasDetails = tr.getAttribute('data-has-details') === '1';
+
+                console.log('Toggle clicked, hasDetails:', hasDetails);
 
                 if (!hasDetails) return;
 
                 if (row.child.isShown()) {
                     // Close this row
                     row.child.hide();
-                    $(tr).removeClass('shown');
-                    $(tr).find('.dt-control i').removeClass('bi-chevron-down').addClass('bi-chevron-right');
+                    tr.classList.remove('shown');
+                    const icon = tr.querySelector('.dt-control i');
+                    if (icon) {
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-right');
+                    }
                 } else {
                     // Open this row
-                    const detailData = $(tr).data('detail');
-                    if (detailData) {
-                        row.child(createDetailRow(detailData)).show();
-                        $(tr).addClass('shown');
-                        $(tr).find('.dt-control i').removeClass('bi-chevron-right').addClass('bi-chevron-down');
+                    const detailDataStr = tr.getAttribute('data-detail');
+                    console.log('Detail data string:', detailDataStr);
+
+                    if (detailDataStr) {
+                        try {
+                            const detailData = JSON.parse(detailDataStr);
+                            console.log('Parsed detail data:', detailData);
+                            row.child(createDetailRow(detailData)).show();
+                            tr.classList.add('shown');
+                            const icon = tr.querySelector('.dt-control i');
+                            if (icon) {
+                                icon.classList.remove('bi-chevron-right');
+                                icon.classList.add('bi-chevron-down');
+                            }
+                        } catch (e) {
+                            console.error('Error parsing detail data:', e);
+                        }
                     }
                 }
             }
 
             // Handle click on entire row (except action buttons)
-            $('#transactionTable tbody').on('click', 'tr.main-row', function(e) {
+            // Use event delegation on tbody
+            $('#transactionTable tbody').on('click', 'tr', function(e) {
+                // Check if this is a main row
+                if (!$(this).hasClass('main-row')) {
+                    return;
+                }
+
                 // Don't toggle if clicking on action buttons or links
                 if ($(e.target).closest('a, button').length > 0) {
                     return;
                 }
 
+                console.log('Row clicked');
                 toggleDetailRow(this);
             });
 
-            // Make rows with details look clickable
-            $('#transactionTable tbody tr.main-row').each(function() {
-                const hasDetails = $(this).data('has-details') === '1';
-                if (hasDetails) {
-                    $(this).css('cursor', 'pointer');
-                }
-            });
+            // Apply cursor styling function
+            function applyCursorStyling() {
+                $('#transactionTable tbody tr.main-row').each(function() {
+                    const hasDetails = this.getAttribute('data-has-details') === '1';
+                    if (hasDetails) {
+                        this.style.cursor = 'pointer';
+                    }
+                });
+            }
+
+            // Initial application
+            applyCursorStyling();
 
             // Re-apply cursor styling after table redraws
             table.on('draw', function() {
-                $('#transactionTable tbody tr.main-row').each(function() {
-                    const hasDetails = $(this).data('has-details') === '1';
-                    if (hasDetails) {
-                        $(this).css('cursor', 'pointer');
-                    }
-                });
+                applyCursorStyling();
             });
         });
 
