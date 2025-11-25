@@ -1173,3 +1173,34 @@ textarea::placeholder {
 [data-theme="dark"] tr {
     background: transparent !important;
 }
+
+/* ===== Transaction Form Accordion ===== */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.transaction-form-body {
+    transition: all 0.3s ease;
+}
+
+.collapse-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.transaction-form .card-header:hover {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Smooth transitions for form container */
+#transactionsContainer {
+    transition: opacity 0.3s ease;
+}
+
+#globalFields {
+    transition: opacity 0.3s ease;
+}
+
+#addTransactionBtn {
+    transition: opacity 0.3s ease;
+}

@@ -480,15 +480,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const nameAttr = (field) => isMultipleMode ? `transactions[${index}][${field}]` : field;
 
             return `
-                <div class="transaction-form mb-4 p-3 border rounded" data-index="${index}">
-                    <div class="row g-3">
-                        <div class="col-12">
+                <div class="transaction-form mb-3 border rounded" data-index="${index}">
+                    <div class="card">
+                        <div class="card-header bg-light cursor-pointer" onclick="toggleTransactionForm(${index})">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0"><i class="bi bi-receipt"></i> <span class="form-title">${isMultipleMode ? 'Transaksi #' + (index + 1) : 'Transaksi'}</span></h6>
-                                ${isMultipleMode && index > 0 ? `<button type="button" class="btn btn-sm btn-outline-danger remove-transaction" onclick="removeTransaction(${index})"><i class="bi bi-trash"></i> Hapus</button>` : ''}
+                                <h6 class="mb-0">
+                                    <i class="bi bi-receipt"></i>
+                                    <span class="form-title">${isMultipleMode ? 'Transaksi #' + (index + 1) : 'Transaksi'}</span>
+                                    <i class="bi bi-chevron-down collapse-icon ms-2" id="collapseIcon${index}"></i>
+                                </h6>
+                                <div onclick="event.stopPropagation()">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="clearTransaction(${index})" title="Clear Form">
+                                        <i class="bi bi-eraser"></i> Clear
+                                    </button>
+                                    ${isMultipleMode && index > 0 ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTransaction(${index})"><i class="bi bi-trash"></i> Hapus</button>` : ''}
+                                </div>
                             </div>
-                            <hr>
                         </div>
+                        <div class="card-body transaction-form-body" id="formBody${index}" style="display: ${index === 0 ? 'block' : 'none'};">
+                            <div class="row g-3">
 
                         ${!isMultipleMode ? `
                         <div class="col-md-6">
@@ -582,9 +592,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <strong>Saldo Transaksi Ini:</strong> <span class="net-balance">Rp 0</span>
                             </div>
                         </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
+        }
+
+        // Toggle transaction form collapse
+        function toggleTransactionForm(index) {
+            const formBody = document.getElementById(`formBody${index}`);
+            const icon = document.getElementById(`collapseIcon${index}`);
+
+            if (!formBody) return;
+
+            if (formBody.style.display === 'none') {
+                // Collapse all other forms in multiple mode
+                if (isMultipleMode) {
+                    document.querySelectorAll('.transaction-form-body').forEach((body, idx) => {
+                        body.style.display = 'none';
+                        const otherIcon = document.getElementById(`collapseIcon${idx}`);
+                        if (otherIcon) {
+                            otherIcon.className = 'bi bi-chevron-down collapse-icon ms-2';
+                        }
+                    });
+                }
+                // Expand this form
+                formBody.style.display = 'block';
+                icon.className = 'bi bi-chevron-up collapse-icon ms-2';
+            } else {
+                // Collapse this form
+                formBody.style.display = 'none';
+                icon.className = 'bi bi-chevron-down collapse-icon ms-2';
+            }
+        }
+
+        // Clear transaction form
+        function clearTransaction(index) {
+            const form = document.querySelector(`[data-index="${index}"]`);
+            if (!form) return;
+
+            if (confirm('Clear semua data di form ini?')) {
+                // Clear all inputs
+                form.querySelectorAll('input[type="text"]').forEach(input => {
+                    if (input.classList.contains('money-input')) {
+                        input.value = '0';
+                    } else {
+                        input.value = '';
+                    }
+                });
+
+                // Reset select if in single mode
+                if (!isMultipleMode) {
+                    const select = form.querySelector('select[name="branch_id"]');
+                    if (select) select.value = '';
+
+                    const dateInput = form.querySelector('input[type="date"]');
+                    if (dateInput) dateInput.value = '<?= date('Y-m-d') ?>';
+                }
+
+                // Recalculate totals
+                calculateTransactionTotal(form);
+                saveDraft();
+            }
         }
 
         // Add new transaction form
@@ -599,16 +669,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 initMoneyInput(input);
             });
 
+            // Add event listeners for autosave
+            newForm.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', saveDraft);
+                input.addEventListener('input', saveDraft);
+            });
+
             calculateTransactionTotal(newForm);
             transactionCount++;
+            saveDraft();
         }
 
         // Remove transaction form
         function removeTransaction(index) {
             const form = document.querySelector(`[data-index="${index}"]`);
-            if (form) {
+            if (form && confirm('Hapus transaksi ini?')) {
                 form.remove();
+                saveDraft();
             }
+        }
+
+        // Save draft to localStorage
+        function saveDraft() {
+            if (!isMultipleMode) return; // Only save in multiple mode
+
+            const draft = {
+                branch_id: document.getElementById('globalBranch')?.value || '',
+                transaction_date: document.getElementById('globalDate')?.value || '',
+                transactions: []
+            };
+
+            document.querySelectorAll('.transaction-form').forEach(form => {
+                const index = form.getAttribute('data-index');
+                const transaction = {
+                    description: form.querySelector(`input[name="transactions[${index}][description]"]`)?.value || '',
+                    cash: form.querySelector(`input[name="transactions[${index}][cash]"]`)?.value || '0',
+                    qris: form.querySelector(`input[name="transactions[${index}][qris]"]`)?.value || '0',
+                    transfer: form.querySelector(`input[name="transactions[${index}][transfer]"]`)?.value || '0',
+                    shopee_food: form.querySelector(`input[name="transactions[${index}][shopee_food]"]`)?.value || '0',
+                    grab_food: form.querySelector(`input[name="transactions[${index}][grab_food]"]`)?.value || '0',
+                    go_food: form.querySelector(`input[name="transactions[${index}][go_food]"]`)?.value || '0',
+                    expenses: form.querySelector(`input[name="transactions[${index}][expenses]"]`)?.value || '0',
+                    expense_description: form.querySelector(`input[name="transactions[${index}][expense_description]"]`)?.value || ''
+                };
+                draft.transactions.push(transaction);
+            });
+
+            localStorage.setItem('transactionDraft', JSON.stringify(draft));
+        }
+
+        // Load draft from localStorage
+        function loadDraft() {
+            const draftJson = localStorage.getItem('transactionDraft');
+            if (!draftJson) return false;
+
+            try {
+                const draft = JSON.parse(draftJson);
+
+                // Set global fields
+                const globalBranch = document.getElementById('globalBranch');
+                const globalDate = document.getElementById('globalDate');
+                if (globalBranch) globalBranch.value = draft.branch_id;
+                if (globalDate) globalDate.value = draft.transaction_date;
+
+                // Load each transaction
+                draft.transactions.forEach((trans, idx) => {
+                    if (idx > 0) {
+                        // Add more forms if needed
+                        addTransaction();
+                    }
+
+                    const form = document.querySelector(`[data-index="${idx}"]`);
+                    if (!form) return;
+
+                    // Set values
+                    const setInputValue = (name, value) => {
+                        const input = form.querySelector(`input[name="transactions[${idx}][${name}]"]`);
+                        if (input) input.value = value;
+                    };
+
+                    setInputValue('description', trans.description);
+                    setInputValue('cash', trans.cash);
+                    setInputValue('qris', trans.qris);
+                    setInputValue('transfer', trans.transfer);
+                    setInputValue('shopee_food', trans.shopee_food);
+                    setInputValue('grab_food', trans.grab_food);
+                    setInputValue('go_food', trans.go_food);
+                    setInputValue('expenses', trans.expenses);
+                    setInputValue('expense_description', trans.expense_description);
+
+                    calculateTransactionTotal(form);
+                });
+
+                return true;
+            } catch (e) {
+                console.error('Error loading draft:', e);
+                return false;
+            }
+        }
+
+        // Clear draft from localStorage
+        function clearDraft() {
+            localStorage.removeItem('transactionDraft');
         }
 
         // Toggle multiple mode
@@ -620,31 +782,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const addBtn = document.getElementById('addTransactionBtn');
                 const container = document.getElementById('transactionsContainer');
 
-                // Clear container
-                container.innerHTML = '';
-                transactionCount = 0;
+                // Fade out animation
+                container.style.opacity = '0';
+                container.style.transition = 'opacity 0.3s ease';
 
-                if (isMultipleMode) {
-                    // Show global fields and add button
-                    globalFields.style.display = '';
-                    globalFields.querySelectorAll('select, input').forEach(el => el.required = true);
-                    addBtn.style.display = '';
+                setTimeout(() => {
+                    // Clear container
+                    container.innerHTML = '';
+                    transactionCount = 0;
 
-                    // Add first transaction form
-                    addTransaction();
-                } else {
-                    // Hide global fields and add button
-                    globalFields.style.display = 'none';
-                    globalFields.querySelectorAll('select, input').forEach(el => el.required = false);
-                    addBtn.style.display = 'none';
+                    if (isMultipleMode) {
+                        // Show global fields and add button with animation
+                        globalFields.style.display = '';
+                        globalFields.style.opacity = '0';
+                        globalFields.style.transition = 'opacity 0.3s ease';
+                        globalFields.querySelectorAll('select, input').forEach(el => el.required = true);
 
-                    // Add single transaction form
-                    addTransaction();
-                }
+                        addBtn.style.display = '';
+                        addBtn.style.opacity = '0';
+                        addBtn.style.transition = 'opacity 0.3s ease';
+
+                        // Add first transaction form
+                        addTransaction();
+
+                        // Try to load draft
+                        const draftLoaded = loadDraft();
+
+                        if (draftLoaded) {
+                            // Show notification
+                            const notification = document.createElement('div');
+                            notification.className = 'alert alert-info alert-dismissible fade show mt-2';
+                            notification.innerHTML = `
+                                <i class="bi bi-info-circle"></i> Draft berhasil dimuat!
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            `;
+                            globalFields.parentElement.insertBefore(notification, globalFields);
+                            setTimeout(() => notification.remove(), 3000);
+                        }
+
+                        // Fade in animations
+                        setTimeout(() => {
+                            globalFields.style.opacity = '1';
+                            addBtn.style.opacity = '1';
+                        }, 50);
+
+                    } else {
+                        // Hide global fields and add button
+                        globalFields.style.display = 'none';
+                        globalFields.querySelectorAll('select, input').forEach(el => el.required = false);
+                        addBtn.style.display = 'none';
+
+                        // Add single transaction form
+                        addTransaction();
+                    }
+
+                    // Fade in container
+                    setTimeout(() => {
+                        container.style.opacity = '1';
+                    }, 50);
+                }, 300);
             });
 
             // Initialize with single mode
             addTransaction();
+
+            // Add autosave listener for global fields
+            document.getElementById('globalBranch')?.addEventListener('change', saveDraft);
+            document.getElementById('globalDate')?.addEventListener('change', saveDraft);
         }
         <?php else: ?>
         // Edit mode - initialize existing inputs
@@ -654,12 +858,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         calculateTotals();
         <?php endif; ?>
 
-        // Convert formatted values back to numbers before submit
+        // Convert formatted values back to numbers before submit and clear draft
         document.getElementById('transactionForm').addEventListener('submit', function(e) {
             document.querySelectorAll('.money-input').forEach(input => {
                 const numericValue = parseFormattedNumber(input.value);
                 input.value = numericValue;
             });
+            <?php if ($action === 'add'): ?>
+            clearDraft();
+            <?php endif; ?>
         });
 
         // Theme toggle
