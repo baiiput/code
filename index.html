@@ -155,10 +155,23 @@
 <div class="form-group">
 <div id="kitNumberSection">
 <label for="nomorKit">Nomor KIT / Serial Number *</label>
-<textarea id="nomorKit" name="nomorKit" rows="4" placeholder="Input multiple KIT atau Serial Number (satu per baris atau pisah dengan koma)&#10;Contoh:&#10;KIT304096716&#10;KIT304096717, KIT304096718&#10;UTxxxxxxxxxx" required style="width: 100%; padding: 12px 15px; border: 2px solid #475569; border-radius: 8px; font-size: 16px; background: #334155; color: #f1f5f9; resize: vertical; font-family: 'Roboto Mono', monospace; line-height: 1.5; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); min-height: 120px;"></textarea>
-<div style="margin-top: 8px; padding: 10px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 6px; color: white; font-size: 12px;">
-💡 <strong>Tips:</strong> Anda bisa input banyak KIT/SN sekaligus! Pisahkan dengan <strong>koma (,)</strong> atau <strong>enter (baris baru)</strong>. Validasi akan otomatis menggunakan KIT Number atau Serial Number.
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+<input type="text" id="nomorKit" name="nomorKit" placeholder="Masukkan 1 KIT atau Serial Number" style="flex: 1; padding: 12px 15px; border: 2px solid #475569; border-radius: 8px; font-size: 16px; background: #334155; color: #f1f5f9; font-family: 'Roboto Mono', monospace; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+<button type="button" id="addKitBtn" style="padding: 12px 24px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;">
+<span style="font-size: 16px;">➕</span> Tambah KIT
+</button>
 </div>
+<div style="margin-top: 8px; padding: 10px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 6px; color: white; font-size: 12px;">
+💡 <strong>Tips:</strong> Input 1 KIT, klik <strong>Tambah KIT</strong>, ulangi untuk KIT berikutnya. Validasi otomatis akan dilakukan untuk setiap KIT yang ditambahkan.
+</div>
+
+<!-- Loading indicator for KIT validation -->
+<div id="addKitLoading" style="display: none; margin-top: 10px; padding: 10px; background: #1e293b; border-radius: 6px; text-align: center; color: #94a3b8;">
+<div style="display: inline-block; animation: spin 1s linear infinite;">⏳</div> Memvalidasi KIT...
+</div>
+
+<!-- List of added KITs (pending validation) -->
+<div id="pendingKitsList" style="margin-top: 12px;"></div>
 </div>
 <div id="clientNameSection" style="display:none;">
 <label for="clientNameSearch">Client Name *</label>

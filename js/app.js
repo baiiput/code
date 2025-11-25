@@ -751,32 +751,90 @@ function setupEventListeners() {
     // Search mode change listener
     elements.searchMode.addEventListener('change', handleSearchModeChange);
 
-    // KIT validation dengan enhanced debounce - UPDATED for multiple input
-    elements.nomorKitInput.addEventListener('input', function() {
-        const inputValue = this.value.trim();
+    // 🆕 NEW: Add KIT button - one KIT at a time
+    const addKitBtn = document.getElementById('addKitBtn');
+    if (addKitBtn) {
+        addKitBtn.addEventListener('click', async function() {
+            const kitInput = elements.nomorKitInput;
+            const kitNumber = kitInput.value.trim();
 
-        // Reset state
-        isKitValid = false;
-        validationResult = null;
-        availableKits = [];
-        selectedKits = [];
-        hideKitSelection();
-        updateButtonStates();
-        hideAllBanners();
+            if (kitNumber.length < 3) {
+                showBanner('❌ Nomor KIT/SN minimal 3 karakter', 'error');
+                return;
+            }
 
-        // Clear previous timeout
-        clearTimeout(validationTimeout);
+            // Show loading
+            const loadingEl = document.getElementById('addKitLoading');
+            if (loadingEl) loadingEl.style.display = 'block';
+            addKitBtn.disabled = true;
 
-        if (inputValue.length >= 3) {
-            showLoading();
+            try {
+                // Validate this single KIT
+                const selectedDate = getFormDateValue();
+                let selectedMonth = null;
+                let selectedYear = null;
 
-            // Enhanced debounce with 1 second delay
-            validationTimeout = setTimeout(() => {
-                validateMultipleKits(inputValue);
-            }, 1000);
-        } else {
-            hideLoading();
-            clearValidation();
+                if (selectedDate) {
+                    const dateParts = selectedDate.split('-');
+                    selectedMonth = parseInt(dateParts[1]);
+                    selectedYear = parseInt(dateParts[0]);
+                }
+
+                const data = await api.validateKitMulti(kitNumber, selectedMonth, selectedYear);
+
+                if (data && data.validation && data.validation.status === 'found') {
+                    // Add KITs from validation to availableKits
+                    if (data.validation.data.allKits) {
+                        data.validation.data.allKits.forEach(kit => {
+                            // Check if KIT already exists
+                            const exists = availableKits.some(k => k.kitNumber === kit.kitNumber);
+                            if (!exists) {
+                                availableKits.push({
+                                    ...kit,
+                                    isSelected: false,
+                                    nominal: 0,
+                                    isDuplicate: data.duplicate?.duplicateKits?.includes(kit.kitNumber) || false
+                                });
+                            }
+                        });
+                    }
+
+                    // Update validation result for client name
+                    if (!validationResult) {
+                        validationResult = data;
+                        isKitValid = true;
+                        elements.clientNameText.textContent = data.validation.data.nama;
+                    }
+
+                    // Clear input and show success
+                    kitInput.value = '';
+                    showBanner(`✅ ${data.validation.data.allKits.length} KIT berhasil ditambahkan!`, 'success');
+
+                    // Update display
+                    showKitSelection();
+                    updateButtonStates();
+
+                } else {
+                    showBanner('❌ KIT/SN tidak ditemukan dalam database', 'error');
+                }
+
+            } catch (error) {
+                CONFIG.error('Error validating KIT:', error);
+                showBanner('❌ Error validasi: ' + error.message, 'error');
+            } finally {
+                // Hide loading
+                if (loadingEl) loadingEl.style.display = 'none';
+                addKitBtn.disabled = false;
+            }
+        });
+    }
+
+    // Enter key on KIT input to add
+    elements.nomorKitInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const addKitBtn = document.getElementById('addKitBtn');
+            if (addKitBtn) addKitBtn.click();
         }
     });   
 
@@ -3029,6 +3087,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeForm();
     testConnection();
 });
+
+// 🌍 EXPORT selectedKits to window scope for stepper.js validation
+window.selectedKits = selectedKits;
+window.availableKits = availableKits;
 
 // 🔧 GLOBAL ERROR HANDLER
 window.addEventListener('error', function(e) {
