@@ -42,19 +42,20 @@ if ($action === 'edit' && $id > 0) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $branchId = (int)$_POST['branch_id'];
-    $date = $_POST['transaction_date'];
-    $description = sanitize($_POST['description']);
-    $cash = floatval($_POST['cash'] ?? 0);
-    $qris = floatval($_POST['qris'] ?? 0);
-    $transfer = floatval($_POST['transfer'] ?? 0);
-    $shopeeFood = floatval($_POST['shopee_food'] ?? 0);
-    $grabFood = floatval($_POST['grab_food'] ?? 0);
-    $goFood = floatval($_POST['go_food'] ?? 0);
-    $expenses = floatval($_POST['expenses'] ?? 0);
-    $expenseDesc = sanitize($_POST['expense_description'] ?? '');
-
     if ($action === 'edit' && $id > 0) {
+        // Edit mode - single transaction
+        $branchId = (int)$_POST['branch_id'];
+        $date = $_POST['transaction_date'];
+        $description = sanitize($_POST['description']);
+        $cash = floatval($_POST['cash'] ?? 0);
+        $qris = floatval($_POST['qris'] ?? 0);
+        $transfer = floatval($_POST['transfer'] ?? 0);
+        $shopeeFood = floatval($_POST['shopee_food'] ?? 0);
+        $grabFood = floatval($_POST['grab_food'] ?? 0);
+        $goFood = floatval($_POST['go_food'] ?? 0);
+        $expenses = floatval($_POST['expenses'] ?? 0);
+        $expenseDesc = sanitize($_POST['expense_description'] ?? '');
+
         $sql = "UPDATE transactions SET
                 branch_id = ?, transaction_date = ?, description = ?,
                 cash = ?, qris = ?, transfer = ?,
@@ -65,12 +66,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$branchId, $date, $description, $cash, $qris, $transfer, $shopeeFood, $grabFood, $goFood, $expenses, $expenseDesc, $id]);
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Transaksi berhasil diperbarui!'];
     } else {
-        $sql = "INSERT INTO transactions
-                (branch_id, transaction_date, description, cash, qris, transfer, shopee_food, grab_food, go_food, expenses, expense_description)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([$branchId, $date, $description, $cash, $qris, $transfer, $shopeeFood, $grabFood, $goFood, $expenses, $expenseDesc]);
-        $_SESSION['message'] = ['type' => 'success', 'text' => 'Transaksi berhasil ditambahkan!'];
+        // Add mode - support multiple transactions
+        $transactions = isset($_POST['transactions']) ? $_POST['transactions'] : [0 => $_POST];
+        $savedCount = 0;
+
+        foreach ($transactions as $trans) {
+            $branchId = (int)($trans['branch_id'] ?? $_POST['branch_id']);
+            $date = $trans['transaction_date'] ?? $_POST['transaction_date'];
+            $description = sanitize($trans['description'] ?? '');
+
+            // Skip if description is empty
+            if (empty($description)) continue;
+
+            $cash = floatval($trans['cash'] ?? 0);
+            $qris = floatval($trans['qris'] ?? 0);
+            $transfer = floatval($trans['transfer'] ?? 0);
+            $shopeeFood = floatval($trans['shopee_food'] ?? 0);
+            $grabFood = floatval($trans['grab_food'] ?? 0);
+            $goFood = floatval($trans['go_food'] ?? 0);
+            $expenses = floatval($trans['expenses'] ?? 0);
+            $expenseDesc = sanitize($trans['expense_description'] ?? '');
+
+            $sql = "INSERT INTO transactions
+                    (branch_id, transaction_date, description, cash, qris, transfer, shopee_food, grab_food, go_food, expenses, expense_description, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$branchId, $date, $description, $cash, $qris, $transfer, $shopeeFood, $grabFood, $goFood, $expenses, $expenseDesc, $currentUser['id']]);
+            $savedCount++;
+        }
+
+        $_SESSION['message'] = ['type' => 'success', 'text' => "Berhasil menambahkan $savedCount transaksi!"];
     }
 
     header('Location: index.php');
@@ -162,21 +187,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="bi bi-<?= $action === 'edit' ? 'pencil' : 'plus-lg' ?>"></i>
                             <?= $action === 'edit' ? 'Edit' : 'Tambah' ?> Transaksi
                         </h5>
+                        <?php if ($action === 'add'): ?>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="multipleMode">
+                            <label class="form-check-label" for="multipleMode">Input Multiple</label>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body">
                         <form method="POST" id="transactionForm">
+                            <?php if ($action === 'add'): ?>
+                            <!-- Global Fields for Multiple Mode (hidden in single mode) -->
+                            <div class="row g-3 mb-4" id="globalFields" style="display:none;">
+                                <div class="col-md-6">
+                                    <label class="form-label">Cabang <span class="text-danger">*</span></label>
+                                    <select name="branch_id" id="globalBranch" class="form-select">
+                                        <option value="">Pilih Cabang</option>
+                                        <?php foreach ($branches as $branch): ?>
+                                        <option value="<?= $branch['id'] ?>"><?= htmlspecialchars($branch['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                    <input type="date" name="transaction_date" id="globalDate" class="form-control" value="<?= date('Y-m-d') ?>">
+                                </div>
+                            </div>
+
+                            <!-- Transaction Forms Container -->
+                            <div id="transactionsContainer"></div>
+
+                            <!-- Add Transaction Button (only in multiple mode) -->
+                            <div class="mb-3" id="addTransactionBtn" style="display:none;">
+                                <button type="button" class="btn btn-outline-primary" onclick="addTransaction()">
+                                    <i class="bi bi-plus-circle"></i> Tambah Transaksi Lagi
+                                </button>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Single Transaction Form for Edit Mode -->
+                            <?php if ($action === 'edit'): ?>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Cabang <span class="text-danger">*</span></label>
                                     <select name="branch_id" class="form-select" required>
                                         <option value="">Pilih Cabang</option>
                                         <?php foreach ($branches as $branch): ?>
-                                        <option value="<?= $branch['id'] ?>" <?= ($transaction && $transaction['branch_id'] == $branch['id']) ? 'selected' : '' ?>>
+                                        <option value="<?= $branch['id'] ?>" <?= $transaction['branch_id'] == $branch['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($branch['name']) ?>
                                         </option>
                                         <?php endforeach; ?>
@@ -184,27 +246,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                    <input type="date" name="transaction_date" class="form-control" required
-                                           value="<?= $transaction ? $transaction['transaction_date'] : date('Y-m-d') ?>">
+                                    <input type="date" name="transaction_date" class="form-control" required value="<?= $transaction['transaction_date'] ?>">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Deskripsi <span class="text-danger">*</span></label>
                                     <input type="text" name="description" class="form-control" required
                                            placeholder="Contoh: Penjualan harian, Catering, dll"
-                                           value="<?= $transaction ? htmlspecialchars($transaction['description']) : '' ?>">
+                                           value="<?= htmlspecialchars($transaction['description']) ?>">
                                 </div>
 
-                                <div class="col-12">
-                                    <hr>
-                                    <h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> Pemasukan</h6>
-                                </div>
+                                <div class="col-12"><hr><h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> Pemasukan</h6></div>
 
                                 <div class="col-md-4">
                                     <label class="form-label">Tunai</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="cash" class="form-control money-input" data-name="cash"
-                                               value="<?= $transaction ? number_format($transaction['cash'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['cash'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -212,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="qris" class="form-control money-input" data-name="qris"
-                                               value="<?= $transaction ? number_format($transaction['qris'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['qris'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -220,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="transfer" class="form-control money-input" data-name="transfer"
-                                               value="<?= $transaction ? number_format($transaction['transfer'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['transfer'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -228,7 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="shopee_food" class="form-control money-input" data-name="shopee_food"
-                                               value="<?= $transaction ? number_format($transaction['shopee_food'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['shopee_food'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -236,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="grab_food" class="form-control money-input" data-name="grab_food"
-                                               value="<?= $transaction ? number_format($transaction['grab_food'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['grab_food'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -244,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="go_food" class="form-control money-input" data-name="go_food"
-                                               value="<?= $transaction ? number_format($transaction['go_food'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['go_food'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
 
@@ -254,24 +312,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
 
-                                <div class="col-12">
-                                    <hr>
-                                    <h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> Pengeluaran</h6>
-                                </div>
+                                <div class="col-12"><hr><h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> Pengeluaran</h6></div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Jumlah Pengeluaran</label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="text" name="expenses" class="form-control money-input" data-name="expenses"
-                                               value="<?= $transaction ? number_format($transaction['expenses'], 0, ',', '.') : '0' ?>">
+                                               value="<?= number_format($transaction['expenses'], 0, ',', '.') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Keterangan Pengeluaran</label>
                                     <input type="text" name="expense_description" class="form-control"
                                            placeholder="Contoh: Beli bahan baku, Bayar listrik"
-                                           value="<?= $transaction ? htmlspecialchars($transaction['expense_description']) : '' ?>">
+                                           value="<?= htmlspecialchars($transaction['expense_description']) ?>">
                                 </div>
 
                                 <div class="col-12">
@@ -280,16 +335,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <strong>Saldo Transaksi Ini:</strong> <span id="netBalance">Rp 0</span>
                                     </div>
                                 </div>
+                            </div>
+                            <?php endif; ?>
 
-                                <div class="col-12">
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-check-lg"></i> Simpan
-                                        </button>
-                                        <a href="index.php" class="btn btn-secondary">
-                                            <i class="bi bi-x-lg"></i> Batal
-                                        </a>
-                                    </div>
+                            <div class="col-12 mt-3">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i> Simpan
+                                    </button>
+                                    <a href="index.php" class="btn btn-secondary">
+                                        <i class="bi bi-x-lg"></i> Batal
+                                    </a>
                                 </div>
                             </div>
                         </form>
@@ -303,11 +359,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         // Format number with thousand separator (without decimal)
         function formatNumber(num) {
-            // Remove non-numeric characters
             const numStr = String(num).replace(/[^\d]/g, '');
             const number = parseInt(numStr) || 0;
-
-            // Format with thousand separator
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
@@ -322,28 +375,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return 'Rp ' + formatNumber(num);
         }
 
-        // Auto-format money inputs
-        document.querySelectorAll('.money-input').forEach(input => {
+        // Initialize money input formatting
+        function initMoneyInput(input) {
             // Format on input
             input.addEventListener('input', function(e) {
                 const cursorPos = this.selectionStart;
                 const oldLength = this.value.length;
-                const oldValue = this.value;
-
-                // Get numeric value
                 const numericValue = this.value.replace(/[^\d]/g, '');
-
-                // Format with separator
                 const formatted = formatNumber(numericValue);
                 this.value = formatted;
 
-                // Adjust cursor position
                 const newLength = formatted.length;
                 const diff = newLength - oldLength;
                 this.setSelectionRange(cursorPos + diff, cursorPos + diff);
 
-                // Calculate totals
-                calculateTotals();
+                // Calculate totals for this transaction
+                const form = this.closest('.transaction-form');
+                if (form) {
+                    calculateTransactionTotal(form);
+                } else {
+                    calculateTotals();
+                }
             });
 
             // Format on blur
@@ -357,9 +409,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             input.addEventListener('focus', function() {
                 this.select();
             });
-        });
+        }
 
-        // Calculate totals
+        // Calculate totals for a specific transaction form
+        function calculateTransactionTotal(form) {
+            const moneyInputs = form.querySelectorAll('.money-input');
+            let totalIncome = 0;
+            let totalExpenses = 0;
+
+            moneyInputs.forEach(input => {
+                const value = parseFormattedNumber(input.value);
+                const name = input.getAttribute('data-name');
+
+                if (name === 'expenses') {
+                    totalExpenses = value;
+                } else {
+                    totalIncome += value;
+                }
+            });
+
+            const netBalance = totalIncome - totalExpenses;
+
+            const incomeEl = form.querySelector('.total-income');
+            const balanceEl = form.querySelector('.net-balance');
+
+            if (incomeEl) incomeEl.textContent = formatRupiah(totalIncome);
+            if (balanceEl) {
+                balanceEl.textContent = formatRupiah(netBalance);
+                balanceEl.className = 'net-balance ' + (netBalance >= 0 ? 'text-success' : 'text-danger');
+            }
+        }
+
+        // Calculate totals (for edit mode)
         function calculateTotals() {
             const moneyInputs = document.querySelectorAll('.money-input');
             let totalIncome = 0;
@@ -378,13 +459,200 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             const netBalance = totalIncome - totalExpenses;
 
-            document.getElementById('totalIncome').textContent = formatRupiah(totalIncome);
-            document.getElementById('netBalance').textContent = formatRupiah(netBalance);
-
-            // Update color based on balance
+            const incomeEl = document.getElementById('totalIncome');
             const balanceEl = document.getElementById('netBalance');
-            balanceEl.className = netBalance >= 0 ? 'text-success' : 'text-danger';
+
+            if (incomeEl) incomeEl.textContent = formatRupiah(totalIncome);
+            if (balanceEl) {
+                balanceEl.textContent = formatRupiah(netBalance);
+                balanceEl.className = netBalance >= 0 ? 'text-success' : 'text-danger';
+            }
         }
+
+        <?php if ($action === 'add'): ?>
+        // Multiple transaction mode variables
+        let transactionCount = 0;
+        let isMultipleMode = false;
+
+        // Transaction form template
+        function getTransactionFormTemplate(index) {
+            const prefix = isMultipleMode ? `transactions[${index}]` : '';
+            const nameAttr = (field) => isMultipleMode ? `transactions[${index}][${field}]` : field;
+
+            return `
+                <div class="transaction-form mb-4 p-3 border rounded" data-index="${index}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-receipt"></i> <span class="form-title">${isMultipleMode ? 'Transaksi #' + (index + 1) : 'Transaksi'}</span></h6>
+                                ${isMultipleMode && index > 0 ? `<button type="button" class="btn btn-sm btn-outline-danger remove-transaction" onclick="removeTransaction(${index})"><i class="bi bi-trash"></i> Hapus</button>` : ''}
+                            </div>
+                            <hr>
+                        </div>
+
+                        ${!isMultipleMode ? `
+                        <div class="col-md-6">
+                            <label class="form-label">Cabang <span class="text-danger">*</span></label>
+                            <select name="branch_id" class="form-select" required>
+                                <option value="">Pilih Cabang</option>
+                                <?php foreach ($branches as $branch): ?>
+                                <option value="<?= $branch['id'] ?>"><?= htmlspecialchars($branch['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                            <input type="date" name="transaction_date" class="form-control" required value="<?= date('Y-m-d') ?>">
+                        </div>
+                        ` : ''}
+
+                        <div class="col-12">
+                            <label class="form-label">Deskripsi <span class="text-danger">*</span></label>
+                            <input type="text" name="${nameAttr('description')}" class="form-control" required placeholder="Contoh: Penjualan harian, Catering, dll">
+                        </div>
+
+                        <div class="col-12"><hr><h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> Pemasukan</h6></div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Tunai</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('cash')}" class="form-control money-input" data-name="cash" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">QRIS</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('qris')}" class="form-control money-input" data-name="qris" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Transfer</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('transfer')}" class="form-control money-input" data-name="transfer" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Shopee Food</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('shopee_food')}" class="form-control money-input" data-name="shopee_food" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Grab Food</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('grab_food')}" class="form-control money-input" data-name="grab_food" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Go Food</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('go_food')}" class="form-control money-input" data-name="go_food" value="0">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <strong>Total Pemasukan:</strong> <span class="total-income">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12"><hr><h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> Pengeluaran</h6></div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Jumlah Pengeluaran</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="${nameAttr('expenses')}" class="form-control money-input" data-name="expenses" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Keterangan Pengeluaran</label>
+                            <input type="text" name="${nameAttr('expense_description')}" class="form-control" placeholder="Contoh: Beli bahan baku, Bayar listrik">
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <div class="alert alert-primary">
+                                <strong>Saldo Transaksi Ini:</strong> <span class="net-balance">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Add new transaction form
+        function addTransaction() {
+            const container = document.getElementById('transactionsContainer');
+            const template = getTransactionFormTemplate(transactionCount);
+            container.insertAdjacentHTML('beforeend', template);
+
+            // Initialize money inputs for the new form
+            const newForm = container.querySelector(`[data-index="${transactionCount}"]`);
+            newForm.querySelectorAll('.money-input').forEach(input => {
+                initMoneyInput(input);
+            });
+
+            calculateTransactionTotal(newForm);
+            transactionCount++;
+        }
+
+        // Remove transaction form
+        function removeTransaction(index) {
+            const form = document.querySelector(`[data-index="${index}"]`);
+            if (form) {
+                form.remove();
+            }
+        }
+
+        // Toggle multiple mode
+        const multipleModeToggle = document.getElementById('multipleMode');
+        if (multipleModeToggle) {
+            multipleModeToggle.addEventListener('change', function() {
+                isMultipleMode = this.checked;
+                const globalFields = document.getElementById('globalFields');
+                const addBtn = document.getElementById('addTransactionBtn');
+                const container = document.getElementById('transactionsContainer');
+
+                // Clear container
+                container.innerHTML = '';
+                transactionCount = 0;
+
+                if (isMultipleMode) {
+                    // Show global fields and add button
+                    globalFields.style.display = '';
+                    globalFields.querySelectorAll('select, input').forEach(el => el.required = true);
+                    addBtn.style.display = '';
+
+                    // Add first transaction form
+                    addTransaction();
+                } else {
+                    // Hide global fields and add button
+                    globalFields.style.display = 'none';
+                    globalFields.querySelectorAll('select, input').forEach(el => el.required = false);
+                    addBtn.style.display = 'none';
+
+                    // Add single transaction form
+                    addTransaction();
+                }
+            });
+
+            // Initialize with single mode
+            addTransaction();
+        }
+        <?php else: ?>
+        // Edit mode - initialize existing inputs
+        document.querySelectorAll('.money-input').forEach(input => {
+            initMoneyInput(input);
+        });
+        calculateTotals();
+        <?php endif; ?>
 
         // Convert formatted values back to numbers before submit
         document.getElementById('transactionForm').addEventListener('submit', function(e) {
@@ -393,9 +661,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 input.value = numericValue;
             });
         });
-
-        // Initial calculation
-        calculateTotals();
 
         // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
