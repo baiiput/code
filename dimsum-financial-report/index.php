@@ -364,14 +364,22 @@ if ($branchId == 0) {
                             foreach ($transactions as $t):
                                 $income = $t['cash'] + $t['qris'] + $t['transfer'] + $t['shopee_food'] + $t['grab_food'] + $t['go_food'];
                                 $hasDetails = $t['cash'] > 0 || $t['qris'] > 0 || $t['transfer'] > 0 || $t['shopee_food'] > 0 || $t['grab_food'] > 0 || $t['go_food'] > 0;
+
+                                // Prepare detail data for JavaScript
+                                $detailData = [
+                                    'cash' => $t['cash'],
+                                    'qris' => $t['qris'],
+                                    'transfer' => $t['transfer'],
+                                    'shopee_food' => $t['shopee_food'],
+                                    'grab_food' => $t['grab_food'],
+                                    'go_food' => $t['go_food']
+                                ];
                             ?>
                             <!-- Main Row -->
-                            <tr class="main-row">
-                                <td>
+                            <tr class="main-row" data-detail='<?= $hasDetails ? json_encode($detailData) : '' ?>' data-has-details="<?= $hasDetails ? '1' : '0' ?>">
+                                <td class="dt-control">
                                     <?php if ($hasDetails): ?>
-                                    <button class="btn btn-sm btn-link p-0 text-muted toggle-detail" data-id="<?= $t['id'] ?>" title="Lihat Detail">
-                                        <i class="bi bi-chevron-right"></i>
-                                    </button>
+                                    <i class="bi bi-chevron-right text-muted"></i>
                                     <?php endif; ?>
                                 </td>
                                 <td><?= $no++ ?></td>
@@ -409,67 +417,6 @@ if ($branchId == 0) {
                                 </td>
                                 <?php endif; ?>
                             </tr>
-
-                            <!-- Detail Row (Hidden by default) -->
-                            <?php if ($hasDetails): ?>
-                            <tr class="detail-row child" id="detail-<?= $t['id'] ?>" style="display: none;">
-                                <td colspan="<?= (canEdit() || canDelete()) ? '9' : '8' ?>" class="child">
-                                    <div class="detail-content bg-light p-3 rounded">
-                                        <h6 class="mb-3"><i class="bi bi-info-circle"></i> Detail Pemasukan</h6>
-                                        <div class="row g-3">
-                                            <?php if ($t['cash'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-cash-stack text-success"></i> Tunai:</span>
-                                                    <strong><?= formatRupiah($t['cash']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($t['qris'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-qr-code text-primary"></i> QRIS:</span>
-                                                    <strong><?= formatRupiah($t['qris']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($t['transfer'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-bank text-info"></i> Transfer:</span>
-                                                    <strong><?= formatRupiah($t['transfer']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($t['shopee_food'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-bag text-warning"></i> Shopee Food:</span>
-                                                    <strong><?= formatRupiah($t['shopee_food']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($t['grab_food'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-bag text-danger"></i> Grab Food:</span>
-                                                    <strong><?= formatRupiah($t['grab_food']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($t['go_food'] > 0): ?>
-                                            <div class="col-md-4">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-bag text-secondary"></i> Go Food:</span>
-                                                    <strong><?= formatRupiah($t['go_food']) ?></strong>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endif; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -553,35 +500,83 @@ if ($branchId == 0) {
         }
         <?php endif; ?>
 
+        // Format currency for display
+        function formatRupiah(amount) {
+            return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+        }
+
+        // Create detail row HTML
+        function createDetailRow(data) {
+            let html = '<div class="detail-content bg-light p-3 rounded">';
+            html += '<h6 class="mb-3"><i class="bi bi-info-circle"></i> Detail Pemasukan</h6>';
+            html += '<div class="row g-3">';
+
+            if (data.cash > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-cash-stack text-success"></i> Tunai:</span>';
+                html += '<strong>' + formatRupiah(data.cash) + '</strong></div></div>';
+            }
+            if (data.qris > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-qr-code text-primary"></i> QRIS:</span>';
+                html += '<strong>' + formatRupiah(data.qris) + '</strong></div></div>';
+            }
+            if (data.transfer > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-bank text-info"></i> Transfer:</span>';
+                html += '<strong>' + formatRupiah(data.transfer) + '</strong></div></div>';
+            }
+            if (data.shopee_food > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-bag text-warning"></i> Shopee Food:</span>';
+                html += '<strong>' + formatRupiah(data.shopee_food) + '</strong></div></div>';
+            }
+            if (data.grab_food > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-bag text-danger"></i> Grab Food:</span>';
+                html += '<strong>' + formatRupiah(data.grab_food) + '</strong></div></div>';
+            }
+            if (data.go_food > 0) {
+                html += '<div class="col-md-4"><div class="d-flex justify-content-between">';
+                html += '<span><i class="bi bi-bag text-secondary"></i> Go Food:</span>';
+                html += '<strong>' + formatRupiah(data.go_food) + '</strong></div></div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
         // DataTable
         $(document).ready(function() {
-            $('#transactionTable').DataTable({
+            const table = $('#transactionTable').DataTable({
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json' },
                 order: [[2, 'desc']], // Sort by Tanggal column
                 pageLength: 25,
                 columnDefs: [
                     { orderable: false, targets: 0 }, // Disable sort on chevron column
                     { width: '30px', targets: 0 }
-                ],
-                // Handle detail rows - don't apply DataTables features to them
-                drawCallback: function() {
-                    // Re-attach toggle event listeners after table redraw
-                    document.querySelectorAll('.toggle-detail').forEach(button => {
-                        button.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            const id = this.getAttribute('data-id');
-                            const detailRow = document.getElementById('detail-' + id);
-                            const icon = this.querySelector('i');
+                ]
+            });
 
-                            if (detailRow.style.display === 'none') {
-                                detailRow.style.display = 'table-row';
-                                icon.className = 'bi bi-chevron-down';
-                            } else {
-                                detailRow.style.display = 'none';
-                                icon.className = 'bi bi-chevron-right';
-                            }
-                        });
-                    });
+            // Handle detail row toggle
+            $('#transactionTable tbody').on('click', 'td.dt-control', function() {
+                const tr = $(this).closest('tr');
+                const row = table.row(tr);
+                const hasDetails = tr.data('has-details') === '1';
+
+                if (!hasDetails) return;
+
+                if (row.child.isShown()) {
+                    // Close this row
+                    row.child.hide();
+                    tr.find('.dt-control i').removeClass('bi-chevron-down').addClass('bi-chevron-right');
+                } else {
+                    // Open this row
+                    const detailData = tr.data('detail');
+                    if (detailData) {
+                        row.child(createDetailRow(detailData)).show();
+                        tr.find('.dt-control i').removeClass('bi-chevron-right').addClass('bi-chevron-down');
+                    }
                 }
             });
         });
