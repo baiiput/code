@@ -1204,3 +1204,36 @@ textarea::placeholder {
 #addTransactionBtn {
     transition: opacity 0.3s ease;
 }
+
+/* ===== Transaction Detail Row ===== */
+.detail-row {
+    background-color: var(--bg-secondary);
+}
+
+.detail-content {
+    background-color: var(--bg-card) !important;
+    border-left: 3px solid var(--primary);
+}
+
+.detail-row .col-md-4 {
+    padding: 0.5rem;
+}
+
+.detail-row .col-md-4 .d-flex {
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 0.25rem;
+}
+
+.toggle-detail {
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+
+.toggle-detail:hover {
+    transform: scale(1.1);
+}
+
+.toggle-detail i {
+    transition: transform 0.2s ease;
+}

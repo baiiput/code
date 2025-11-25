@@ -333,22 +333,17 @@ if ($branchId == 0) {
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="transactionTable" class="table table-striped table-hover">
+                    <table id="transactionTable" class="table table-hover">
                         <thead>
                             <tr>
+                                <th width="30"></th>
                                 <th>No</th>
                                 <th>Tanggal</th>
                                 <th>Cabang</th>
                                 <th>Deskripsi</th>
-                                <th>Tunai</th>
-                                <th>QRIS</th>
-                                <th>Transfer</th>
-                                <th>Shopee</th>
-                                <th>Grab</th>
-                                <th>GoFood</th>
-                                <th>Pengeluaran</th>
-                                <th>Keterangan</th>
-                                <th>Saldo</th>
+                                <th class="text-end">Pemasukan</th>
+                                <th class="text-end">Pengeluaran</th>
+                                <th class="text-end">Saldo</th>
                                 <?php if (canEdit() || canDelete()): ?>
                                 <th>Aksi</th>
                                 <?php endif; ?>
@@ -368,21 +363,33 @@ if ($branchId == 0) {
 
                             foreach ($transactions as $t):
                                 $income = $t['cash'] + $t['qris'] + $t['transfer'] + $t['shopee_food'] + $t['grab_food'] + $t['go_food'];
+                                $hasDetails = $t['cash'] > 0 || $t['qris'] > 0 || $t['transfer'] > 0 || $t['shopee_food'] > 0 || $t['grab_food'] > 0 || $t['go_food'] > 0;
                             ?>
-                            <tr>
+                            <!-- Main Row -->
+                            <tr class="main-row">
+                                <td>
+                                    <?php if ($hasDetails): ?>
+                                    <button class="btn btn-sm btn-link p-0 text-muted toggle-detail" data-id="<?= $t['id'] ?>" title="Lihat Detail">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= $no++ ?></td>
                                 <td><?= formatDate($t['transaction_date']) ?></td>
                                 <td><span class="badge bg-secondary"><?= htmlspecialchars($t['branch_name']) ?></span></td>
                                 <td><?= htmlspecialchars($t['description']) ?></td>
-                                <td class="text-end"><?= $t['cash'] > 0 ? formatRupiah($t['cash']) : '-' ?></td>
-                                <td class="text-end"><?= $t['qris'] > 0 ? formatRupiah($t['qris']) : '-' ?></td>
-                                <td class="text-end"><?= $t['transfer'] > 0 ? formatRupiah($t['transfer']) : '-' ?></td>
-                                <td class="text-end"><?= $t['shopee_food'] > 0 ? formatRupiah($t['shopee_food']) : '-' ?></td>
-                                <td class="text-end"><?= $t['grab_food'] > 0 ? formatRupiah($t['grab_food']) : '-' ?></td>
-                                <td class="text-end"><?= $t['go_food'] > 0 ? formatRupiah($t['go_food']) : '-' ?></td>
-                                <td class="text-end text-danger"><?= $t['expenses'] > 0 ? formatRupiah($t['expenses']) : '-' ?></td>
-                                <td><small class="text-muted"><?= !empty($t['expense_description']) ? htmlspecialchars($t['expense_description']) : '-' ?></small></td>
-                                <td class="text-end fw-semibold <?= $balances[$t['id']] >= 0 ? 'text-success' : 'text-danger' ?>">
+                                <td class="text-end text-success fw-semibold"><?= formatRupiah($income) ?></td>
+                                <td class="text-end">
+                                    <?php if ($t['expenses'] > 0): ?>
+                                        <span class="text-danger fw-semibold"><?= formatRupiah($t['expenses']) ?></span>
+                                        <?php if (!empty($t['expense_description'])): ?>
+                                        <br><small class="text-muted"><?= htmlspecialchars($t['expense_description']) ?></small>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end fw-bold <?= $balances[$t['id']] >= 0 ? 'text-success' : 'text-danger' ?>">
                                     <?= formatRupiah($balances[$t['id']]) ?>
                                 </td>
                                 <?php if (canEdit() || canDelete()): ?>
@@ -402,6 +409,67 @@ if ($branchId == 0) {
                                 </td>
                                 <?php endif; ?>
                             </tr>
+
+                            <!-- Detail Row (Hidden by default) -->
+                            <?php if ($hasDetails): ?>
+                            <tr class="detail-row" id="detail-<?= $t['id'] ?>" style="display: none;">
+                                <td colspan="<?= (canEdit() || canDelete()) ? '9' : '8' ?>">
+                                    <div class="detail-content bg-light p-3 rounded">
+                                        <h6 class="mb-3"><i class="bi bi-info-circle"></i> Detail Pemasukan</h6>
+                                        <div class="row g-3">
+                                            <?php if ($t['cash'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-cash-stack text-success"></i> Tunai:</span>
+                                                    <strong><?= formatRupiah($t['cash']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($t['qris'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-qr-code text-primary"></i> QRIS:</span>
+                                                    <strong><?= formatRupiah($t['qris']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($t['transfer'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-bank text-info"></i> Transfer:</span>
+                                                    <strong><?= formatRupiah($t['transfer']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($t['shopee_food'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-bag text-warning"></i> Shopee Food:</span>
+                                                    <strong><?= formatRupiah($t['shopee_food']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($t['grab_food'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-bag text-danger"></i> Grab Food:</span>
+                                                    <strong><?= formatRupiah($t['grab_food']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($t['go_food'] > 0): ?>
+                                            <div class="col-md-4">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><i class="bi bi-bag text-secondary"></i> Go Food:</span>
+                                                    <strong><?= formatRupiah($t['go_food']) ?></strong>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -550,6 +618,24 @@ if ($branchId == 0) {
             const params = new URLSearchParams(window.location.search);
             window.location.href = 'export.php?type=excel&' + params.toString();
         }
+
+        // Toggle detail rows
+        document.querySelectorAll('.toggle-detail').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const id = this.getAttribute('data-id');
+                const detailRow = document.getElementById('detail-' + id);
+                const icon = this.querySelector('i');
+
+                if (detailRow.style.display === 'none') {
+                    detailRow.style.display = 'table-row';
+                    icon.className = 'bi bi-chevron-down';
+                } else {
+                    detailRow.style.display = 'none';
+                    icon.className = 'bi bi-chevron-right';
+                }
+            });
+        });
     </script>
 </body>
 </html>
