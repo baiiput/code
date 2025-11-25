@@ -3197,12 +3197,16 @@ function isFormValid() {
         allKitsHaveValidPaymentType = selectedKits.every(kit => kit.tipePembayaran && kit.tipePembayaran !== '');
     }
 
-    // Check berdasarkan search mode
+    // 🔧 FIX: Check search field only if no KITs selected yet
+    // If KITs already selected, we don't need to check the input field (which is cleared after adding)
     const searchMode = document.getElementById('searchMode').value;
     let searchFieldValid = false;
 
-    if (searchMode === 'kit') {
-        // Mode KIT: Cek input KIT
+    if (selectedKits.length > 0) {
+        // If we have selected KITs, search field is valid (KITs were already validated when added)
+        searchFieldValid = true;
+    } else if (searchMode === 'kit') {
+        // Mode KIT: Cek input KIT (only if no KITs selected yet)
         const kit = document.getElementById('nomorKit').value.trim();
         searchFieldValid = kit.length > 0;
     } else {
@@ -3210,8 +3214,22 @@ function isFormValid() {
         searchFieldValid = isKitValid;
     }
 
+    const isValid = tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && allKitsHaveValidNominal && allKitsHaveValidPaymentType;
+
+    // 🔍 DEBUG: Log validation details
+    console.log('🔍 isFormValid() check:', {
+        tanggal: !!tanggal,
+        searchFieldValid: searchFieldValid,
+        nama: nama,
+        namaValid: nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid',
+        allKitsHaveValidNominal: allKitsHaveValidNominal,
+        allKitsHaveValidPaymentType: allKitsHaveValidPaymentType,
+        selectedKitsCount: selectedKits.length,
+        isValid: isValid
+    });
+
     // 🆕 UPDATED: Check per-KIT nominal AND payment type instead of global payment type
-    return tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && allKitsHaveValidNominal && allKitsHaveValidPaymentType;
+    return isValid;
 }
 
 function updatePreview() {

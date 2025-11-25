@@ -678,28 +678,18 @@ function updateLocalPreview() {
     // Build full preview HTML (without Transaction ID - it will be generated on submit)
     const previewHTML = `
         <h3 style="color:#3b82f6;margin-bottom:20px;font-size:18px;text-align:center;border-bottom:2px solid #334155;padding-bottom:12px;">📋 Preview Data Pembayaran</h3>
-        
+
         <div style="display:flex;flex-direction:column;gap:10px;">
             <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
                 <span style="font-weight:600;color:#94a3b8;font-size:14px;">📅 Tanggal Pembayaran:</span>
                 <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${tanggalIndonesia}</span>
             </div>
-            
-            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
-                <span style="font-weight:600;color:#94a3b8;font-size:14px;">👤 Nama Client:</span>
-                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${clientNameText}</span>
-            </div>
-            
+
             <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
                 <span style="font-weight:600;color:#94a3b8;font-size:14px;">📦 Jumlah KIT:</span>
                 <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${kitCount} KIT</span>
             </div>
-            
-            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
-                <span style="font-weight:600;color:#94a3b8;font-size:14px;">💳 Tipe Pembayaran:</span>
-                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${tipePembayaran}</span>
-            </div>
-            
+
             <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
                 <span style="font-weight:600;color:#94a3b8;font-size:14px;">💰 Nominal Total:</span>
                 <span style="font-weight:700;color:#10b981;font-size:16px;">${nominalFormatted}</span>
