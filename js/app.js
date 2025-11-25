@@ -982,47 +982,56 @@ async function confirmAndSubmit() {
     startLoadingProgressMonitor();
     
     try {
-        const nominalInput = document.getElementById('nominal').value;
-        const totalNominal = Number(unformatNumber(nominalInput));
+        // Validate that all selected KITs have nominal
+        const kitsWithoutNominal = selectedKits.filter(kit => !kit.nominal || kit.nominal < 10000);
+        if (kitsWithoutNominal.length > 0) {
+            const missingKits = kitsWithoutNominal.map(kit => kit.kitNumber).join(', ');
+            throw new Error(`Nominal belum diisi atau kurang dari Rp 10.000 untuk KIT: ${missingKits}`);
+        }
+
+        // Calculate total nominal from all selected KITs
+        const totalNominal = selectedKits.reduce((sum, kit) => sum + (kit.nominal || 0), 0);
         const kitNumbers = selectedKits.map(kit => kit.kitNumber).join('\n');
         const kitPackages = selectedKits.map(kit => kit.paket).join('\n');
-        
+
         // UNIQUE REQUEST ID untuk mencegah duplikasi - gunakan timestamp + hash KIT numbers
         const requestId = Date.now() + '_' + btoa(kitNumbers).slice(-8);
-        
+
         // Store current requestId to prevent duplicate
         currentRequestId = requestId;
-        
+
         const formData = {
             requestId: requestId,
             submissionTime: submitStartTime,
             tanggal: getFormDateValue(),
             nama: elements.clientNameText.textContent.trim(),
             tipe: document.getElementById('tipePembayaran').value,
-            nominal: totalNominal,
+            nominal: totalNominal, // Total for summary purposes
             kitNumbers: kitNumbers,
             kitPackages: kitPackages,
             kitCount: selectedKits.length,
             isMultipleKit: selectedKits.length > 1,
+            submitAsMultipleEntries: true, // NEW: flag to indicate separate entries
             selectedKits: selectedKits.map(kit => ({
                 kitNumber: kit.kitNumber,
                 serialNumber: kit.serialNumber || '',
                 paket: kit.paket,
-                nominal: totalNominal
+                nominal: kit.nominal // UPDATED: use per-KIT nominal
             }))
         };
-        
+
         console.log('📤 Submitting with unique Request ID:', requestId);
+        console.log('📤 Total KITs:', selectedKits.length, '| Total Nominal:', totalNominal);
         CONFIG.log('Submitting form data:', formData);
-        
+
         // Submit dengan enhanced retry handling
         const result = await submitWithRetry(formData);
-        
+
         console.log('📥 Submit result received:', result);
         CONFIG.log('Submit result:', result);
-        
+
         handleSubmitSuccess(result);
-        
+
     } catch (error) {
         console.error('❌ Submit error:', error);
         CONFIG.error('Submit error:', error);
@@ -2719,49 +2728,132 @@ function hideKitSelection() {
 
 function updateKitDisplay() {
     elements.kitList.innerHTML = '';
-    
+
     availableKits.forEach((kit, index) => {
         const kitItem = document.createElement('div');
         kitItem.className = `kit-item ${kit.isSelected ? 'selected' : ''} ${kit.isDuplicate ? 'duplicate' : ''}`;
-        
+
         const serialInfo = kit.serialNumber ? ` | SN: ${kit.serialNumber}` : '';
         const duplicateLabel = kit.isDuplicate ? '<span style="color: #fde68a; font-size: 12px; margin-right: 8px;">DUPLICATE</span>' : '';
-        
+
+        // Format nominal jika sudah diisi
+        const nominalValue = kit.nominal ? formatRupiahInput(kit.nominal) : '';
+
         kitItem.innerHTML = `
-            <div class="kit-info">
-                <div class="kit-left-info">
-                    <span class="kit-number">🛰️ ${kit.kitNumber}${serialInfo}</span>
-                    <span class="kit-package">${kit.paket}</span>
+            <div class="kit-info" style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="kit-left-info">
+                        <span class="kit-number">🛰️ ${kit.kitNumber}${serialInfo}</span>
+                        <span class="kit-package">${kit.paket}</span>
+                    </div>
+                    <div class="kit-right-controls">
+                        ${duplicateLabel}
+                        <input type="checkbox"
+                               class="kit-checkbox"
+                               id="kit-${index}"
+                               data-kit="${kit.kitNumber}"
+                               data-package="${kit.paket}"
+                               ${kit.isSelected ? 'checked' : ''}>
+                    </div>
                 </div>
-                <div class="kit-right-controls">
-                    ${duplicateLabel}
-                    <input type="checkbox" 
-                           class="kit-checkbox" 
-                           id="kit-${index}" 
-                           data-kit="${kit.kitNumber}"
-                           data-package="${kit.paket}"
-                           ${kit.isSelected ? 'checked' : ''}>
+                <div class="kit-nominal-input" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 10px; background: #1e293b; border-radius: 6px; border: 2px solid #3b82f6;">
+                    <label style="display: block; color: #94a3b8; font-size: 12px; margin-bottom: 5px;">💰 Nominal untuk KIT ini:</label>
+                    <input type="text"
+                           class="nominal-input-per-kit"
+                           data-kit-index="${index}"
+                           placeholder="Contoh: 100000 atau 100.000"
+                           value="${nominalValue}"
+                           style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #f1f5f9; font-size: 14px; font-family: 'Roboto Mono', monospace;">
+                    <small style="color: #64748b; font-size: 11px; display: block; margin-top: 4px;">Minimal Rp 10.000</small>
                 </div>
             </div>
         `;
-        
-        kitItem.addEventListener('click', function() {
+
+        // Checkbox click handler
+        const checkbox = kitItem.querySelector('.kit-checkbox');
+        checkbox.addEventListener('click', function(e) {
+            e.stopPropagation();
             toggleKitSelection(index);
         });
-        
+
+        // Nominal input handler
+        const nominalInput = kitItem.querySelector('.nominal-input-per-kit');
+        if (nominalInput) {
+            nominalInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            nominalInput.addEventListener('input', function(e) {
+                handleKitNominalInput(index, this.value);
+            });
+
+            nominalInput.addEventListener('focus', function() {
+                this.value = kit.nominal || '';
+            });
+
+            nominalInput.addEventListener('blur', function() {
+                if (kit.nominal) {
+                    this.value = formatRupiahInput(kit.nominal);
+                }
+            });
+        }
+
         elements.kitList.appendChild(kitItem);
     });
+}
+
+// 🆕 Handle nominal input per KIT
+function handleKitNominalInput(kitIndex, value) {
+    // Remove non-numeric characters except digits
+    const cleaned = value.replace(/[^\d]/g, '');
+    const numericValue = parseInt(cleaned) || 0;
+
+    // Update kit nominal
+    availableKits[kitIndex].nominal = numericValue;
+
+    // Update selectedKits if this kit is selected
+    if (availableKits[kitIndex].isSelected) {
+        const selectedIndex = selectedKits.findIndex(kit => kit.kitNumber === availableKits[kitIndex].kitNumber);
+        if (selectedIndex !== -1) {
+            selectedKits[selectedIndex].nominal = numericValue;
+        }
+    }
+
+    updateKitSummary();
+    updateButtonStates();
+    updateStep3Summary(); // Update Step 3 summary display
+}
+
+// 🆕 Update Step 3 Summary Display
+function updateStep3Summary() {
+    const totalKitsCountEl = document.getElementById('totalKitsCount');
+    const totalNominalDisplayEl = document.getElementById('totalNominalDisplay');
+
+    if (!totalKitsCountEl || !totalNominalDisplayEl) return;
+
+    const selectedCount = selectedKits.length;
+    const totalNominal = selectedKits.reduce((sum, kit) => sum + (kit.nominal || 0), 0);
+
+    totalKitsCountEl.textContent = selectedCount;
+    totalNominalDisplayEl.textContent = formatRupiahInput(totalNominal);
+}
+
+// 🆕 Format rupiah for input display
+function formatRupiahInput(amount) {
+    if (!amount) return '';
+    return 'Rp ' + Number(amount).toLocaleString('id-ID');
 }
 
 function toggleKitSelection(index) {
     availableKits[index].isSelected = !availableKits[index].isSelected;
     selectedKits = availableKits.filter(kit => kit.isSelected);
-    
+
+    // Re-render to show/hide nominal input
     updateKitDisplay();
     updateKitSummary();
     updateButtonStates();
     updatePreview();
-    
+
     // Update stepper navigation buttons
     if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
         window.stepperNav.updateNavigationButtons();
@@ -2772,12 +2864,19 @@ function updateKitSummary() {
     const selectedCount = selectedKits.length;
     const totalCount = availableKits.length;
     const duplicateCount = availableKits.filter(kit => kit.isDuplicate).length;
-    
+
+    // Calculate total nominal from selected KITs
+    const totalNominal = selectedKits.reduce((sum, kit) => sum + (kit.nominal || 0), 0);
+    const formattedTotal = totalNominal > 0 ? formatRupiahInput(totalNominal) : 'Rp 0';
+
     let summaryText = `<strong>Dipilih: ${selectedCount} dari ${totalCount} KIT</strong>`;
+    if (selectedCount > 0) {
+        summaryText += `<br><small style="color: #3b82f6;">💰 Total Nominal: ${formattedTotal}</small>`;
+    }
     if (duplicateCount > 0) {
         summaryText += `<br><small style="color: #fde68a;">⚠️ ${duplicateCount} KIT duplicate (tetap bisa dipilih)</small>`;
     }
-    
+
     elements.kitSummary.innerHTML = summaryText;
 }
 

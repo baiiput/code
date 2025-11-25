@@ -256,13 +256,29 @@
 </div>
 </div>
 
-<!-- Nominal -->
-<div class="form-group">
+<!-- Nominal (HIDDEN - now per KIT in Step 2) -->
+<div class="form-group" style="display: none;">
 <label for="nominal">Nominal Total *</label>
 <div class="rupiah-input">
-<input type="text" id="nominal" name="nominal" placeholder="Contoh: 100.000 (total untuk semua KIT yang dipilih)" min="10000" step="1000" required>
+<input type="text" id="nominal" name="nominal" placeholder="Auto-calculated from per-KIT nominals" min="10000" step="1000">
 </div>
-<small style="color:#94a3b8;font-size:12px;">Minimal Rp 10.000 - Input total nominal untuk semua KIT yang dipilih</small>
+<small style="color:#94a3b8;font-size:12px;">Total nominal dihitung otomatis dari nominal per KIT di Step 2</small>
+</div>
+
+<!-- Nominal Summary Display -->
+<div class="form-group">
+<label>📊 Ringkasan Nominal</label>
+<div id="nominalSummaryDisplay" style="padding: 15px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 8px; color: white;">
+<div style="font-size: 14px; margin-bottom: 10px;">
+<strong>Total KIT Dipilih:</strong> <span id="totalKitsCount">0</span> KIT
+</div>
+<div style="font-size: 18px; font-weight: bold;">
+<strong>Total Nominal:</strong> <span id="totalNominalDisplay">Rp 0</span>
+</div>
+<div style="font-size: 12px; margin-top: 10px; color: #dbeafe;">
+💡 Setiap KIT akan disubmit sebagai entry terpisah ke spreadsheet
+</div>
+</div>
 </div>
 </div>
 </div>

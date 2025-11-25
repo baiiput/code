@@ -4300,74 +4300,153 @@ function submitPaymentDataMultiKit(formData) {
       };
     }
     
-    var transactionID = generateTransactionID(tanggal, month, year);
-    Logger.log('Generated Transaction ID: ' + transactionID);
-    
     var sheet = getReportSheet(month, year, true);
-    
+
     // ✅ NEW: Remove existing filters BEFORE processing
     removeExistingFiltersFromReportSheet(sheet);
-    
+
     var lastRow = sheet.getLastRow();
-    
+
     var day = tanggal.getDate().toString().padStart(2, '0');
     var monthStr = month.toString().padStart(2, '0');
     var yearStr = year.toString();
     var formattedDate = `${day}/${monthStr}/${yearStr}`;
-    
-    var newRowNumber = lastRow;
-    
-    // ✅ CRITICAL: Prepare serialNumbers untuk multiple kit
-    var serialNumbers = '';
-    if (formData.isMultipleKit && formData.kitCount > 1) {
-      var serialNumArray = formData.selectedKits.map(function(kit) {
-        return kit.serialNumber || '';
-      });
-      serialNumbers = serialNumArray.join('\n');
-      Logger.log('Prepared serial numbers for multiple kit: ' + serialNumbers);
-    } else if (formData.selectedKits.length === 1) {
-      serialNumbers = formData.selectedKits[0].serialNumber || '';
-      Logger.log('Single kit serial number: ' + serialNumbers);
-    }
-    
-    var rowData;
-    if (formData.isMultipleKit && formData.kitCount > 1) {
-      // ✅ NEW: Struktur 11 kolom dengan Serial Number terpisah
-      rowData = [
-        newRowNumber,         // A: Nomor
-        formattedDate,        // B: Tanggal  
-        transactionID,        // C: ID Transaksi
-        formData.nama,        // D: Nama Client
-        formData.kitNumbers,  // E: Serial Number (KIT) ← dari KIT Number client
-        serialNumbers,        // F: Serial Number ← BARU dari Serial Number client
-        formData.kitPackages, // G: Paket ← GESER dari F
-        formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
-        formData.nominal      // I: Nominal ← GESER dari H
-        // J: Jumlah Total akan dihitung running total ← GESER dari I
-        // K: Total Harian akan di-merge ← GESER dari J
-      ];
+
+    // 🆕 NEW LOGIC: Check if should submit as multiple entries (one row per KIT)
+    if (formData.submitAsMultipleEntries && formData.selectedKits.length > 1) {
+      Logger.log('🔄 Processing as MULTIPLE SEPARATE ENTRIES (one row per KIT)');
+      Logger.log('📊 Total KITs to insert: ' + formData.selectedKits.length);
+
+      var insertedTransactionIDs = [];
+      var insertedRows = [];
+
+      // Loop each KIT and insert as separate entry
+      for (var kitIndex = 0; kitIndex < formData.selectedKits.length; kitIndex++) {
+        var kit = formData.selectedKits[kitIndex];
+
+        // Generate unique transaction ID for each KIT
+        var transactionID = generateTransactionID(tanggal, month, year);
+        insertedTransactionIDs.push(transactionID);
+
+        Logger.log('Processing KIT ' + (kitIndex + 1) + '/' + formData.selectedKits.length + ': ' + kit.kitNumber);
+        Logger.log('  - Transaction ID: ' + transactionID);
+        Logger.log('  - Nominal: ' + kit.nominal);
+
+        // Get current last row (updates after each insert)
+        lastRow = sheet.getLastRow();
+        var newRowNumber = lastRow;
+
+        // Create row data for this KIT
+        var rowData = [
+          newRowNumber,               // A: Nomor
+          formattedDate,              // B: Tanggal
+          transactionID,              // C: ID Transaksi
+          formData.nama,              // D: Nama Client
+          kit.kitNumber,              // E: Serial Number (KIT)
+          kit.serialNumber || '',     // F: Serial Number
+          kit.paket,                  // G: Paket
+          formData.tipe,              // H: Tipe Pembayaran
+          kit.nominal                 // I: Nominal (per-KIT nominal)
+        ];
+
+        // Insert this row
+        sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
+        insertedRows.push(rowData);
+
+        Logger.log('✅ Inserted row ' + (kitIndex + 1) + ': ' + JSON.stringify(rowData));
+      }
+
+      Logger.log('✅ All ' + formData.selectedKits.length + ' KITs inserted as separate entries');
+      Logger.log('📋 Transaction IDs: ' + insertedTransactionIDs.join(', '));
+
+      // Sort and organize after all inserts
+      sortAndOrganizeWithNew11ColumnStructure(sheet);
+
+      // Apply filter based on transaction date
+      applyDateFilterToReportSheet(sheet, tanggal);
+
+      // Update client data with transaction IDs
+      var updateResult = updateClientDataWithTransactionID(formData.selectedKits, insertedTransactionIDs.join(', '));
+
+      // Send email notification
+      try {
+        sendEmailNotificationMultiKitWithTransactionID(formData, sheet.getName(), insertedTransactionIDs.join(', '), updateResult);
+      } catch (emailError) {
+        Logger.log('⚠️ Email notification failed but submission successful: ' + emailError.message);
+      }
+
+      return {
+        status: 'success',
+        message: 'Data berhasil disubmit! ' + formData.selectedKits.length + ' KIT diproses sebagai entry terpisah.',
+        transactionIDs: insertedTransactionIDs,
+        totalEntries: formData.selectedKits.length,
+        requestId: formData.requestId,
+        sheetName: sheet.getName(),
+        clientUpdates: updateResult,
+        timestamp: new Date().toISOString()
+      };
+
     } else {
-      var kit = formData.selectedKits[0];
-      // ✅ NEW: Struktur 11 kolom untuk single kit
-      rowData = [
-        newRowNumber,         // A: Nomor
-        formattedDate,        // B: Tanggal
-        transactionID,        // C: ID Transaksi
-        formData.nama,        // D: Nama Client
-        kit.kitNumber,        // E: Serial Number (KIT) ← dari KIT Number client
-        kit.serialNumber || '', // F: Serial Number ← BARU dari Serial Number client
-        kit.paket,           // G: Paket ← GESER dari F
-        formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
-        kit.nominal || formData.nominal // I: Nominal ← GESER dari H
-        // J: Jumlah Total akan dihitung running total ← GESER dari I
-        // K: Total Harian akan di-merge ← GESER dari J
-      ];
+      // Original logic for single entry (backward compatibility)
+      Logger.log('📝 Processing as SINGLE ENTRY (original behavior)');
+
+      var transactionID = generateTransactionID(tanggal, month, year);
+      Logger.log('Generated Transaction ID: ' + transactionID);
+
+      var newRowNumber = lastRow;
+
+      // ✅ CRITICAL: Prepare serialNumbers untuk multiple kit
+      var serialNumbers = '';
+      if (formData.isMultipleKit && formData.kitCount > 1) {
+        var serialNumArray = formData.selectedKits.map(function(kit) {
+          return kit.serialNumber || '';
+        });
+        serialNumbers = serialNumArray.join('\n');
+        Logger.log('Prepared serial numbers for multiple kit: ' + serialNumbers);
+      } else if (formData.selectedKits.length === 1) {
+        serialNumbers = formData.selectedKits[0].serialNumber || '';
+        Logger.log('Single kit serial number: ' + serialNumbers);
+      }
+
+      var rowData;
+      if (formData.isMultipleKit && formData.kitCount > 1) {
+        // ✅ NEW: Struktur 11 kolom dengan Serial Number terpisah
+        rowData = [
+          newRowNumber,         // A: Nomor
+          formattedDate,        // B: Tanggal
+          transactionID,        // C: ID Transaksi
+          formData.nama,        // D: Nama Client
+          formData.kitNumbers,  // E: Serial Number (KIT) ← dari KIT Number client
+          serialNumbers,        // F: Serial Number ← BARU dari Serial Number client
+          formData.kitPackages, // G: Paket ← GESER dari F
+          formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
+          formData.nominal      // I: Nominal ← GESER dari H
+          // J: Jumlah Total akan dihitung running total ← GESER dari I
+          // K: Total Harian akan di-merge ← GESER dari J
+        ];
+      } else {
+        var kit = formData.selectedKits[0];
+        // ✅ NEW: Struktur 11 kolom untuk single kit
+        rowData = [
+          newRowNumber,         // A: Nomor
+          formattedDate,        // B: Tanggal
+          transactionID,        // C: ID Transaksi
+          formData.nama,        // D: Nama Client
+          kit.kitNumber,        // E: Serial Number (KIT) ← dari KIT Number client
+          kit.serialNumber || '', // F: Serial Number ← BARU dari Serial Number client
+          kit.paket,           // G: Paket ← GESER dari F
+          formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
+          kit.nominal || formData.nominal // I: Nominal ← GESER dari H
+          // J: Jumlah Total akan dihitung running total ← GESER dari I
+          // K: Total Harian akan di-merge ← GESER dari J
+        ];
+      }
+
+      // Insert data (sampai kolom I saja, J dan K akan dihitung)
+      sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
+      Logger.log('✅ Data inserted with NEW 11-column structure');
+      Logger.log('Row data: ' + JSON.stringify(rowData));
     }
-    
-    // Insert data (sampai kolom I saja, J dan K akan dihitung)
-    sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
-    Logger.log('✅ Data inserted with NEW 11-column structure');
-    Logger.log('Row data: ' + JSON.stringify(rowData));
     
     // ✅ CRITICAL: Panggil fungsi dengan nama BARU
     sortAndOrganizeWithNew11ColumnStructure(sheet);
