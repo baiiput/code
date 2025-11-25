@@ -548,18 +548,11 @@ if ($branchId == 0) {
 
         // DataTable
         $(document).ready(function() {
-            const table = $('#transactionTable').DataTable({
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json' },
-                order: [[2, 'desc']], // Sort by Tanggal column
-                pageLength: 25,
-                columnDefs: [
-                    { orderable: false, targets: 0 }, // Disable sort on chevron column
-                    { width: '30px', targets: 0 }
-                ]
-            });
+            console.log('Document ready, initializing DataTable...');
 
             // Function to toggle detail row
-            function toggleDetailRow(tr) {
+            function toggleDetailRow(tr, table) {
+                console.log('toggleDetailRow called');
                 const row = table.row(tr);
 
                 // Use getAttribute for more reliable data reading
@@ -567,10 +560,14 @@ if ($branchId == 0) {
 
                 console.log('Toggle clicked, hasDetails:', hasDetails);
 
-                if (!hasDetails) return;
+                if (!hasDetails) {
+                    console.log('No details to show');
+                    return;
+                }
 
                 if (row.child.isShown()) {
                     // Close this row
+                    console.log('Closing detail row');
                     row.child.hide();
                     tr.classList.remove('shown');
                     const icon = tr.querySelector('.dt-control i');
@@ -601,25 +598,9 @@ if ($branchId == 0) {
                 }
             }
 
-            // Handle click on entire row (except action buttons)
-            // Use event delegation on tbody
-            $('#transactionTable tbody').on('click', 'tr', function(e) {
-                // Check if this is a main row
-                if (!$(this).hasClass('main-row')) {
-                    return;
-                }
-
-                // Don't toggle if clicking on action buttons or links
-                if ($(e.target).closest('a, button').length > 0) {
-                    return;
-                }
-
-                console.log('Row clicked');
-                toggleDetailRow(this);
-            });
-
             // Apply cursor styling function
             function applyCursorStyling() {
+                console.log('Applying cursor styling...');
                 $('#transactionTable tbody tr.main-row').each(function() {
                     const hasDetails = this.getAttribute('data-has-details') === '1';
                     if (hasDetails) {
@@ -628,13 +609,51 @@ if ($branchId == 0) {
                 });
             }
 
-            // Initial application
-            applyCursorStyling();
+            const table = $('#transactionTable').DataTable({
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json' },
+                order: [[2, 'desc']], // Sort by Tanggal column
+                pageLength: 25,
+                columnDefs: [
+                    { orderable: false, targets: 0 }, // Disable sort on chevron column
+                    { width: '30px', targets: 0 }
+                ],
+                initComplete: function() {
+                    console.log('DataTable initialized');
+
+                    // Apply cursor styling after init
+                    applyCursorStyling();
+
+                    // Attach event handler AFTER DataTables is fully initialized
+                    $('#transactionTable tbody').off('click').on('click', 'tr', function(e) {
+                        console.log('Row clicked! Target:', e.target);
+
+                        // Check if this is a main row
+                        if (!$(this).hasClass('main-row')) {
+                            console.log('Not a main-row, ignoring');
+                            return;
+                        }
+
+                        // Don't toggle if clicking on action buttons or links
+                        if ($(e.target).closest('a, button').length > 0) {
+                            console.log('Clicked on button/link, ignoring');
+                            return;
+                        }
+
+                        console.log('Valid row click, toggling...');
+                        toggleDetailRow(this, table);
+                    });
+
+                    console.log('Event handlers attached');
+                }
+            });
 
             // Re-apply cursor styling after table redraws
             table.on('draw', function() {
+                console.log('Table redrawn, reapplying cursor styling');
                 applyCursorStyling();
             });
+
+            console.log('Setup complete');
         });
 
         // Theme toggle
