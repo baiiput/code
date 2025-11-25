@@ -861,10 +861,39 @@ function resetFormAndStepper() {
     if (nominal) nominal.value = '';
     
     const tanggalIndonesia = document.getElementById('tanggalIndonesia');
-    if (tanggalIndonesia) tanggalIndonesia.textContent = 'Klik untuk pilih tanggal';
-    
     const tanggalPembayaran = document.getElementById('tanggalPembayaran');
-    if (tanggalPembayaran) tanggalPembayaran.value = '';
+
+    // Reset date to today instead of empty
+    const today = new Date();
+    const todayISO = today.toISOString().split('T')[0];
+
+    if (tanggalPembayaran) {
+        tanggalPembayaran.value = todayISO;
+        console.log('📅 Reset tanggal to today:', todayISO);
+    }
+
+    // Update display texts - use formatDateIndonesian if available (from app.js)
+    if (typeof formatDateIndonesian === 'function') {
+        const indonesianDate = formatDateIndonesian(todayISO);
+
+        if (tanggalIndonesia) {
+            tanggalIndonesia.textContent = indonesianDate;
+        }
+
+        const dateText = document.getElementById('dateText');
+        if (dateText) {
+            dateText.textContent = indonesianDate;
+        }
+    } else {
+        // Fallback: show simple format
+        if (tanggalIndonesia) {
+            tanggalIndonesia.textContent = todayISO;
+        }
+        const dateText = document.getElementById('dateText');
+        if (dateText) {
+            dateText.textContent = 'Klik untuk pilih tanggal';
+        }
+    }
     
     // Uncheck all KIT checkboxes
     document.querySelectorAll('.kit-checkbox').forEach(checkbox => {

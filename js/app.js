@@ -1066,16 +1066,23 @@ async function confirmAndSubmit() {
         currentRequestId = requestId;
 
         // 🐛 DEBUG: Check values before creating formData
+        const tanggalInput = document.getElementById('tanggalPembayaran');
         const tanggalValue = getFormDateValue();
         const namaValue = elements.clientNameText.textContent.trim();
 
         console.log('🐛 DEBUG - Values before submit:');
-        console.log('  - tanggal:', tanggalValue);
+        console.log('  - tanggalInput element exists:', !!tanggalInput);
+        console.log('  - tanggalInput.value:', tanggalInput ? tanggalInput.value : 'N/A');
+        console.log('  - tanggalValue (from getFormDateValue):', tanggalValue);
         console.log('  - nama:', namaValue);
         console.log('  - selectedKits count:', selectedKits.length);
 
         if (!tanggalValue) {
-            throw new Error('Tanggal pembayaran tidak valid');
+            console.error('❌ Tanggal validation failed!');
+            console.error('  - Element exists:', !!tanggalInput);
+            console.error('  - Element value:', tanggalInput ? tanggalInput.value : 'element not found');
+            console.error('  - Element display:', tanggalInput ? getComputedStyle(tanggalInput).display : 'N/A');
+            throw new Error('Tanggal pembayaran tidak valid. Silakan pilih tanggal terlebih dahulu.');
         }
         if (!namaValue || namaValue === 'Akan terisi otomatis setelah nomor KIT valid') {
             throw new Error('Nama client tidak valid');
