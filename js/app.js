@@ -1065,11 +1065,27 @@ async function confirmAndSubmit() {
         // Store current requestId to prevent duplicate
         currentRequestId = requestId;
 
+        // 🐛 DEBUG: Check values before creating formData
+        const tanggalValue = getFormDateValue();
+        const namaValue = elements.clientNameText.textContent.trim();
+
+        console.log('🐛 DEBUG - Values before submit:');
+        console.log('  - tanggal:', tanggalValue);
+        console.log('  - nama:', namaValue);
+        console.log('  - selectedKits count:', selectedKits.length);
+
+        if (!tanggalValue) {
+            throw new Error('Tanggal pembayaran tidak valid');
+        }
+        if (!namaValue || namaValue === 'Akan terisi otomatis setelah nomor KIT valid') {
+            throw new Error('Nama client tidak valid');
+        }
+
         const formData = {
             requestId: requestId,
             submissionTime: submitStartTime,
-            tanggal: getFormDateValue(),
-            nama: elements.clientNameText.textContent.trim(),
+            tanggal: tanggalValue,
+            nama: namaValue,
             // 🆕 REMOVED: tipe - no longer global, each KIT has its own
             nominal: totalNominal, // Total for summary purposes
             kitNumbers: kitNumbers,
@@ -1088,6 +1104,7 @@ async function confirmAndSubmit() {
 
         console.log('📤 Submitting with unique Request ID:', requestId);
         console.log('📤 Total KITs:', selectedKits.length, '| Total Nominal:', totalNominal);
+        console.log('📤 Form Data being sent:', JSON.stringify(formData, null, 2));
         CONFIG.log('Submitting form data:', formData);
 
         // Submit dengan enhanced retry handling
@@ -2552,10 +2569,10 @@ function showConfirmationModal() {
     
     const tanggal = getFormDateValue();
     const nama = elements.clientNameText.textContent.trim();
-    const tipe = document.getElementById('tipePembayaran').value;
-    const nominalInput = document.getElementById('nominal').value;
-    const totalNominal = Number(unformatNumber(nominalInput));
-    
+
+    // Calculate total nominal from selectedKits
+    const totalNominal = selectedKits.reduce((sum, kit) => sum + (kit.nominal || 0), 0);
+
     const formattedDate = formatDateForDisplay(tanggal);
     const formattedNominal = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -2571,8 +2588,6 @@ function showConfirmationModal() {
     confirmationDetails.innerHTML = `
         <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
             <p><strong>📅 Tanggal:</strong> ${formattedDate}</p>
-            <p><strong>👤 Client:</strong> ${nama}</p>
-            <p><strong>📋 Tipe:</strong> ${tipe}</p>
             <p><strong>💰 Nominal:</strong> ${formattedNominal}</p>
             <p><strong>🛰️ Total KIT:</strong> ${selectedKits.length}</p>
         </div>
