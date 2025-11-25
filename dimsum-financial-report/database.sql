@@ -31,10 +31,12 @@ CREATE TABLE IF NOT EXISTS transactions (
     -- Pengeluaran
     expenses DECIMAL(15,2) DEFAULT 0,
     expense_description VARCHAR(500),
+    created_by INT NULL,
     -- Metadata
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_branch_date (branch_id, transaction_date),
     INDEX idx_date (transaction_date)
 ) ENGINE=InnoDB;
