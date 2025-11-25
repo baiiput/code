@@ -558,26 +558,55 @@ if ($branchId == 0) {
                 ]
             });
 
-            // Handle detail row toggle
-            $('#transactionTable tbody').on('click', 'td.dt-control', function() {
-                const tr = $(this).closest('tr');
+            // Function to toggle detail row
+            function toggleDetailRow(tr) {
                 const row = table.row(tr);
-                const hasDetails = tr.data('has-details') === '1';
+                const hasDetails = $(tr).data('has-details') === '1';
 
                 if (!hasDetails) return;
 
                 if (row.child.isShown()) {
                     // Close this row
                     row.child.hide();
-                    tr.find('.dt-control i').removeClass('bi-chevron-down').addClass('bi-chevron-right');
+                    $(tr).removeClass('shown');
+                    $(tr).find('.dt-control i').removeClass('bi-chevron-down').addClass('bi-chevron-right');
                 } else {
                     // Open this row
-                    const detailData = tr.data('detail');
+                    const detailData = $(tr).data('detail');
                     if (detailData) {
                         row.child(createDetailRow(detailData)).show();
-                        tr.find('.dt-control i').removeClass('bi-chevron-right').addClass('bi-chevron-down');
+                        $(tr).addClass('shown');
+                        $(tr).find('.dt-control i').removeClass('bi-chevron-right').addClass('bi-chevron-down');
                     }
                 }
+            }
+
+            // Handle click on entire row (except action buttons)
+            $('#transactionTable tbody').on('click', 'tr.main-row', function(e) {
+                // Don't toggle if clicking on action buttons or links
+                if ($(e.target).closest('a, button').length > 0) {
+                    return;
+                }
+
+                toggleDetailRow(this);
+            });
+
+            // Make rows with details look clickable
+            $('#transactionTable tbody tr.main-row').each(function() {
+                const hasDetails = $(this).data('has-details') === '1';
+                if (hasDetails) {
+                    $(this).css('cursor', 'pointer');
+                }
+            });
+
+            // Re-apply cursor styling after table redraws
+            table.on('draw', function() {
+                $('#transactionTable tbody tr.main-row').each(function() {
+                    const hasDetails = $(this).data('has-details') === '1';
+                    if (hasDetails) {
+                        $(this).css('cursor', 'pointer');
+                    }
+                });
             });
         });
 
