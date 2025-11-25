@@ -793,6 +793,7 @@ function setupEventListeners() {
                                     ...kit,
                                     isSelected: false,
                                     nominal: 0,
+                                    tipePembayaran: '', // 🆕 NEW: Per-KIT payment type
                                     isDuplicate: data.duplicate?.duplicateKits?.includes(kit.kitNumber) || false
                                 });
                             }
@@ -1040,11 +1041,17 @@ async function confirmAndSubmit() {
     startLoadingProgressMonitor();
     
     try {
-        // Validate that all selected KITs have nominal
+        // 🆕 NEW: Validate that all selected KITs have nominal AND payment type
         const kitsWithoutNominal = selectedKits.filter(kit => !kit.nominal || kit.nominal < 10000);
         if (kitsWithoutNominal.length > 0) {
             const missingKits = kitsWithoutNominal.map(kit => kit.kitNumber).join(', ');
             throw new Error(`Nominal belum diisi atau kurang dari Rp 10.000 untuk KIT: ${missingKits}`);
+        }
+
+        const kitsWithoutPaymentType = selectedKits.filter(kit => !kit.tipePembayaran || kit.tipePembayaran === '');
+        if (kitsWithoutPaymentType.length > 0) {
+            const missingKits = kitsWithoutPaymentType.map(kit => kit.kitNumber).join(', ');
+            throw new Error(`Tipe pembayaran belum dipilih untuk KIT: ${missingKits}`);
         }
 
         // Calculate total nominal from all selected KITs
@@ -1063,7 +1070,7 @@ async function confirmAndSubmit() {
             submissionTime: submitStartTime,
             tanggal: getFormDateValue(),
             nama: elements.clientNameText.textContent.trim(),
-            tipe: document.getElementById('tipePembayaran').value,
+            // 🆕 REMOVED: tipe - no longer global, each KIT has its own
             nominal: totalNominal, // Total for summary purposes
             kitNumbers: kitNumbers,
             kitPackages: kitPackages,
@@ -1074,7 +1081,8 @@ async function confirmAndSubmit() {
                 kitNumber: kit.kitNumber,
                 serialNumber: kit.serialNumber || '',
                 paket: kit.paket,
-                nominal: kit.nominal // UPDATED: use per-KIT nominal
+                nominal: kit.nominal, // Per-KIT nominal
+                tipePembayaran: kit.tipePembayaran // 🆕 NEW: Per-KIT payment type
             }))
         };
 
@@ -2840,7 +2848,7 @@ function updateKitDisplay() {
                 </div>
 
                 <!-- Nominal Input (shown when selected) -->
-                <div class="kit-nominal-input" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 12px; background: #0f172a; border-radius: 8px; border: 2px solid #60a5fa;">
+                <div class="kit-nominal-input" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 12px; background: #0f172a; border-radius: 8px; border: 2px solid #60a5fa; margin-bottom: 12px;">
                     <label style="display: block; color: #e0f2fe; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
                         💰 Nominal Pembayaran:
                     </label>
@@ -2852,6 +2860,23 @@ function updateKitDisplay() {
                            style="width: 100%; padding: 10px 14px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; color: #f1f5f9; font-size: 15px; font-family: 'Roboto Mono', monospace; font-weight: 600; transition: all 0.3s ease;">
                     <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
                         ℹ️ Minimal Rp 10.000
+                    </small>
+                </div>
+
+                <!-- 🆕 NEW: Payment Type Dropdown (shown when selected) -->
+                <div class="kit-payment-type" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 12px; background: #0f172a; border-radius: 8px; border: 2px solid #f59e0b;">
+                    <label style="display: block; color: #fef3c7; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+                        💳 Tipe Pembayaran:
+                    </label>
+                    <select class="payment-type-per-kit"
+                            data-kit-index="${index}"
+                            style="width: 100%; padding: 10px 14px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; color: #f1f5f9; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                        <option value="">-- Pilih Tipe --</option>
+                        <option value="Aktivasi" ${kit.tipePembayaran === 'Aktivasi' ? 'selected' : ''}>🚀 Aktivasi</option>
+                        <option value="Perpanjangan" ${kit.tipePembayaran === 'Perpanjangan' ? 'selected' : ''}>🔄 Perpanjangan</option>
+                    </select>
+                    <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
+                        ℹ️ Pilih Aktivasi atau Perpanjangan untuk KIT ini
                     </small>
                 </div>
                 </div>
@@ -2867,8 +2892,9 @@ function updateKitDisplay() {
 
         // Click on box to toggle
         kitItem.addEventListener('click', function(e) {
-            // Don't toggle if clicking on input field
-            if (e.target.classList.contains('nominal-input-per-kit')) {
+            // Don't toggle if clicking on input field or dropdown
+            if (e.target.classList.contains('nominal-input-per-kit') ||
+                e.target.classList.contains('payment-type-per-kit')) {
                 return;
             }
             toggleKitSelection(index);
@@ -2895,6 +2921,28 @@ function updateKitDisplay() {
                 if (kit.nominal) {
                     this.value = formatRupiahInput(kit.nominal);
                 }
+                this.style.borderColor = '#475569';
+                this.style.boxShadow = 'none';
+            });
+        }
+
+        // 🆕 NEW: Payment type dropdown handler
+        const paymentTypeSelect = kitItem.querySelector('.payment-type-per-kit');
+        if (paymentTypeSelect) {
+            paymentTypeSelect.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            paymentTypeSelect.addEventListener('change', function(e) {
+                handleKitPaymentTypeChange(index, this.value);
+            });
+
+            paymentTypeSelect.addEventListener('focus', function() {
+                this.style.borderColor = '#f59e0b';
+                this.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+            });
+
+            paymentTypeSelect.addEventListener('blur', function() {
                 this.style.borderColor = '#475569';
                 this.style.boxShadow = 'none';
             });
@@ -2943,6 +2991,42 @@ function handleKitNominalInput(kitIndex, value) {
     // 🔍 DEBUG: Trigger stepper validation update
     if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
         console.log('🔄 Triggering stepper navigation update...');
+        window.stepperNav.updateNavigationButtons();
+    }
+}
+
+// 🆕 NEW: Handle payment type change per KIT
+function handleKitPaymentTypeChange(kitIndex, value) {
+    // Update kit payment type
+    availableKits[kitIndex].tipePembayaran = value;
+
+    // Update selectedKits if this kit is selected
+    if (availableKits[kitIndex].isSelected) {
+        const selectedIndex = selectedKits.findIndex(kit => kit.kitNumber === availableKits[kitIndex].kitNumber);
+        if (selectedIndex !== -1) {
+            selectedKits[selectedIndex].tipePembayaran = value;
+        }
+    }
+
+    // 🔍 DEBUG: Export to window scope for stepper validation
+    window.selectedKits = selectedKits;
+
+    console.log('💳 Payment type updated:', {
+        kitIndex: kitIndex,
+        kitNumber: availableKits[kitIndex].kitNumber,
+        tipePembayaran: value,
+        isSelected: availableKits[kitIndex].isSelected,
+        selectedKitsCount: selectedKits.length,
+        allSelectedKitsHavePaymentType: selectedKits.every(kit => kit.tipePembayaran && kit.tipePembayaran !== '')
+    });
+
+    updateKitSummary();
+    updateButtonStates();
+    updateStep3Summary();
+
+    // 🔍 DEBUG: Trigger stepper validation update
+    if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
+        console.log('🔄 Triggering stepper navigation update after payment type change...');
         window.stepperNav.updateNavigationButtons();
     }
 }
@@ -3104,12 +3188,13 @@ function updateButtonStates() {
 function isFormValid() {
     const tanggal = getFormDateValue();
     const nama = elements.clientNameText.textContent.trim();
-    const tipe = document.getElementById('tipePembayaran').value;
 
-    // NEW: Check if all selected KITs have nominal >= 10000
+    // 🆕 NEW: Check if all selected KITs have nominal >= 10000 AND payment type
     let allKitsHaveValidNominal = true;
+    let allKitsHaveValidPaymentType = true;
     if (selectedKits.length > 0) {
         allKitsHaveValidNominal = selectedKits.every(kit => kit.nominal && kit.nominal >= 10000);
+        allKitsHaveValidPaymentType = selectedKits.every(kit => kit.tipePembayaran && kit.tipePembayaran !== '');
     }
 
     // Check berdasarkan search mode
@@ -3125,8 +3210,8 @@ function isFormValid() {
         searchFieldValid = isKitValid;
     }
 
-    // UPDATED: Check allKitsHaveValidNominal instead of single nominal input
-    return tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && tipe && allKitsHaveValidNominal;
+    // 🆕 UPDATED: Check per-KIT nominal AND payment type instead of global payment type
+    return tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && allKitsHaveValidNominal && allKitsHaveValidPaymentType;
 }
 
 function updatePreview() {

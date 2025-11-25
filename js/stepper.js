@@ -311,26 +311,27 @@ function validateStep2() {
 
 /**
  * Validate Step 3: Payment Details
- * UPDATED: Check per-KIT nominal validation
+ * UPDATED: Check per-KIT nominal AND payment type validation
  */
 function validateStep3() {
-    const tipePembayaran = document.getElementById('tipePembayaran')?.value;
+    // 🆕 NEW: No longer need global payment type
+    // Each KIT has its own payment type now
 
-    // NEW: Check if all selected KITs have valid nominal (>= 10000)
     // Access from window scope (defined in app.js)
     const selectedKits = window.selectedKits || [];
 
     console.log('🔍 Step 3 Validation - START:', {
         currentStep: currentStep,
-        tipePembayaranElement: !!document.getElementById('tipePembayaran'),
-        tipePembayaran: tipePembayaran,
         windowSelectedKitsExists: !!window.selectedKits,
         selectedKitsCount: selectedKits.length
     });
 
-    // Check if all selected KITs have nominal >= 10000
+    // 🆕 NEW: Check if all selected KITs have valid nominal AND payment type
     let allKitsHaveValidNominal = selectedKits.length > 0 &&
                                   selectedKits.every(kit => kit.nominal && kit.nominal >= 10000);
+
+    let allKitsHaveValidPaymentType = selectedKits.length > 0 &&
+                                      selectedKits.every(kit => kit.tipePembayaran && kit.tipePembayaran !== '');
 
     // Detailed per-KIT validation check
     const kitValidationDetails = selectedKits.map(kit => ({
@@ -338,37 +339,37 @@ function validateStep3() {
         nominal: kit.nominal,
         hasNominal: !!kit.nominal,
         nominalValid: kit.nominal && kit.nominal >= 10000,
-        nominalFormatted: kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'NOT SET'
+        nominalFormatted: kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'NOT SET',
+        tipePembayaran: kit.tipePembayaran || 'NOT SET',
+        paymentTypeValid: kit.tipePembayaran && kit.tipePembayaran !== ''
     }));
 
     console.log('🔍 Step 3 Validation - KIT Details:', kitValidationDetails);
 
     // Check individual validations
-    const hasTipePembayaran = !!tipePembayaran;
     const hasSelectedKits = selectedKits.length > 0;
-    const allKitsValid = allKitsHaveValidNominal;
+    const allKitsHaveNominal = allKitsHaveValidNominal;
+    const allKitsHavePaymentType = allKitsHaveValidPaymentType;
 
-    const isValid = hasTipePembayaran && hasSelectedKits && allKitsValid;
+    const isValid = hasSelectedKits && allKitsHaveNominal && allKitsHavePaymentType;
 
     console.log('🔍 Step 3 Validation - RESULT:', {
-        hasTipePembayaran: hasTipePembayaran,
-        tipePembayaranValue: tipePembayaran,
         hasSelectedKits: hasSelectedKits,
         selectedKitsCount: selectedKits.length,
         allKitsHaveValidNominal: allKitsHaveValidNominal,
+        allKitsHaveValidPaymentType: allKitsHaveValidPaymentType,
         isValid: isValid,
         failureReason: !isValid ? (
-            !hasTipePembayaran ? 'Missing tipePembayaran' :
             !hasSelectedKits ? 'No KITs selected' :
-            !allKitsValid ? 'Some KITs have invalid nominal' :
+            !allKitsHaveNominal ? 'Some KITs have invalid nominal' :
+            !allKitsHavePaymentType ? 'Some KITs missing payment type' :
             'Unknown'
         ) : 'All valid'
     });
 
     if (isValid) {
-        formData.tipePembayaran = tipePembayaran;
-        // Nominal is now per-KIT, will be calculated in submit
-        console.log('✅ Step 3 validation PASSED');
+        // No need to set global payment type anymore
+        console.log('✅ Step 3 validation PASSED - All KITs have valid nominal and payment type');
     } else {
         console.error('❌ Step 3 validation FAILED');
     }
@@ -625,25 +626,48 @@ function updateLocalPreview() {
         return;
     }
     
-    // 🆕 NEW: Build KIT details HTML from window.selectedKits data
+    // 🆕 NEW: Build KIT details HTML from window.selectedKits data with client name and payment type
     let kitDetailsHTML = '';
     if (kitCount > 0) {
-        kitDetailsHTML = '<div style="background:#0f172a;padding:15px;border-radius:8px;border:1px solid #475569;margin-top:15px;"><h4 style="color:#94a3b8;font-size:14px;margin-bottom:12px;">📦 Detail KIT yang Dipilih:</h4><div style="display:flex;flex-direction:column;gap:8px;">';
+        kitDetailsHTML = '<div style="background:#0f172a;padding:15px;border-radius:8px;border:1px solid #475569;margin-top:15px;"><h4 style="color:#94a3b8;font-size:14px;margin-bottom:12px;">📦 Detail KIT yang Dipilih:</h4><div style="display:flex;flex-direction:column;gap:10px;">';
 
         selectedKitsData.forEach((kit, index) => {
             const kitNumber = kit.kitNumber || 'Unknown';
             const kitPackage = kit.paket || 'Unknown';
             const kitNominal = kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'Rp 0';
+            const kitPaymentType = kit.tipePembayaran || 'Not Set';
+            const paymentIcon = kit.tipePembayaran === 'Aktivasi' ? '🚀' : kit.tipePembayaran === 'Perpanjangan' ? '🔄' : '❓';
 
-            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage, nominal: kitNominal});
+            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage, nominal: kitNominal, paymentType: kitPaymentType});
 
             kitDetailsHTML += `
-                <div style="display:flex;justify-content:space-between;padding:10px;background:#334155;border-radius:6px;border:1px solid #475569;">
-                    <div style="flex: 1;">
-                        <span style="color:#f1f5f9;font-size:13px;font-weight:600;">${index + 1}. ${kitNumber}</span>
-                        <div style="color:#94a3b8;font-size:11px;margin-top:2px;">${kitPackage}</div>
+                <div style="background:#1e293b;border:2px solid #3b82f6;border-radius:8px;overflow:hidden;">
+                    <!-- Client Name Header -->
+                    <div style="background:linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);padding:8px 12px;">
+                        <span style="color:#f0fdfa;font-size:12px;font-weight:600;">👤 ${clientNameText}</span>
                     </div>
-                    <span style="color:#10b981;font-size:12px;font-weight:600;padding:3px 8px;border-radius:4px;background:#064e3b;">${kitNominal}</span>
+
+                    <!-- KIT Info -->
+                    <div style="padding:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="color:#f1f5f9;font-size:14px;font-weight:600;margin-bottom:4px;">
+                                    ${index + 1}. 🛰️ ${kitNumber}
+                                </div>
+                                <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                                    📦 ${kitPackage}
+                                </div>
+                                <div style="color:#fbbf24;font-size:12px;font-weight:600;">
+                                    ${paymentIcon} ${kitPaymentType}
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:#10b981;font-size:14px;font-weight:700;background:#064e3b;padding:6px 10px;border-radius:6px;">
+                                    ${kitNominal}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         });

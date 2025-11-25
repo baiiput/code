@@ -662,12 +662,14 @@ function sendEmailNotificationMultiKitWithTransactionID(formData, sheetName, tra
     
     var selectedKitsList = formData.selectedKits.map(function(kit, index) {
       var nominal = kit.nominal || formData.nominal || 0;
-      // ✅ MINOR UPDATE: Tampilkan info KIT Number dan Serial Number terpisah
+      var paymentType = kit.tipePembayaran || '-';
+      var paymentIcon = paymentType === 'Aktivasi' ? '🚀' : paymentType === 'Perpanjangan' ? '🔄' : '❓';
+      // 🆕 UPDATED: Tampilkan KIT dengan payment type per-KIT
       var kitInfo = `${index + 1}. KIT: ${kit.kitNumber}`;
       if (kit.serialNumber) {
         kitInfo += ` | SN: ${kit.serialNumber}`;
       }
-      kitInfo += ` (${kit.paket}) - ${formatRupiah(nominal)}`;
+      kitInfo += ` (${kit.paket}) - ${paymentIcon} ${paymentType} - ${formatRupiah(nominal)}`;
       return kitInfo;
     }).join('\n');
     
@@ -702,7 +704,6 @@ Transaction ID: ${transactionID}
 
 👤 Client: ${formData.nama}
 📅 Tanggal Transaksi: ${formattedTransactionDate}
-🔧 Tipe: ${formData.tipe}
 📊 Sheet: ${sheetName}
 
 🛰️ KIT yang Diperpanjang (${formData.selectedKits.length} KIT):
@@ -4345,7 +4346,7 @@ function submitPaymentDataMultiKit(formData) {
           kit.kitNumber,              // E: Serial Number (KIT)
           kit.serialNumber || '',     // F: Serial Number
           kit.paket,                  // G: Paket
-          formData.tipe,              // H: Tipe Pembayaran
+          kit.tipePembayaran || '',   // H: Tipe Pembayaran (🆕 NOW PER-KIT)
           kit.nominal                 // I: Nominal (per-KIT nominal)
         ];
 
