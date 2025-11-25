@@ -2969,13 +2969,17 @@ function isFormValid() {
     const tanggal = getFormDateValue();
     const nama = elements.clientNameText.textContent.trim();
     const tipe = document.getElementById('tipePembayaran').value;
-    const nominalInput = document.getElementById('nominal').value;
-    const nominal = Number(unformatNumber(nominalInput));
-    
+
+    // NEW: Check if all selected KITs have nominal >= 10000
+    let allKitsHaveValidNominal = true;
+    if (selectedKits.length > 0) {
+        allKitsHaveValidNominal = selectedKits.every(kit => kit.nominal && kit.nominal >= 10000);
+    }
+
     // Check berdasarkan search mode
     const searchMode = document.getElementById('searchMode').value;
     let searchFieldValid = false;
-    
+
     if (searchMode === 'kit') {
         // Mode KIT: Cek input KIT
         const kit = document.getElementById('nomorKit').value.trim();
@@ -2984,8 +2988,9 @@ function isFormValid() {
         // Mode Client Name: Cek apakah nama sudah tervalidasi
         searchFieldValid = isKitValid;
     }
-    
-    return tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && tipe && nominalInput && nominal >= 10000;
+
+    // UPDATED: Check allKitsHaveValidNominal instead of single nominal input
+    return tanggal && searchFieldValid && nama && nama !== 'Akan terisi otomatis setelah nomor KIT valid' && tipe && allKitsHaveValidNominal;
 }
 
 function updatePreview() {
