@@ -1,0 +1,834 @@
+/**
+ * ============================================
+ * 🎯 STEPPER NAVIGATION SYSTEM
+ * Modern Multi-Step Form with Validation
+ * ============================================
+ */
+
+// Global State
+let currentStep = 1;
+const totalSteps = 4;
+let formData = {
+    searchMode: 'kit',
+    tanggalPembayaran: '',
+    nomorKit: '',
+    clientName: '',
+    selectedKits: [],
+    tipePembayaran: '',
+    nominal: '',
+    transactionId: ''
+};
+
+// Initialize on page load - WAIT for app.js to finish
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for app.js to initialize first
+    setTimeout(() => {
+        console.log('🚀 Stepper initialized');
+        initializeStepper();
+        setupStepNavigation();
+        setupFormValidation();
+    }, 100);
+    
+    // Keep existing functionality from original app.js
+    // This assumes app.js handles KIT validation, date picker, etc.
+});
+
+/**
+ * Initialize Stepper UI
+ */
+function initializeStepper() {
+    updateStepperUI();
+    updateNavigationButtons();
+}
+
+/**
+ * Setup Step Navigation Buttons
+ */
+function setupStepNavigation() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Safety check
+    if (!prevBtn || !nextBtn || !submitBtn) {
+        console.error('❌ Stepper navigation buttons not found');
+        return;
+    }
+    
+    // Next Button
+    nextBtn.addEventListener('click', function() {
+        if (validateCurrentStep()) {
+            goToNextStep();
+        } else {
+            showError('Mohon lengkapi semua field yang required sebelum melanjutkan');
+        }
+    });
+    
+    // Previous Button
+    prevBtn.addEventListener('click', function() {
+        goToPreviousStep();
+    });
+    
+    // Submit Button (handled by existing form submit logic)
+    submitBtn.addEventListener('click', function(e) {
+        // Let the original form submission logic handle this
+        console.log('📝 Submit clicked');
+    });
+    
+    // Allow clicking on completed steps to go back
+    document.querySelectorAll('.step-item').forEach(stepItem => {
+        stepItem.addEventListener('click', function() {
+            const targetStep = parseInt(this.dataset.step);
+            if (targetStep < currentStep) {
+                goToStep(targetStep);
+            }
+        });
+    });
+}
+
+/**
+ * Go to Next Step
+ */
+function goToNextStep() {
+    if (currentStep < totalSteps) {
+        // Mark current step as completed
+        markStepCompleted(currentStep);
+        
+        currentStep++;
+        updateStepperUI();
+        updateNavigationButtons();
+        scrollToTop();
+        
+        // Auto-preview on step 4 with multiple retry attempts
+        if (currentStep === 4) {
+            console.log('📋 Step 4 reached - Starting preview load sequence...');
+            
+            // Immediate attempt
+            updateLocalPreview();
+            
+            // Retry with increasing delays
+            setTimeout(() => {
+                console.log('📋 Preview retry #1');
+                updateLocalPreview();
+            }, 100);
+            
+            setTimeout(() => {
+                console.log('📋 Preview retry #2');
+                updateLocalPreview();
+            }, 300);
+            
+            setTimeout(() => {
+                console.log('📋 Preview retry #3 (final)');
+                updateLocalPreview();
+            }, 600);
+        }
+    }
+}
+
+/**
+ * Go to Previous Step
+ */
+function goToPreviousStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        updateStepperUI();
+        updateNavigationButtons();
+        scrollToTop();
+    }
+}
+
+/**
+ * Go to Specific Step
+ */
+function goToStep(stepNumber) {
+    if (stepNumber >= 1 && stepNumber <= totalSteps && stepNumber < currentStep) {
+        currentStep = stepNumber;
+        updateStepperUI();
+        updateNavigationButtons();
+        scrollToTop();
+    }
+}
+
+/**
+ * Update Stepper UI
+ */
+function updateStepperUI() {
+    // Update step items
+    document.querySelectorAll('.step-item').forEach(stepItem => {
+        const stepNumber = parseInt(stepItem.dataset.step);
+        
+        // Remove all states
+        stepItem.classList.remove('active', 'completed');
+        
+        if (stepNumber === currentStep) {
+            stepItem.classList.add('active');
+        } else if (stepNumber < currentStep) {
+            stepItem.classList.add('completed');
+        }
+    });
+    
+    // Update step content
+    document.querySelectorAll('.step-content').forEach(content => {
+        const stepNumber = parseInt(content.dataset.stepContent);
+        content.classList.toggle('active', stepNumber === currentStep);
+    });
+    
+    // Update lines
+    updateStepLines();
+}
+
+/**
+ * Update Step Connection Lines
+ */
+function updateStepLines() {
+    const lines = document.querySelectorAll('.step-line');
+    lines.forEach((line, index) => {
+        const stepBefore = index + 1;
+        if (stepBefore < currentStep) {
+            line.classList.add('completed');
+        } else {
+            line.classList.remove('completed');
+        }
+    });
+}
+
+/**
+ * Mark Step as Completed
+ */
+function markStepCompleted(stepNumber) {
+    const stepItem = document.querySelector(`.step-item[data-step="${stepNumber}"]`);
+    if (stepItem) {
+        stepItem.classList.add('completed');
+    }
+}
+
+/**
+ * Update Navigation Buttons
+ */
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Show/Hide Previous button
+    if (prevBtn) {
+        prevBtn.style.display = currentStep > 1 ? 'flex' : 'none';
+    }
+    
+    // Show/Hide Next vs Submit button
+    if (currentStep === totalSteps) {
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (submitBtn) {
+            submitBtn.style.display = 'flex';
+            // Enable submit button on step 4
+            submitBtn.disabled = false;
+        }
+    } else {
+        if (nextBtn) {
+            nextBtn.style.display = 'flex';
+            // Enable/Disable Next button based on validation
+            nextBtn.disabled = !validateCurrentStep();
+        }
+        if (submitBtn) submitBtn.style.display = 'none';
+    }
+}
+
+/**
+ * Validate Current Step
+ */
+function validateCurrentStep() {
+    switch(currentStep) {
+        case 1:
+            return validateStep1();
+        case 2:
+            return validateStep2();
+        case 3:
+            return validateStep3();
+        case 4:
+            return true; // Preview step, always valid
+        default:
+            return false;
+    }
+}
+
+/**
+ * Validate Step 1: Search Mode & Date
+ */
+function validateStep1() {
+    const searchMode = document.getElementById('searchMode')?.value;
+    const tanggalPembayaran = document.getElementById('tanggalPembayaran')?.value;
+    
+    // Valid if search mode selected AND date is filled
+    const isValid = searchMode && tanggalPembayaran && tanggalPembayaran.trim() !== '';
+    
+    console.log('🔍 Step 1 Validation:', {
+        searchMode: searchMode,
+        tanggalPembayaran: tanggalPembayaran,
+        isValid: isValid
+    });
+    
+    if (isValid) {
+        formData.searchMode = searchMode;
+        formData.tanggalPembayaran = tanggalPembayaran;
+    }
+    
+    return isValid;
+}
+
+/**
+ * Validate Step 2: KIT Selection & Client
+ */
+function validateStep2() {
+    const selectedKits = document.querySelectorAll('.kit-checkbox:checked');
+    const clientNameText = document.getElementById('clientNameText');
+    const clientName = clientNameText ? clientNameText.textContent.trim() : '';
+    
+    // Check if client name is filled (not the default placeholder text)
+    const isClientNameValid = clientName && 
+                              clientName !== 'Akan terisi otomatis setelah nomor KIT valid' &&
+                              clientName !== '';
+    
+    // Valid if at least 1 KIT selected AND client name is filled
+    const isValid = selectedKits.length > 0 && isClientNameValid;
+    
+    console.log('🔍 Step 2 Validation:', {
+        selectedKitsCount: selectedKits.length,
+        clientName: clientName,
+        isClientNameValid: isClientNameValid,
+        isValid: isValid
+    });
+    
+    if (isValid) {
+        formData.selectedKits = Array.from(selectedKits).map(cb => ({
+            kitNumber: cb.dataset.kit,
+            package: cb.dataset.package
+        }));
+        formData.clientName = clientName;
+    }
+    
+    return isValid;
+}
+
+/**
+ * Validate Step 3: Payment Details
+ */
+function validateStep3() {
+    const tipePembayaran = document.getElementById('tipePembayaran')?.value;
+    const nominal = document.getElementById('nominal')?.value;
+    
+    // Remove formatting for validation
+    const nominalValue = nominal.replace(/[^\d]/g, '');
+    const isValid = tipePembayaran && nominalValue && parseInt(nominalValue) >= 10000;
+    
+    if (isValid) {
+        formData.tipePembayaran = tipePembayaran;
+        formData.nominal = nominal;
+        // Transaction ID will be generated by backend, not here
+    }
+    
+    return isValid;
+}
+
+/**
+ * Setup Form Validation (Real-time)
+ */
+function setupFormValidation() {
+    // Listen to form changes for real-time validation
+    const form = document.getElementById('paymentForm');
+    if (!form) return;
+    
+    form.addEventListener('change', function(e) {
+        console.log('📝 Form change detected:', e.target.id || e.target.className);
+        updateNavigationButtons();
+    });
+    
+    form.addEventListener('input', function(e) {
+        updateNavigationButtons();
+    });
+    
+    // Listen to KIT checkbox changes with event delegation
+    document.addEventListener('change', function(e) {
+        // Update navigation buttons when KIT checkbox is changed
+        if (e.target && e.target.classList.contains('kit-checkbox')) {
+            console.log('📦 KIT checkbox changed, updating navigation buttons');
+            setTimeout(() => {
+                updateNavigationButtons();
+            }, 100);
+        }
+    });
+    
+    // Listen to client name changes (filled by app.js)
+    const clientNameObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                console.log('👤 Client name changed');
+                setTimeout(() => {
+                    updateNavigationButtons();
+                }, 100);
+            }
+        });
+    });
+    
+    const clientNameText = document.getElementById('clientNameText');
+    if (clientNameText) {
+        clientNameObserver.observe(clientNameText, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
+    
+    // Listen to date changes (from date picker)
+    const tanggalPembayaran = document.getElementById('tanggalPembayaran');
+    if (tanggalPembayaran) {
+        tanggalPembayaran.addEventListener('change', function() {
+            console.log('📅 Date changed:', this.value);
+            setTimeout(() => {
+                updateNavigationButtons();
+            }, 100);
+        });
+    }
+    
+    // Listen to date display changes (when date is selected)
+    const dateDisplay = document.getElementById('dateDisplay');
+    if (dateDisplay) {
+        dateDisplay.addEventListener('click', function() {
+            // After date picker closes, check validation
+            setTimeout(() => {
+                updateNavigationButtons();
+            }, 500);
+        });
+    }
+    
+    // Observe tanggalIndonesia changes (updated by date picker)
+    const tanggalIndonesiaObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                console.log('📅 Tanggal Indonesia display updated');
+                setTimeout(() => {
+                    updateNavigationButtons();
+                }, 100);
+            }
+        });
+    });
+    
+    const tanggalIndonesia = document.getElementById('tanggalIndonesia');
+    if (tanggalIndonesia) {
+        tanggalIndonesiaObserver.observe(tanggalIndonesia, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
+    
+    // Prevent Enter key from submitting form when in Step 3
+    // User should click Next button to go to Step 4 (preview)
+    const formElement = document.getElementById('paymentForm');
+    if (formElement) {
+        formElement.addEventListener('keydown', function(e) {
+            // If Enter key is pressed
+            if (e.key === 'Enter') {
+                // Check if we're in Step 3
+                if (currentStep === 3) {
+                    e.preventDefault();
+                    console.log('⚠️ Enter key blocked in Step 3 - use Next button to proceed');
+                    
+                    // If form is valid, trigger Next button instead
+                    if (validateCurrentStep()) {
+                        const nextBtn = document.getElementById('nextBtn');
+                        if (nextBtn && !nextBtn.disabled) {
+                            nextBtn.click();
+                        }
+                    }
+                    return false;
+                }
+                
+                // In other steps, allow Enter key if needed
+                // But generally prevent form submission until Step 4
+                if (currentStep < 4) {
+                    e.preventDefault();
+                    console.log('⚠️ Enter key blocked - use navigation buttons');
+                    return false;
+                }
+            }
+        });
+    }
+    
+    // Also specifically prevent Enter on nominal input
+    const nominalInput = document.getElementById('nominal');
+    if (nominalInput) {
+        nominalInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('⚠️ Enter key blocked on nominal input');
+                
+                // If we're in step 3 and form is valid, trigger Next button
+                if (currentStep === 3 && validateCurrentStep()) {
+                    const nextBtn = document.getElementById('nextBtn');
+                    if (nextBtn && !nextBtn.disabled) {
+                        nextBtn.click();
+                    }
+                }
+                return false;
+            }
+        });
+    }
+}
+
+/**
+ * Generate Transaction ID
+ */
+function generateTransactionId() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    
+    return `TRX${year}${month}${day}${random}`;
+}
+
+/**
+ * Update Transaction ID Display
+ */
+function updateTransactionIdDisplay() {
+    const display = document.getElementById('transactionIdDisplay');
+    const text = document.getElementById('transactionIdText');
+    
+    if (display && text && formData.transactionId) {
+        text.textContent = `Transaction ID: ${formData.transactionId}`;
+        display.classList.remove('hidden');
+    }
+}
+
+/**
+ * Update Preview Section (Local version for stepper)
+ */
+function updateLocalPreview() {
+    console.log('📋 updateLocalPreview() called');
+    
+    const previewSection = document.getElementById('previewSection');
+    if (!previewSection) {
+        console.error('❌ previewSection element not found!');
+        return;
+    }
+    
+    // Get current form values directly from elements (real-time data)
+    const tanggalIndonesiaEl = document.getElementById('tanggalIndonesia');
+    const clientNameTextEl = document.getElementById('clientNameText');
+    const tipePembayaranEl = document.getElementById('tipePembayaran');
+    const nominalInputEl = document.getElementById('nominal');
+    
+    console.log('📋 Elements found:', {
+        tanggalIndonesia: !!tanggalIndonesiaEl,
+        clientNameText: !!clientNameTextEl,
+        tipePembayaran: !!tipePembayaranEl,
+        nominal: !!nominalInputEl
+    });
+    
+    const tanggalIndonesia = tanggalIndonesiaEl?.textContent || '-';
+    const clientNameText = clientNameTextEl?.textContent || '-';
+    const tipePembayaran = tipePembayaranEl?.value || '-';
+    const nominalInput = nominalInputEl?.value || '-';
+    
+    console.log('📋 Data retrieved:', {
+        tanggal: tanggalIndonesia,
+        client: clientNameText,
+        tipe: tipePembayaran,
+        nominal: nominalInput
+    });
+    
+    // Get selected KITs
+    const selectedKits = document.querySelectorAll('.kit-checkbox:checked');
+    const kitCount = selectedKits.length;
+    
+    console.log('📋 Selected KITs:', kitCount);
+    
+    // Check if we have minimum required data
+    if (tanggalIndonesia === '-' || clientNameText === '-' || kitCount === 0) {
+        console.warn('⚠️ Some data is missing, showing loading state');
+        previewSection.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#94a3b8;">
+                <div style="font-size:48px;margin-bottom:15px;">⏳</div>
+                <p style="font-size:16px;font-weight:600;color:#f1f5f9;margin-bottom:8px;">Loading Preview...</p>
+                <p style="font-size:13px;">Data sedang dimuat, mohon tunggu sebentar...</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Build KIT details HTML - Extract from rendered DOM
+    let kitDetailsHTML = '';
+    if (kitCount > 0) {
+        kitDetailsHTML = '<div style="background:#0f172a;padding:15px;border-radius:8px;border:1px solid #475569;margin-top:15px;"><h4 style="color:#94a3b8;font-size:14px;margin-bottom:12px;">📦 Detail KIT yang Dipilih:</h4><div style="display:flex;flex-direction:column;gap:8px;">';
+        
+        selectedKits.forEach((checkbox, index) => {
+            // Get KIT info from parent element's text content
+            const kitItem = checkbox.closest('.kit-item');
+            let kitNumber = 'Unknown';
+            let kitPackage = 'Unknown';
+            
+            if (kitItem) {
+                // Extract KIT number from .kit-number span
+                const kitNumberEl = kitItem.querySelector('.kit-number');
+                if (kitNumberEl) {
+                    // Remove emoji and "Nomor KIT:" prefix, trim whitespace
+                    kitNumber = kitNumberEl.textContent
+                        .replace(/🛰️/g, '')
+                        .replace(/Nomor KIT:/gi, '')
+                        .replace(/\(Serial:.*?\)/g, '') // Remove serial number
+                        .trim();
+                }
+                
+                // Extract package from .kit-package span
+                const kitPackageEl = kitItem.querySelector('.kit-package');
+                if (kitPackageEl) {
+                    kitPackage = kitPackageEl.textContent.trim();
+                }
+            }
+            
+            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage});
+            
+            kitDetailsHTML += `
+                <div style="display:flex;justify-content:space-between;padding:10px;background:#334155;border-radius:6px;border:1px solid #475569;">
+                    <span style="color:#f1f5f9;font-size:13px;font-weight:600;">${index + 1}. ${kitNumber}</span>
+                    <span style="color:#94a3b8;font-size:12px;background:#475569;padding:3px 8px;border-radius:4px;">${kitPackage}</span>
+                </div>
+            `;
+        });
+        
+        kitDetailsHTML += '</div></div>';
+    }
+    
+    // Build full preview HTML (without Transaction ID - it will be generated on submit)
+    const previewHTML = `
+        <h3 style="color:#3b82f6;margin-bottom:20px;font-size:18px;text-align:center;border-bottom:2px solid #334155;padding-bottom:12px;">📋 Preview Data Pembayaran</h3>
+        
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
+                <span style="font-weight:600;color:#94a3b8;font-size:14px;">📅 Tanggal Pembayaran:</span>
+                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${tanggalIndonesia}</span>
+            </div>
+            
+            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
+                <span style="font-weight:600;color:#94a3b8;font-size:14px;">👤 Nama Client:</span>
+                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${clientNameText}</span>
+            </div>
+            
+            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
+                <span style="font-weight:600;color:#94a3b8;font-size:14px;">📦 Jumlah KIT:</span>
+                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${kitCount} KIT</span>
+            </div>
+            
+            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
+                <span style="font-weight:600;color:#94a3b8;font-size:14px;">💳 Tipe Pembayaran:</span>
+                <span style="font-weight:700;color:#f1f5f9;font-size:14px;">${tipePembayaran}</span>
+            </div>
+            
+            <div class="preview-item" style="display:flex;justify-content:space-between;padding:12px 15px;background:#334155;border-radius:8px;border:1px solid #475569;">
+                <span style="font-weight:600;color:#94a3b8;font-size:14px;">💰 Nominal Total:</span>
+                <span style="font-weight:700;color:#10b981;font-size:16px;">${nominalInput}</span>
+            </div>
+        </div>
+        
+        ${kitDetailsHTML}
+        
+        <div style="margin-top:20px;padding:15px;background:linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);border-radius:8px;text-align:center;color:white;border:2px solid #3b82f6;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);">
+            <p style="font-size:13px;margin-bottom:5px;opacity:0.9;">📊 Total Pembayaran</p>
+            <p style="font-size:24px;font-weight:700;margin:0;">${nominalInput}</p>
+        </div>
+        
+        <div style="margin-top:15px;padding:12px;background:rgba(16, 185, 129, 0.1);border-radius:8px;border:1px solid #10b981;text-align:center;">
+            <p style="color:#10b981;font-size:13px;margin:0;">✅ Silakan periksa kembali data di atas sebelum submit</p>
+            <p style="color:#94a3b8;font-size:12px;margin:5px 0 0 0;">Transaction ID akan di-generate otomatis setelah submit</p>
+        </div>
+    `;
+    
+    previewSection.innerHTML = previewHTML;
+    
+    // Force display the preview section (override CSS display: none)
+    previewSection.style.display = 'block';
+    
+    console.log('✅ Preview updated successfully with data');
+}
+
+/**
+ * Show Error Message
+ */
+function showError(message) {
+    const errorBanner = document.getElementById('errorBanner');
+    if (errorBanner) {
+        errorBanner.textContent = `⚠️ ${message}`;
+        errorBanner.style.display = 'block';
+        errorBanner.style.background = 'rgba(239, 68, 68, 0.1)';
+        errorBanner.style.color = '#fca5a5';
+        errorBanner.style.padding = '12px 15px';
+        errorBanner.style.borderRadius = '8px';
+        errorBanner.style.marginBottom = '15px';
+        errorBanner.style.borderLeft = '4px solid #ef4444';
+        
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            errorBanner.style.display = 'none';
+        }, 5000);
+        
+        scrollToTop();
+    }
+}
+
+/**
+ * Scroll to Top of Form
+ */
+function scrollToTop() {
+    const container = document.querySelector('.container');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+/**
+ * Enhanced Form Submit Handler
+ */
+document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
+    if (currentStep !== totalSteps) {
+        e.preventDefault();
+        showError('Mohon selesaikan semua step terlebih dahulu');
+        return;
+    }
+    
+    // Let the original app.js handle the actual submission
+    console.log('📤 Form submitted with data:', formData);
+    
+    // Setup success detection with multiple strategies
+    setupSuccessDetection();
+});
+
+/**
+ * Setup Success Detection (Multiple Strategies)
+ */
+function setupSuccessDetection() {
+    console.log('🔍 Setting up success detection...');
+    
+    // Strategy 1: Watch for successBanner to appear
+    const successBanner = document.getElementById('successBanner');
+    if (successBanner) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const display = successBanner.style.display;
+                    if (display === 'block' && successBanner.textContent.trim() !== '') {
+                        console.log('✅ Success banner detected, resetting form...');
+                        observer.disconnect();
+                        setTimeout(() => {
+                            resetFormAndStepper();
+                        }, 2000); // Wait 2s for user to see success message
+                    }
+                }
+            });
+        });
+        
+        observer.observe(successBanner, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+        
+        console.log('👁️ MutationObserver watching successBanner');
+    }
+    
+    // Strategy 2: Polling check (backup method)
+    let checkCount = 0;
+    const maxChecks = 15; // Check for 15 seconds
+    
+    const intervalId = setInterval(() => {
+        checkCount++;
+        
+        const successBanner = document.getElementById('successBanner');
+        if (successBanner && successBanner.style.display === 'block' && successBanner.textContent.trim() !== '') {
+            console.log('✅ Success detected via polling, resetting form...');
+            clearInterval(intervalId);
+            setTimeout(() => {
+                resetFormAndStepper();
+            }, 2000);
+        }
+        
+        // Stop checking after maxChecks
+        if (checkCount >= maxChecks) {
+            console.log('⏹️ Stopped checking for success (timeout)');
+            clearInterval(intervalId);
+        }
+    }, 1000);
+    
+    console.log('🔄 Polling check started');
+}
+
+/**
+ * Reset Form and Stepper to Step 1
+ */
+function resetFormAndStepper() {
+    console.log('🔄 Resetting form and stepper to Step 1...');
+    
+    // Reset stepper to step 1
+    currentStep = 1;
+    
+    // Reset formData
+    formData = {
+        searchMode: 'kit',
+        tanggalPembayaran: '',
+        nomorKit: '',
+        clientName: '',
+        selectedKits: [],
+        tipePembayaran: '',
+        nominal: '',
+        transactionId: ''
+    };
+    
+    // Clear form fields
+    const nomorKitInput = document.getElementById('nomorKit');
+    if (nomorKitInput) nomorKitInput.value = '';
+    
+    const clientNameText = document.getElementById('clientNameText');
+    if (clientNameText) clientNameText.textContent = 'Akan terisi otomatis setelah nomor KIT valid';
+    
+    const tipePembayaran = document.getElementById('tipePembayaran');
+    if (tipePembayaran) tipePembayaran.value = '';
+    
+    const nominal = document.getElementById('nominal');
+    if (nominal) nominal.value = '';
+    
+    const tanggalIndonesia = document.getElementById('tanggalIndonesia');
+    if (tanggalIndonesia) tanggalIndonesia.textContent = 'Klik untuk pilih tanggal';
+    
+    const tanggalPembayaran = document.getElementById('tanggalPembayaran');
+    if (tanggalPembayaran) tanggalPembayaran.value = '';
+    
+    // Uncheck all KIT checkboxes
+    document.querySelectorAll('.kit-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Reset all step markers
+    document.querySelectorAll('.step-item').forEach(stepItem => {
+        stepItem.classList.remove('active', 'completed');
+    });
+    
+    // Mark step 1 as active
+    const step1 = document.querySelector('.step-item[data-step="1"]');
+    if (step1) step1.classList.add('active');
+    
+    // Update UI
+    updateStepperUI();
+    updateNavigationButtons();
+    
+    // Scroll to top
+    scrollToTop();
+    
+    console.log('✅ Form reset complete - Ready for new entry');
+}
+
+// Export functions for use by app.js
+window.stepperNav = {
+    getCurrentStep: () => currentStep,
+    goToStep: goToStep,
+    updateNavigationButtons: updateNavigationButtons,
+    formData: formData
+};
