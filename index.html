@@ -154,8 +154,11 @@
 <!-- Search Input Section -->
 <div class="form-group">
 <div id="kitNumberSection">
-<label for="nomorKit">Nomor KIT *</label>
-<input type="text" id="nomorKit" name="nomorKit" placeholder="Contoh: KIT304096716" required>
+<label for="nomorKit">Nomor KIT / Serial Number *</label>
+<textarea id="nomorKit" name="nomorKit" rows="4" placeholder="Input multiple KIT atau Serial Number (satu per baris atau pisah dengan koma)&#10;Contoh:&#10;KIT304096716&#10;KIT304096717, KIT304096718&#10;UTxxxxxxxxxx" required style="resize: vertical; font-family: 'Roboto Mono', monospace; font-size: 14px; line-height: 1.5;"></textarea>
+<div style="margin-top: 8px; padding: 10px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 6px; color: white; font-size: 12px;">
+💡 <strong>Tips:</strong> Anda bisa input banyak KIT/SN sekaligus! Pisahkan dengan <strong>koma (,)</strong> atau <strong>enter (baris baru)</strong>. Validasi akan otomatis menggunakan KIT Number atau Serial Number.
+</div>
 </div>
 <div id="clientNameSection" style="display:none;">
 <label for="clientNameSearch">Client Name *</label>

@@ -4523,90 +4523,63 @@ function checkDuplicateInReportMultiKit(kitNumbers, month, year) {
 // ========================================
 
 /**
- * 🔄 UPDATED: Validate KIT dengan kolom mapping baru
+ * 🔄 UPDATED: Validate KIT dengan kolom mapping baru + Serial Number validation
  */
 function validateKitForFormMultiKit(kitNumber) {
   try {
     const sheetNames = ["Client Aktif", "Client Non Aktif", "Client Lepas"];
-    
+
+    // Detect if input is KIT number or Serial Number
+    // Serial Number usually starts with "UT" and has specific format
+    const isSerialNumber = kitNumber.toUpperCase().startsWith('UT');
+
+    Logger.log('🔍 Validating input: ' + kitNumber);
+    Logger.log('   - Detected as: ' + (isSerialNumber ? 'Serial Number' : 'KIT Number'));
+
     for (let sheetName of sheetNames) {
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
       if (!sheet) continue;
-      
+
       var data = sheet.getDataRange().getValues();
-      
+
       for (var i = 1; i < data.length; i++) {
         var kitCell = data[i][COLUMNS.KIT_NUMBER]; // I: KIT Number ✅ NEW
-        
-        if (!kitCell) continue;
-        
-        var kitString = kitCell.toString().trim();
-        var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
-        
-        for (var j = 0; j < kitArray.length; j++) {
-          if (kitArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
-            
-            var nama = data[i][COLUMNS.NAMA] || '';
-            var paketCell = data[i][COLUMNS.PAKET] || ''; // P: Paket ✅ MOVED
-            var serialCell = data[i][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number ✅ NEW
-            
-            Logger.log('🔍 DEBUG - Data yang diambil:');
-            Logger.log('   - Nama: ' + nama);
-            Logger.log('   - KIT Cell (col I): ' + kitCell);
-            Logger.log('   - Serial Cell (col J): ' + serialCell);
-            Logger.log('   - Paket Cell (col P): ' + paketCell);
-            
-            var allKits = [];
-            var paketString = paketCell.toString().trim();
-            var paketArray = paketString.includes('\n') ? paketString.split('\n') : [paketString];
-            
-            var serialString = serialCell.toString().trim();
-            var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
-            
-            for (var k = 0; k < kitArray.length; k++) {
-              var kit = kitArray[k].trim();
-              var paket = paketArray[k] || paketArray[0] || '';
-              var serial = serialArray[k] || serialArray[0] || '';
-              
-              if (kit) {
-                allKits.push({
-                  kitNumber: kit,
-                  serialNumber: serial.trim(), // ✅ NEW
-                  paket: paket.trim(),
-                  isSelected: kit.toUpperCase() === kitNumber.toUpperCase()
-                });
-                
-                Logger.log(`   - KIT ${k + 1}: ${kit} | SN: ${serial.trim()} | Paket: ${paket.trim()}`);
-              }
+        var serialCell = data[i][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number ✅ NEW
+
+        // Search in KIT Number column
+        if (kitCell) {
+          var kitString = kitCell.toString().trim();
+          var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
+
+          for (var j = 0; j < kitArray.length; j++) {
+            if (kitArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              return buildKitValidationResult(data, i, sheetName, kitNumber, 'KIT Number');
             }
-            
-            return {
-              status: 'found',
-              clientStatus: sheetName,
-              isActive: sheetName === "Client Aktif",
-              data: {
-                nama: nama.toString().trim(),
-                rowNumber: i + 1,
-                sheetName: sheetName,
-                allKits: allKits,
-                totalKits: allKits.length
-              },
-              warning: sheetName !== "Client Aktif" ? 
-                "⚠️ PERHATIAN: Client tidak berada di 'Client Aktif'. Segera update data!" : null
-            };
+          }
+        }
+
+        // Search in Serial Number column (NEW)
+        if (serialCell && isSerialNumber) {
+          var serialString = serialCell.toString().trim();
+          var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
+
+          for (var j = 0; j < serialArray.length; j++) {
+            if (serialArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              return buildKitValidationResult(data, i, sheetName, kitNumber, 'Serial Number');
+            }
           }
         }
       }
     }
-    
+
     return {
       status: 'not_found',
       clientStatus: null,
       isActive: false,
       data: null,
-      warning: "❌ Nomor KIT tidak ditemukan dalam database!"
+      warning: "❌ Nomor " + (isSerialNumber ? 'Serial Number' : 'KIT') + " tidak ditemukan dalam database!"
     };
-    
+
   } catch (error) {
     return {
       status: 'error',
@@ -4616,6 +4589,75 @@ function validateKitForFormMultiKit(kitNumber) {
       warning: "❌ Error dalam validasi: " + error.message
     };
   }
+}
+
+/**
+ * 🆕 Helper function to build validation result
+ */
+function buildKitValidationResult(data, rowIndex, sheetName, searchValue, foundIn) {
+  var nama = data[rowIndex][COLUMNS.NAMA] || '';
+  var paketCell = data[rowIndex][COLUMNS.PAKET] || ''; // P: Paket
+  var kitCell = data[rowIndex][COLUMNS.KIT_NUMBER] || ''; // I: KIT Number
+  var serialCell = data[rowIndex][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number
+
+  Logger.log('🔍 DEBUG - Data yang diambil (found by ' + foundIn + '):');
+  Logger.log('   - Nama: ' + nama);
+  Logger.log('   - KIT Cell (col I): ' + kitCell);
+  Logger.log('   - Serial Cell (col J): ' + serialCell);
+  Logger.log('   - Paket Cell (col P): ' + paketCell);
+
+  var kitString = kitCell.toString().trim();
+  var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
+
+  var paketString = paketCell.toString().trim();
+  var paketArray = paketString.includes('\n') ? paketString.split('\n') : [paketString];
+
+  var serialString = serialCell.toString().trim();
+  var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
+
+  var allKits = [];
+
+  for (var k = 0; k < kitArray.length; k++) {
+    var kit = kitArray[k].trim();
+    var paket = paketArray[k] || paketArray[0] || '';
+    var serial = serialArray[k] || serialArray[0] || '';
+
+    if (kit) {
+      var isMatched = false;
+
+      // Check if this kit matches the search value (by KIT or Serial)
+      if (foundIn === 'KIT Number') {
+        isMatched = kit.toUpperCase() === searchValue.toUpperCase();
+      } else if (foundIn === 'Serial Number') {
+        isMatched = serial.trim().toUpperCase() === searchValue.toUpperCase();
+      }
+
+      allKits.push({
+        kitNumber: kit,
+        serialNumber: serial.trim(),
+        paket: paket.trim(),
+        isSelected: isMatched
+      });
+
+      Logger.log(`   - KIT ${k + 1}: ${kit} | SN: ${serial.trim()} | Paket: ${paket.trim()} | Matched: ${isMatched}`);
+    }
+  }
+
+  return {
+    status: 'found',
+    clientStatus: sheetName,
+    isActive: sheetName === "Client Aktif",
+    foundBy: foundIn, // NEW: indicate what field matched
+    data: {
+      nama: nama.toString().trim(),
+      rowNumber: rowIndex + 1,
+      sheetName: sheetName,
+      allKits: allKits,
+      totalKits: allKits.length
+    },
+    warning: sheetName !== "Client Aktif" ?
+      "⚠️ PERHATIAN: Client tidak berada di 'Client Aktif'. Segera update data!" : null
+  };
 }
 
 /**

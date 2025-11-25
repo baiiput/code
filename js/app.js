@@ -751,10 +751,10 @@ function setupEventListeners() {
     // Search mode change listener
     elements.searchMode.addEventListener('change', handleSearchModeChange);
 
-    // KIT validation dengan enhanced debounce
+    // KIT validation dengan enhanced debounce - UPDATED for multiple input
     elements.nomorKitInput.addEventListener('input', function() {
-        const kitNumber = this.value.trim();
-        
+        const inputValue = this.value.trim();
+
         // Reset state
         isKitValid = false;
         validationResult = null;
@@ -763,16 +763,16 @@ function setupEventListeners() {
         hideKitSelection();
         updateButtonStates();
         hideAllBanners();
-        
+
         // Clear previous timeout
         clearTimeout(validationTimeout);
-        
-        if (kitNumber.length >= 3) {
+
+        if (inputValue.length >= 3) {
             showLoading();
-            
+
             // Enhanced debounce with 1 second delay
             validationTimeout = setTimeout(() => {
-                validateKit(kitNumber);
+                validateMultipleKits(inputValue);
             }, 1000);
         } else {
             hideLoading();
@@ -2145,18 +2145,179 @@ function displayDuplicateResults(result, month, year) {
     elements.duplicateTable.style.display = 'block';
 }
 
-// VALIDATE KIT
+// 🆕 PARSE MULTIPLE KIT INPUT
+function parseMultipleKitInput(inputValue) {
+    if (!inputValue || inputValue.trim() === '') {
+        return [];
+    }
+
+    // Split by newline, comma, atau semicolon
+    const separators = /[\n,;]+/;
+    const rawItems = inputValue.split(separators);
+
+    // Clean up and filter empty values
+    const kitNumbers = rawItems
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .filter((item, index, self) => self.indexOf(item) === index); // Remove duplicates
+
+    CONFIG.log('📋 Parsed KIT/SN numbers:', kitNumbers);
+    return kitNumbers;
+}
+
+// 🆕 VALIDATE MULTIPLE KITS
+async function validateMultipleKits(inputValue) {
+    try {
+        const kitNumbers = parseMultipleKitInput(inputValue);
+
+        if (kitNumbers.length === 0) {
+            hideLoading();
+            clearValidation();
+            return;
+        }
+
+        CONFIG.log(`🔍 Validating ${kitNumbers.length} KIT/SN numbers...`);
+        showLoading();
+
+        // Get selected date for duplicate check
+        const selectedDate = getFormDateValue();
+        let selectedMonth = null;
+        let selectedYear = null;
+
+        if (selectedDate) {
+            const dateParts = selectedDate.split('-');
+            selectedMonth = parseInt(dateParts[1]);
+            selectedYear = parseInt(dateParts[0]);
+        }
+
+        // Validate all KITs in parallel
+        const validationPromises = kitNumbers.map(kitNumber =>
+            api.validateKitMulti(kitNumber, selectedMonth, selectedYear)
+                .then(result => ({
+                    kitNumber,
+                    success: true,
+                    data: result
+                }))
+                .catch(error => ({
+                    kitNumber,
+                    success: false,
+                    error: error.message
+                }))
+        );
+
+        const results = await Promise.all(validationPromises);
+
+        CONFIG.log('📊 Validation results:', results);
+
+        // Process results and aggregate
+        handleMultipleValidationResults(results);
+
+    } catch (error) {
+        CONFIG.error('Error validating multiple KITs:', error);
+        handleValidationError(error);
+    }
+}
+
+// 🆕 HANDLE MULTIPLE VALIDATION RESULTS
+function handleMultipleValidationResults(results) {
+    hideLoading();
+
+    const successfulResults = results.filter(r => r.success && r.data?.validation?.status === 'found');
+    const failedResults = results.filter(r => !r.success || r.data?.validation?.status !== 'found');
+
+    if (successfulResults.length === 0) {
+        const errorMessages = failedResults.map(r => `❌ ${r.kitNumber}: ${r.error || 'Not found'}`).join('\n');
+        showValidationMessage(`Tidak ada KIT/SN yang valid:\n${errorMessages}`, 'error');
+        return;
+    }
+
+    // Aggregate all KITs from successful validations
+    const allKits = [];
+    const clientNames = new Set();
+    const duplicateInfo = [];
+
+    successfulResults.forEach(result => {
+        const data = result.data;
+
+        if (data.validation?.data?.allKits) {
+            data.validation.data.allKits.forEach(kit => {
+                allKits.push(kit);
+            });
+
+            if (data.validation.data.nama) {
+                clientNames.add(data.validation.data.nama);
+            }
+        }
+
+        // Collect duplicate info
+        if (data.duplicate?.hasDuplicate) {
+            duplicateInfo.push({
+                kitNumber: result.kitNumber,
+                duplicates: data.duplicate.duplicateKits || []
+            });
+        }
+    });
+
+    // Remove duplicate KITs based on kitNumber
+    const uniqueKits = [];
+    const seenKitNumbers = new Set();
+
+    allKits.forEach(kit => {
+        if (!seenKitNumbers.has(kit.kitNumber)) {
+            uniqueKits.push(kit);
+            seenKitNumbers.add(kit.kitNumber);
+        }
+    });
+
+    // Update validation result
+    validationResult = {
+        validation: {
+            status: 'found',
+            data: {
+                nama: Array.from(clientNames).join(', '),
+                allKits: uniqueKits
+            }
+        },
+        duplicate: duplicateInfo.length > 0 ? {
+            hasDuplicate: true,
+            duplicateKits: duplicateInfo.flatMap(d => d.duplicates)
+        } : {
+            hasDuplicate: false,
+            duplicateKits: []
+        }
+    };
+
+    CONFIG.log('✅ Aggregated validation result:', validationResult);
+
+    // Show validation success with aggregated data
+    handleValidationSuccess(validationResult);
+
+    // Show summary message
+    let summaryMessage = `✅ ${successfulResults.length} KIT/SN berhasil divalidasi, total ${uniqueKits.length} KIT ditemukan`;
+
+    if (failedResults.length > 0) {
+        summaryMessage += `\n⚠️ ${failedResults.length} KIT/SN tidak ditemukan: ${failedResults.map(r => r.kitNumber).join(', ')}`;
+    }
+
+    if (duplicateInfo.length > 0) {
+        summaryMessage += `\n⚠️ ${duplicateInfo.length} KIT memiliki duplikasi`;
+    }
+
+    showValidationMessage(summaryMessage, successfulResults.length > 0 ? 'success' : 'warning');
+}
+
+// VALIDATE KIT (original function - kept for backward compatibility)
 async function validateKit(kitNumber) {
     try {
         CONFIG.log('Validating KIT:', kitNumber);
-        
+
         const selectedDate = getFormDateValue();
         console.log('🐛 DEBUG selectedDate:', selectedDate);
         console.log('🐛 DEBUG selectedDate type:', typeof selectedDate);
-        
+
         let selectedMonth = null;
         let selectedYear = null;
-        
+
         if (selectedDate) {
             const dateParts = selectedDate.split('-');
             console.log('🐛 DEBUG dateParts:', dateParts);
@@ -2165,12 +2326,12 @@ async function validateKit(kitNumber) {
             console.log('🐛 DEBUG extracted month:', selectedMonth);
             console.log('🐛 DEBUG extracted year:', selectedYear);
         }
-        
+
         console.log('🐛 DEBUG Final params - month:', selectedMonth, 'year:', selectedYear);
-        
+
         const data = await api.validateKitMulti(kitNumber, selectedMonth, selectedYear);
         handleValidationSuccess(data);
-        
+
     } catch (error) {
         handleValidationError(error);
     }
