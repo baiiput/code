@@ -347,6 +347,7 @@ if ($branchId == 0) {
                                 <th>Grab</th>
                                 <th>GoFood</th>
                                 <th>Pengeluaran</th>
+                                <th>Keterangan</th>
                                 <th>Saldo</th>
                                 <?php if (canEdit() || canDelete()): ?>
                                 <th>Aksi</th>
@@ -380,6 +381,7 @@ if ($branchId == 0) {
                                 <td class="text-end"><?= $t['grab_food'] > 0 ? formatRupiah($t['grab_food']) : '-' ?></td>
                                 <td class="text-end"><?= $t['go_food'] > 0 ? formatRupiah($t['go_food']) : '-' ?></td>
                                 <td class="text-end text-danger"><?= $t['expenses'] > 0 ? formatRupiah($t['expenses']) : '-' ?></td>
+                                <td><small class="text-muted"><?= !empty($t['expense_description']) ? htmlspecialchars($t['expense_description']) : '-' ?></small></td>
                                 <td class="text-end fw-semibold <?= $balances[$t['id']] >= 0 ? 'text-success' : 'text-danger' ?>">
                                     <?= formatRupiah($balances[$t['id']]) ?>
                                 </td>
