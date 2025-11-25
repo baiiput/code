@@ -2731,48 +2731,69 @@ function updateKitDisplay() {
 
     availableKits.forEach((kit, index) => {
         const kitItem = document.createElement('div');
-        kitItem.className = `kit-item ${kit.isSelected ? 'selected' : ''} ${kit.isDuplicate ? 'duplicate' : ''}`;
-
-        const serialInfo = kit.serialNumber ? ` | SN: ${kit.serialNumber}` : '';
-        const duplicateLabel = kit.isDuplicate ? '<span style="color: #fde68a; font-size: 12px; margin-right: 8px;">DUPLICATE</span>' : '';
 
         // Format nominal jika sudah diisi
         const nominalValue = kit.nominal ? formatRupiahInput(kit.nominal) : '';
 
+        const serialInfo = kit.serialNumber ? `<div style="color: #94a3b8; font-size: 13px; margin-top: 2px;">📟 SN: ${kit.serialNumber}</div>` : '';
+        const duplicateLabel = kit.isDuplicate ? '<div style="background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; margin-top: 5px;">⚠️ DUPLICATE</div>' : '';
+
+        // 🆕 NEW: Each KIT in its own box with clear borders
         kitItem.innerHTML = `
-            <div class="kit-info" style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="kit-left-info">
-                        <span class="kit-number">🛰️ ${kit.kitNumber}${serialInfo}</span>
-                        <span class="kit-package">${kit.paket}</span>
-                    </div>
-                    <div class="kit-right-controls">
+            <div style="background: ${kit.isSelected ? '#1e3a8a' : '#1e293b'}; border: 2px solid ${kit.isSelected ? '#3b82f6' : '#475569'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; transition: all 0.3s ease; box-shadow: ${kit.isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.2)'};">
+
+                <!-- Checkbox & KIT Info Row -->
+                <div style="display: flex; align-items: start; gap: 12px; margin-bottom: ${kit.isSelected ? '12px' : '0'};">
+                    <input type="checkbox"
+                           class="kit-checkbox"
+                           id="kit-${index}"
+                           data-kit="${kit.kitNumber}"
+                           ${kit.isSelected ? 'checked' : ''}
+                           style="margin-top: 4px; width: 20px; height: 20px; cursor: pointer; accent-color: #3b82f6;">
+
+                    <div style="flex: 1;">
+                        <div style="color: #f1f5f9; font-size: 15px; font-weight: 600; margin-bottom: 2px;">
+                            🛰️ ${kit.kitNumber}
+                        </div>
+                        ${serialInfo}
+                        <div style="color: #60a5fa; font-size: 13px; margin-top: 4px; font-weight: 500;">
+                            📦 ${kit.paket}
+                        </div>
                         ${duplicateLabel}
-                        <input type="checkbox"
-                               class="kit-checkbox"
-                               id="kit-${index}"
-                               data-kit="${kit.kitNumber}"
-                               data-package="${kit.paket}"
-                               ${kit.isSelected ? 'checked' : ''}>
                     </div>
                 </div>
-                <div class="kit-nominal-input" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 10px; background: #1e293b; border-radius: 6px; border: 2px solid #3b82f6;">
-                    <label style="display: block; color: #94a3b8; font-size: 12px; margin-bottom: 5px;">💰 Nominal untuk KIT ini:</label>
+
+                <!-- Nominal Input (shown when selected) -->
+                <div class="kit-nominal-input" style="display: ${kit.isSelected ? 'block' : 'none'}; padding: 12px; background: #0f172a; border-radius: 8px; border: 2px solid #60a5fa;">
+                    <label style="display: block; color: #e0f2fe; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+                        💰 Nominal Pembayaran:
+                    </label>
                     <input type="text"
                            class="nominal-input-per-kit"
                            data-kit-index="${index}"
                            placeholder="Contoh: 100000 atau 100.000"
                            value="${nominalValue}"
-                           style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #f1f5f9; font-size: 14px; font-family: 'Roboto Mono', monospace;">
-                    <small style="color: #64748b; font-size: 11px; display: block; margin-top: 4px;">Minimal Rp 10.000</small>
+                           style="width: 100%; padding: 10px 14px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; color: #f1f5f9; font-size: 15px; font-family: 'Roboto Mono', monospace; font-weight: 600; transition: all 0.3s ease;">
+                    <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
+                        ℹ️ Minimal Rp 10.000
+                    </small>
                 </div>
             </div>
         `;
 
         // Checkbox click handler
         const checkbox = kitItem.querySelector('.kit-checkbox');
-        checkbox.addEventListener('click', function(e) {
+        checkbox.addEventListener('change', function(e) {
             e.stopPropagation();
+            toggleKitSelection(index);
+        });
+
+        // Click on box to toggle
+        kitItem.addEventListener('click', function(e) {
+            // Don't toggle if clicking on input field
+            if (e.target.classList.contains('nominal-input-per-kit')) {
+                return;
+            }
             toggleKitSelection(index);
         });
 
@@ -2789,12 +2810,16 @@ function updateKitDisplay() {
 
             nominalInput.addEventListener('focus', function() {
                 this.value = kit.nominal || '';
+                this.style.borderColor = '#3b82f6';
+                this.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
             });
 
             nominalInput.addEventListener('blur', function() {
                 if (kit.nominal) {
                     this.value = formatRupiahInput(kit.nominal);
                 }
+                this.style.borderColor = '#475569';
+                this.style.boxShadow = 'none';
             });
         }
 
@@ -2852,6 +2877,7 @@ function toggleKitSelection(index) {
     updateKitDisplay();
     updateKitSummary();
     updateButtonStates();
+    updateStep3Summary(); // NEW: Update Step 3 summary when selection changes
     updatePreview();
 
     // Update stepper navigation buttons
