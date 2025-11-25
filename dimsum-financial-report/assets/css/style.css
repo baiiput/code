@@ -1210,6 +1210,16 @@ textarea::placeholder {
     background-color: var(--bg-secondary);
 }
 
+.detail-row.child {
+    /* Prevent DataTables from manipulating detail rows */
+    background-color: var(--bg-secondary) !important;
+}
+
+tr.child td.child {
+    /* Force detail row styling */
+    padding: 0.75rem !important;
+}
+
 .detail-content {
     background-color: var(--bg-card) !important;
     border-left: 3px solid var(--primary);
@@ -1236,4 +1246,9 @@ textarea::placeholder {
 
 .toggle-detail i {
     transition: transform 0.2s ease;
+}
+
+/* Prevent sorting icon on chevron column */
+table.dataTable thead th:first-child {
+    cursor: default !important;
 }

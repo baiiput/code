@@ -412,8 +412,8 @@ if ($branchId == 0) {
 
                             <!-- Detail Row (Hidden by default) -->
                             <?php if ($hasDetails): ?>
-                            <tr class="detail-row" id="detail-<?= $t['id'] ?>" style="display: none;">
-                                <td colspan="<?= (canEdit() || canDelete()) ? '9' : '8' ?>">
+                            <tr class="detail-row child" id="detail-<?= $t['id'] ?>" style="display: none;">
+                                <td colspan="<?= (canEdit() || canDelete()) ? '9' : '8' ?>" class="child">
                                     <div class="detail-content bg-light p-3 rounded">
                                         <h6 class="mb-3"><i class="bi bi-info-circle"></i> Detail Pemasukan</h6>
                                         <div class="row g-3">
@@ -557,8 +557,32 @@ if ($branchId == 0) {
         $(document).ready(function() {
             $('#transactionTable').DataTable({
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json' },
-                order: [[1, 'desc']],
-                pageLength: 25
+                order: [[2, 'desc']], // Sort by Tanggal column
+                pageLength: 25,
+                columnDefs: [
+                    { orderable: false, targets: 0 }, // Disable sort on chevron column
+                    { width: '30px', targets: 0 }
+                ],
+                // Handle detail rows - don't apply DataTables features to them
+                drawCallback: function() {
+                    // Re-attach toggle event listeners after table redraw
+                    document.querySelectorAll('.toggle-detail').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const id = this.getAttribute('data-id');
+                            const detailRow = document.getElementById('detail-' + id);
+                            const icon = this.querySelector('i');
+
+                            if (detailRow.style.display === 'none') {
+                                detailRow.style.display = 'table-row';
+                                icon.className = 'bi bi-chevron-down';
+                            } else {
+                                detailRow.style.display = 'none';
+                                icon.className = 'bi bi-chevron-right';
+                            }
+                        });
+                    });
+                }
             });
         });
 
@@ -618,24 +642,6 @@ if ($branchId == 0) {
             const params = new URLSearchParams(window.location.search);
             window.location.href = 'export.php?type=excel&' + params.toString();
         }
-
-        // Toggle detail rows
-        document.querySelectorAll('.toggle-detail').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const id = this.getAttribute('data-id');
-                const detailRow = document.getElementById('detail-' + id);
-                const icon = this.querySelector('i');
-
-                if (detailRow.style.display === 'none') {
-                    detailRow.style.display = 'table-row';
-                    icon.className = 'bi bi-chevron-down';
-                } else {
-                    detailRow.style.display = 'none';
-                    icon.className = 'bi bi-chevron-right';
-                }
-            });
-        });
     </script>
 </body>
 </html>
