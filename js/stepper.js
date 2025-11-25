@@ -320,23 +320,57 @@ function validateStep3() {
     // Access from window scope (defined in app.js)
     const selectedKits = window.selectedKits || [];
 
+    console.log('🔍 Step 3 Validation - START:', {
+        currentStep: currentStep,
+        tipePembayaranElement: !!document.getElementById('tipePembayaran'),
+        tipePembayaran: tipePembayaran,
+        windowSelectedKitsExists: !!window.selectedKits,
+        selectedKitsCount: selectedKits.length
+    });
+
     // Check if all selected KITs have nominal >= 10000
     let allKitsHaveValidNominal = selectedKits.length > 0 &&
                                   selectedKits.every(kit => kit.nominal && kit.nominal >= 10000);
 
-    const isValid = tipePembayaran && allKitsHaveValidNominal;
+    // Detailed per-KIT validation check
+    const kitValidationDetails = selectedKits.map(kit => ({
+        kitNumber: kit.kitNumber,
+        nominal: kit.nominal,
+        hasNominal: !!kit.nominal,
+        nominalValid: kit.nominal && kit.nominal >= 10000,
+        nominalFormatted: kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'NOT SET'
+    }));
 
-    console.log('🔍 Step 3 Validation:', {
-        tipePembayaran: tipePembayaran,
+    console.log('🔍 Step 3 Validation - KIT Details:', kitValidationDetails);
+
+    // Check individual validations
+    const hasTipePembayaran = !!tipePembayaran;
+    const hasSelectedKits = selectedKits.length > 0;
+    const allKitsValid = allKitsHaveValidNominal;
+
+    const isValid = hasTipePembayaran && hasSelectedKits && allKitsValid;
+
+    console.log('🔍 Step 3 Validation - RESULT:', {
+        hasTipePembayaran: hasTipePembayaran,
+        tipePembayaranValue: tipePembayaran,
+        hasSelectedKits: hasSelectedKits,
         selectedKitsCount: selectedKits.length,
         allKitsHaveValidNominal: allKitsHaveValidNominal,
-        kits: selectedKits.map(k => ({kit: k.kitNumber, nominal: k.nominal})),
-        isValid: isValid
+        isValid: isValid,
+        failureReason: !isValid ? (
+            !hasTipePembayaran ? 'Missing tipePembayaran' :
+            !hasSelectedKits ? 'No KITs selected' :
+            !allKitsValid ? 'Some KITs have invalid nominal' :
+            'Unknown'
+        ) : 'All valid'
     });
 
     if (isValid) {
         formData.tipePembayaran = tipePembayaran;
         // Nominal is now per-KIT, will be calculated in submit
+        console.log('✅ Step 3 validation PASSED');
+    } else {
+        console.error('❌ Step 3 validation FAILED');
     }
 
     return isValid;
@@ -365,6 +399,22 @@ function setupFormValidation() {
         if (e.target && e.target.classList.contains('kit-checkbox')) {
             console.log('📦 KIT checkbox changed, updating navigation buttons');
             setTimeout(() => {
+                updateNavigationButtons();
+            }, 100);
+        }
+    });
+
+    // 🔍 DEBUG: Listen to nominal input changes with event delegation
+    document.addEventListener('input', function(e) {
+        // Update navigation buttons when nominal input is changed
+        if (e.target && e.target.classList.contains('nominal-input-per-kit')) {
+            console.log('💰 Nominal input detected in stepper.js:', {
+                kitIndex: e.target.dataset.kitIndex,
+                value: e.target.value,
+                currentStep: currentStep
+            });
+            setTimeout(() => {
+                console.log('🔄 Updating navigation buttons after nominal input...');
                 updateNavigationButtons();
             }, 100);
         }

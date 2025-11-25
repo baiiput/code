@@ -2787,6 +2787,9 @@ function hideKitSelection() {
 function updateKitDisplay() {
     elements.kitList.innerHTML = '';
 
+    // Get client name from validation result
+    const clientName = validationResult?.validation?.data?.nama || 'Unknown Client';
+
     availableKits.forEach((kit, index) => {
         const kitItem = document.createElement('div');
 
@@ -2798,9 +2801,18 @@ function updateKitDisplay() {
 
         // 🆕 NEW: Each KIT in its own box with clear borders
         kitItem.innerHTML = `
-            <div style="background: ${kit.isSelected ? '#1e3a8a' : '#1e293b'}; border: 2px solid ${kit.isSelected ? '#3b82f6' : '#475569'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; transition: all 0.3s ease; box-shadow: ${kit.isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.2)'};">
+            <div style="background: ${kit.isSelected ? '#1e3a8a' : '#1e293b'}; border: 2px solid ${kit.isSelected ? '#3b82f6' : '#475569'}; border-radius: 10px; padding: 0; margin-bottom: 12px; transition: all 0.3s ease; box-shadow: ${kit.isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.2)'}; overflow: hidden;">
 
-                <!-- Checkbox & KIT Info Row -->
+                <!-- Client Name Header -->
+                <div style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); padding: 10px 15px; border-bottom: 2px solid #134e4a;">
+                    <div style="color: #f0fdfa; font-size: 13px; font-weight: 600;">
+                        👤 ${clientName}
+                    </div>
+                </div>
+
+                <!-- KIT Content -->
+                <div style="padding: 15px;">
+                    <!-- Checkbox & KIT Info Row -->
                 <div style="display: flex; align-items: start; gap: 12px; margin-bottom: ${kit.isSelected ? '12px' : '0'};">
                     <input type="checkbox"
                            class="kit-checkbox"
@@ -2835,6 +2847,7 @@ function updateKitDisplay() {
                     <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
                         ℹ️ Minimal Rp 10.000
                     </small>
+                </div>
                 </div>
             </div>
         `;
@@ -2883,6 +2896,9 @@ function updateKitDisplay() {
 
         elements.kitList.appendChild(kitItem);
     });
+
+    // 🔍 DEBUG: Export to window scope for stepper validation
+    window.selectedKits = selectedKits;
 }
 
 // 🆕 Handle nominal input per KIT
@@ -2902,9 +2918,27 @@ function handleKitNominalInput(kitIndex, value) {
         }
     }
 
+    // 🔍 DEBUG: Export to window scope for stepper validation
+    window.selectedKits = selectedKits;
+
+    console.log('💰 Nominal input updated:', {
+        kitIndex: kitIndex,
+        kitNumber: availableKits[kitIndex].kitNumber,
+        nominal: numericValue,
+        isSelected: availableKits[kitIndex].isSelected,
+        selectedKitsCount: selectedKits.length,
+        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 10000)
+    });
+
     updateKitSummary();
     updateButtonStates();
     updateStep3Summary(); // Update Step 3 summary display
+
+    // 🔍 DEBUG: Trigger stepper validation update
+    if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
+        console.log('🔄 Triggering stepper navigation update...');
+        window.stepperNav.updateNavigationButtons();
+    }
 }
 
 // 🆕 Update Step 3 Summary Display
@@ -2931,6 +2965,17 @@ function toggleKitSelection(index) {
     availableKits[index].isSelected = !availableKits[index].isSelected;
     selectedKits = availableKits.filter(kit => kit.isSelected);
 
+    // 🔍 DEBUG: Export to window scope for stepper validation
+    window.selectedKits = selectedKits;
+
+    console.log('✅ KIT selection toggled:', {
+        kitIndex: index,
+        kitNumber: availableKits[index].kitNumber,
+        isSelected: availableKits[index].isSelected,
+        selectedKitsCount: selectedKits.length,
+        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 10000)
+    });
+
     // Re-render to show/hide nominal input
     updateKitDisplay();
     updateKitSummary();
@@ -2940,6 +2985,7 @@ function toggleKitSelection(index) {
 
     // Update stepper navigation buttons
     if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.updateNavigationButtons === 'function') {
+        console.log('🔄 Triggering stepper navigation update after KIT toggle...');
         window.stepperNav.updateNavigationButtons();
     }
 }
