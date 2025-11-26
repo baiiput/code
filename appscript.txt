@@ -4625,12 +4625,8 @@ function validateKitForFormMultiKit(kitNumber) {
   try {
     const sheetNames = ["Client Aktif", "Client Non Aktif", "Client Lepas"];
 
-    // Detect if input is KIT number or Serial Number
-    // Serial Number usually starts with "UT" and has specific format
-    const isSerialNumber = kitNumber.toUpperCase().startsWith('UT');
-
     Logger.log('🔍 Validating input: ' + kitNumber);
-    Logger.log('   - Detected as: ' + (isSerialNumber ? 'Serial Number' : 'KIT Number'));
+    Logger.log('   - Searching in both KIT Number and Serial Number columns');
 
     for (let sheetName of sheetNames) {
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
@@ -4642,25 +4638,27 @@ function validateKitForFormMultiKit(kitNumber) {
         var kitCell = data[i][COLUMNS.KIT_NUMBER]; // I: KIT Number ✅ NEW
         var serialCell = data[i][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number ✅ NEW
 
-        // Search in KIT Number column
+        // 🔧 FIX: Search in KIT Number column
         if (kitCell) {
           var kitString = kitCell.toString().trim();
           var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
 
           for (var j = 0; j < kitArray.length; j++) {
             if (kitArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              Logger.log('✅ Found match in KIT Number column');
               return buildKitValidationResult(data, i, sheetName, kitNumber, 'KIT Number');
             }
           }
         }
 
-        // Search in Serial Number column (NEW)
-        if (serialCell && isSerialNumber) {
+        // 🔧 FIX: Search in Serial Number column (ALWAYS, not just if starts with UT)
+        if (serialCell) {
           var serialString = serialCell.toString().trim();
           var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
 
           for (var j = 0; j < serialArray.length; j++) {
             if (serialArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              Logger.log('✅ Found match in Serial Number column');
               return buildKitValidationResult(data, i, sheetName, kitNumber, 'Serial Number');
             }
           }
@@ -4673,7 +4671,7 @@ function validateKitForFormMultiKit(kitNumber) {
       clientStatus: null,
       isActive: false,
       data: null,
-      warning: "❌ Nomor " + (isSerialNumber ? 'Serial Number' : 'KIT') + " tidak ditemukan dalam database!"
+      warning: "❌ KIT/Serial Number tidak ditemukan dalam database!"
     };
 
   } catch (error) {
