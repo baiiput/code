@@ -4884,6 +4884,7 @@ function getAllClientsByStatus() {
       var transactionID = data[i][COLUMNS.TRANSACTION_ID] || '';
       var status = data[i][COLUMNS.STATUS] || '';
       var paket = data[i][COLUMNS.PAKET] || '';
+      var tipePelanggan = data[i][COLUMNS.TIPE_PELANGGAN] || '';
       
       // Status indicators
       var jatuhTempoLabel = data[i][COLUMNS.LABEL_JATUH_TEMPO] || '';
@@ -4914,10 +4915,11 @@ function getAllClientsByStatus() {
         serialNumber: serialNumber, // ✅ FIXED: Kirim sebagai string, bukan undefined
         jatuhTempo: jatuhTempoFormatted,
         paket: paket.toString(),
-        kode: kode, // ✅ FIXED: Kirim sebagai string, bukan undefined   
+        kode: kode, // ✅ FIXED: Kirim sebagai string, bukan undefined
         payment: payment, // ✅ FIXED: Kirim sebagai string, bukan undefined
         transactionID: transactionID.toString(),
         status: status.toString(),
+        tipePelanggan: tipePelanggan.toString(), // ✅ NEW: Tipe Pelanggan dari kolom S
         statusClient: "Client Aktif",
         rowNumber: i + 1
       };
