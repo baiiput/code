@@ -1068,7 +1068,7 @@ async function confirmAndSubmit() {
         // 🐛 DEBUG: Check values before creating formData
         const tanggalInput = document.getElementById('tanggalPembayaran');
         const tanggalValue = getFormDateValue();
-        const namaValue = elements.clientNameText.textContent.trim();
+        let namaValue = elements.clientNameText.textContent.trim();
 
         console.log('🐛 DEBUG - Values before submit:');
         console.log('  - tanggalInput element exists:', !!tanggalInput);
@@ -1084,8 +1084,26 @@ async function confirmAndSubmit() {
             console.error('  - Element display:', tanggalInput ? getComputedStyle(tanggalInput).display : 'N/A');
             throw new Error('Tanggal pembayaran tidak valid. Silakan pilih tanggal terlebih dahulu.');
         }
+
+        // 🔧 FIX: If client name is placeholder, get it from validationResult
         if (!namaValue || namaValue === 'Akan terisi otomatis setelah nomor KIT valid') {
-            throw new Error('Nama client tidak valid');
+            console.log('⚠️ Client name is placeholder, checking validationResult...');
+
+            const clientNameFromValidation = validationResult?.validation?.data?.nama;
+            console.log('  - validationResult nama:', clientNameFromValidation);
+
+            if (clientNameFromValidation) {
+                console.log('  ✅ Found client name in validationResult:', clientNameFromValidation);
+                // Update clientNameText with correct value
+                elements.clientNameText.textContent = clientNameFromValidation;
+                namaValue = clientNameFromValidation;
+                console.log('  - Using client name:', namaValue);
+            } else {
+                console.error('❌ Nama client validation failed!');
+                console.error('  - namaValue:', namaValue);
+                console.error('  - validationResult:', validationResult);
+                throw new Error('Nama client tidak valid. Silakan tambahkan KIT terlebih dahulu.');
+            }
         }
 
         const formData = {
