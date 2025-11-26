@@ -4855,36 +4855,41 @@ function getAllClientsByStatus() {
       // ✅ FIXED: Proper extraction dengan debug logging
       var kitNumberRaw = data[i][COLUMNS.KIT_NUMBER]; // Column I (index 8)
       var serialNumberRaw = data[i][COLUMNS.SERIAL_NUMBER]; // Column J (index 9)
-      var kodeRaw = data[i][COLUMNS.KODE]; // Column L (index 11)  
+      var kodeRaw = data[i][COLUMNS.KODE]; // Column L (index 11)
       var paymentRaw = data[i][COLUMNS.PAYMENT]; // Column M (index 12)
-      
+      var tipePelangganRaw = data[i][COLUMNS.TIPE_PELANGGAN]; // Column S (index 18)
+
       // ✅ FIXED: Safe conversion to strings
       var kitNumber = '';
       var serialNumber = '';
       var kode = '';
       var payment = '';
-      
+      var tipePelanggan = '';
+
       if (kitNumberRaw !== null && kitNumberRaw !== undefined) {
         kitNumber = kitNumberRaw.toString().trim();
       }
-      
+
       if (serialNumberRaw !== null && serialNumberRaw !== undefined) {
         serialNumber = serialNumberRaw.toString().trim();
       }
-      
+
       if (kodeRaw !== null && kodeRaw !== undefined) {
         kode = kodeRaw.toString().trim();
       }
-      
+
       if (paymentRaw !== null && paymentRaw !== undefined) {
         payment = paymentRaw.toString().trim();
       }
-      
+
+      if (tipePelangganRaw !== null && tipePelangganRaw !== undefined) {
+        tipePelanggan = tipePelangganRaw.toString().trim();
+      }
+
       var jatuhTempo = data[i][COLUMNS.JATUH_TEMPO] || '';
       var transactionID = data[i][COLUMNS.TRANSACTION_ID] || '';
       var status = data[i][COLUMNS.STATUS] || '';
       var paket = data[i][COLUMNS.PAKET] || '';
-      var tipePelanggan = data[i][COLUMNS.TIPE_PELANGGAN] || '';
       
       // Status indicators
       var jatuhTempoLabel = data[i][COLUMNS.LABEL_JATUH_TEMPO] || '';
@@ -4919,7 +4924,7 @@ function getAllClientsByStatus() {
         payment: payment, // ✅ FIXED: Kirim sebagai string, bukan undefined
         transactionID: transactionID.toString(),
         status: status.toString(),
-        tipePelanggan: tipePelanggan.toString(), // ✅ NEW: Tipe Pelanggan dari kolom S
+        tipePelanggan: tipePelanggan, // ✅ NEW: Tipe Pelanggan dari kolom S (sudah string)
         statusClient: "Client Aktif",
         rowNumber: i + 1
       };
