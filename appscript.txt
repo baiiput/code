@@ -4366,12 +4366,28 @@ function submitPaymentDataMultiKit(formData) {
       // Apply filter based on transaction date
       applyDateFilterToReportSheet(sheet, tanggal);
 
-      // Update client data with transaction IDs
-      var updateResult = updateClientDataWithTransactionID(formData.selectedKits, insertedTransactionIDs.join(', '));
+      // 🔧 FIX: Update client data with transaction IDs - each KIT gets its own transaction ID
+      var allUpdateResults = { updated: [], notFound: [] };
+
+      for (var kitIndex = 0; kitIndex < formData.selectedKits.length; kitIndex++) {
+        var kit = formData.selectedKits[kitIndex];
+        var transactionID = insertedTransactionIDs[kitIndex]; // Match by index
+
+        Logger.log('Updating client data for KIT ' + (kitIndex + 1) + ': ' + kit.kitNumber + ' with Transaction ID: ' + transactionID);
+
+        // Update this specific KIT with its own transaction ID
+        var updateResult = updateClientDataWithTransactionID([kit], transactionID);
+
+        // Merge results
+        allUpdateResults.updated = allUpdateResults.updated.concat(updateResult.updated);
+        allUpdateResults.notFound = allUpdateResults.notFound.concat(updateResult.notFound);
+      }
+
+      Logger.log('✅ Client data updates completed: ' + allUpdateResults.updated.length + ' updated, ' + allUpdateResults.notFound.length + ' not found');
 
       // Send email notification
       try {
-        sendEmailNotificationMultiKitWithTransactionID(formData, sheet.getName(), insertedTransactionIDs.join(', '), updateResult);
+        sendEmailNotificationMultiKitWithTransactionID(formData, sheet.getName(), insertedTransactionIDs.join(', '), allUpdateResults);
       } catch (emailError) {
         Logger.log('⚠️ Email notification failed but submission successful: ' + emailError.message);
       }
@@ -4383,7 +4399,7 @@ function submitPaymentDataMultiKit(formData) {
         totalEntries: formData.selectedKits.length,
         requestId: formData.requestId,
         sheetName: sheet.getName(),
-        clientUpdates: updateResult,
+        clientUpdates: allUpdateResults,
         timestamp: new Date().toISOString()
       };
 
