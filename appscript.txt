@@ -4886,6 +4886,11 @@ function getAllClientsByStatus() {
         tipePelanggan = tipePelangganRaw.toString().trim();
       }
 
+      // Debug log untuk beberapa baris pertama
+      if (i <= 2) {
+        console.log(`Row ${i} - Nama: "${nama}" | Tipe Pelanggan: "${tipePelanggan}" | Raw: ${tipePelangganRaw}`);
+      }
+
       var jatuhTempo = data[i][COLUMNS.JATUH_TEMPO] || '';
       var transactionID = data[i][COLUMNS.TRANSACTION_ID] || '';
       var status = data[i][COLUMNS.STATUS] || '';
@@ -4974,7 +4979,22 @@ function getAllClientsByStatus() {
         console.log(`❌ Error reading reminder cell for row ${i+1}: ${reminderError.message}`);
       }
     }
-    
+
+    // Debug: Log sample data sebelum return
+    console.log('=== SAMPLE DATA CHECK ===');
+    if (allData.proses.length > 0) {
+      console.log('Sample Proses[0] tipePelanggan:', allData.proses[0].tipePelanggan);
+    }
+    if (allData.reminderH1.length > 0) {
+      console.log('Sample ReminderH1[0] tipePelanggan:', allData.reminderH1[0].tipePelanggan);
+    }
+    console.log('Total records:', {
+      proses: allData.proses.length,
+      reminderH1: allData.reminderH1.length,
+      reminderH2: allData.reminderH2.length,
+      reminderH3: allData.reminderH3.length
+    });
+
     return {
       status: 'success',
       data: allData

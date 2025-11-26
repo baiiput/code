@@ -1331,13 +1331,24 @@
                 }
                 
                 const data = result.data || {};
-                
+
+                // Debug: Log sample data untuk cek tipePelanggan
+                console.log('=== CLIENT SIDE DEBUG ===');
+                if (data.proses && data.proses.length > 0) {
+                    console.log('Sample Proses[0]:', data.proses[0]);
+                    console.log('tipePelanggan:', data.proses[0].tipePelanggan);
+                }
+                if (data.reminderH1 && data.reminderH1.length > 0) {
+                    console.log('Sample ReminderH1[0]:', data.reminderH1[0]);
+                    console.log('tipePelanggan:', data.reminderH1[0].tipePelanggan);
+                }
+
                 // Update counts
                 updateCounts(data);
-                
+
                 // Auto-expand category with highest priority data
                 autoExpandCategoryWithData();
-                
+
                 // Render lists
                 renderClientList('proses-list', data.proses || []);
                 renderClientList('warning-reminder-list', data.warningReminder || [], true);
