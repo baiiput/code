@@ -22,7 +22,7 @@ const REPORT_SPREADSHEET_NAME = "Laporan Starlink 2025";
 // Column Mapping (NEW STRUCTURE)
 const COLUMNS = {
   NAMA: 0,              // A
-  LOGIN_GMAIL: 1,       // B  
+  LOGIN_GMAIL: 1,       // B
   LOGIN_STARLINK: 2,    // C
   LOGIN_ALTERNATIF: 3,  // D
   ACC_NO: 4,            // E
@@ -39,7 +39,7 @@ const COLUMNS = {
   PAKET: 15,            // P
   LAST_4_DIGIT: 16,     // Q
   NO_REGISTER: 17,      // R
-  CADANGAN_1: 18,       // S ✅ NEW: Kosong
+  TIPE_PELANGGAN: 18,   // S ✅ NEW: Tipe Pelanggan
   CADANGAN_2: 19,       // T ✅ NEW: Kosong
   LABEL_JATUH_TEMPO: 20, // U ✅ MOVED: "JATUH TEMPO"
   LABEL_PROSES: 21,     // V ✅ MOVED: "PROSES"
@@ -3563,6 +3563,7 @@ function kirimWhatsApp() {
     var jatuhTempoRaw = data[i][COLUMNS.JATUH_TEMPO]; // K: Jatuh Tempo ✅ MOVED
     var paket = data[i][COLUMNS.PAKET]; // P: Paket ✅ MOVED
     var status = data[i][statusColumnIndex]; // O: Status ✅ MOVED
+    var tipePelanggan = data[i][COLUMNS.TIPE_PELANGGAN]; // S: Tipe Pelanggan ✅ NEW
     
     // ✅ UPDATED: Cell references dengan kolom baru
     var tandaCell = sheet.getRange(i + 1, tandaColumnIndex + 1); // U: Tanda "Jatuh Tempo"
@@ -3686,6 +3687,7 @@ function kirimWhatsApp() {
       paket: paket,
       jatuhTempoDate: jatuhTempoDate,
       status: status,
+      tipePelanggan: tipePelanggan,
       cell: cell,
       i: i
     }, logs); // ✅ Pass logs object by reference
@@ -3702,13 +3704,13 @@ function kirimWhatsApp() {
  * ✅ FIXED: Process reminder logic (now properly modifies logs object)
  */
 function processReminderLogic(selisihHari, isEligible, clientData, logs) {
-  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, cell, i } = clientData;
+  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, tipePelanggan, cell, i } = clientData;
   
   if (selisihHari === 3) {
     // H-3: Reminder H-3
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3');
+        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3', tipePelanggan);
         setReminderCell(cell, "📅 Reminder H-3", waLinkH3, "#2563eb");
         logs.clientReminderH3Log += `${i + 1}. - ${nama} (H-3, Status: ${status}) | ${waLinkH3}\n\n`;
       } else {
@@ -3722,7 +3724,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-2: Reminder H-2
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2');
+        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2', tipePelanggan);
         setReminderCell(cell, "⚠️ Reminder H-2", waLinkH2, "#f59e0b");
         logs.clientReminderH2Log += `${i + 1}. - ${nama} (H-2, Status: ${status}) | ${waLinkH2}\n\n`;
       } else {
@@ -3736,7 +3738,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-1: Reminder H-1
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1');
+        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1', tipePelanggan);
         setReminderCell(cell, "🚨 Reminder H-1", waLinkH1, "#dc2626");
         logs.clientReminderH1Log += `${i + 1}. - ${nama} (H-1, Status: ${status}) | ${waLinkH1}\n\n`;
       } else {
@@ -3750,7 +3752,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // HARI H: Warning Reminder
     if (isEligible) {
       if (nomorWA) {
-        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING');
+        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING', tipePelanggan);
         setReminderCell(cell, "💀 Warning Reminder", waLinkHariH, "#7c2d12");
         logs.clientWarningLog += `${i + 1}. - ${nama} (Warning, Status: ${status}) | ${waLinkHariH}\n\n`;
       } else {
@@ -3788,35 +3790,35 @@ function sendConsolidatedEmail(logs) {
 /**
  * ✅ NEW: Generate WhatsApp link dengan KIT Number dan Serial Number
  */
-function generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, type) {
+function generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, type, tipePelanggan) {
   var kitInfo = '';
-  
+
   // Handle KIT Number dan Serial Number
   if (kitNumber || serialNumber) {
     var kitLines = [];
     var kitArray = kitNumber ? (kitNumber.includes('\n') ? kitNumber.split('\n') : [kitNumber]) : ['Data KIT tidak tersedia'];
     var serialArray = serialNumber ? (serialNumber.includes('\n') ? serialNumber.split('\n') : [serialNumber]) : ['Data Serial tidak tersedia'];
     var paketArray = paket ? (paket.includes('\n') ? paket.split('\n') : [paket]) : ['Data paket tidak tersedia'];
-    
+
     var maxLength = Math.max(kitArray.length, serialArray.length, paketArray.length);
-    
+
     for (var j = 0; j < maxLength; j++) {
       var kitItem = kitArray[j] || kitArray[0] || 'N/A';
       var serialItem = serialArray[j] || serialArray[0] || 'N/A';
       var paketItem = paketArray[j] || paketArray[0] || 'N/A';
       kitLines.push(`   ✅ KIT: ${kitItem} | SN: ${serialItem} (${paketItem})`);
     }
-    
+
     kitInfo = kitLines.join('\n');
   }
-  
+
   var messages = {
-    'H-3': generateH3Message(nama, kitInfo, jatuhTempoDate),
-    'H-2': generateH2Message(nama, kitInfo, jatuhTempoDate),
-    'H-1': generateH1Message(nama, kitInfo, jatuhTempoDate),
-    'WARNING': generateWarningMessage(nama, kitInfo, jatuhTempoDate)
+    'H-3': generateH3Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'H-2': generateH2Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'H-1': generateH1Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'WARNING': generateWarningMessage(nama, kitInfo, jatuhTempoDate, tipePelanggan)
   };
-  
+
   var message = messages[type] || messages['H-3'];
   return `https://web.whatsapp.com/send?phone=${nomorWA}&text=${encodeURIComponent(message)}`;
 }
@@ -3845,16 +3847,18 @@ function setReminderCell(cell, text, url, color) {
 /**
  * ✅ NEW: Message generators
  */
-function generateH3Message(nama, kitInfo, jatuhTempoDate) {
+function generateH3Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
   var satuHariSebelumJatuhTempo = new Date(jatuhTempoDate);
   satuHariSebelumJatuhTempo.setDate(satuHariSebelumJatuhTempo.getDate() - 1);
   var namaHariSebelumnya = getNamaHari(satuHariSebelumJatuhTempo);
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
 
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo + `\n` +
     `📅 Kami ingin menginformasikan bahwa layanan Starlink Anda akan jatuh tempo dalam 3 hari pada tanggal tersebut.\n\n` +
     `Untuk memastikan kesinambungan layanan internet Anda, mohon konfirmasi perpanjangan layanan maksimal pada hari *${namaHariSebelumnya}*.\n\n` +
     `Jika memerlukan bantuan atau informasi lebih lanjut, silakan hubungi kami.\n\n` +
@@ -3862,12 +3866,15 @@ function generateH3Message(nama, kitInfo, jatuhTempoDate) {
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateH2Message(nama, kitInfo, jatuhTempoDate) {
+function generateH2Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo + `\n` +
     `⚠️ Pemberitahuan penting: layanan Starlink Anda akan jatuh tempo dalam 2 hari pada tanggal tersebut.\n\n` +
     `Untuk menghindari gangguan layanan, kami merekomendasikan agar perpanjangan segera dilakukan.\n\n` +
     `⏰ Waktu perpanjangan semakin terbatas, mohon segera lakukan konfirmasi.\n\n` +
@@ -3876,12 +3883,15 @@ function generateH2Message(nama, kitInfo, jatuhTempoDate) {
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateH1Message(nama, kitInfo, jatuhTempoDate) {
+function generateH1Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo + `\n` +
     `🚨 Peringatan urgent: layanan Starlink Anda akan jatuh tempo BESOK pada tanggal tersebut.\n\n` +
     `Mohon konfirmasi perpanjangan layanan HARI INI untuk menghindari terputusnya koneksi internet.\n\n` +
     `⏰ Ini adalah pengingat terakhir sebelum masa aktif berakhir.\n\n` +
@@ -3890,11 +3900,14 @@ function generateH1Message(nama, kitInfo, jatuhTempoDate) {
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateWarningMessage(nama, kitInfo, jatuhTempoDate) {
+function generateWarningMessage(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `⚠️ *PENTING: Layanan Internet Starlink Berakhir Hari Ini* ⚠️\n\n` +
     `👤 *${nama}*\n` +
-    `📅 *Masa Aktif Berakhir: HARI INI* (${formatTanggalIndonesia(jatuhTempoDate)})\n\n` +
-    `🛰️ *Starlink yang terpengaruh:*\n${kitInfo}\n\n` +
+    `📅 *Masa Aktif Berakhir: HARI INI* (${formatTanggalIndonesia(jatuhTempoDate)})\n` +
+    tipePelangganInfo +
+    `\n🛰️ *Starlink yang terpengaruh:*\n${kitInfo}\n\n` +
     `⏰ *Mohon konfirmasi perpanjangan secepatnya untuk menghindari pemutusan layanan.*\n\n` +
     `Untuk informasi perpanjangan atau bantuan teknis, silakan hubungi kami.\n\n` +
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
