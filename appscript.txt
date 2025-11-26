@@ -4332,6 +4332,8 @@ function submitPaymentDataMultiKit(formData) {
         Logger.log('Processing KIT ' + (kitIndex + 1) + '/' + formData.selectedKits.length + ': ' + kit.kitNumber);
         Logger.log('  - Transaction ID: ' + transactionID);
         Logger.log('  - Nominal: ' + kit.nominal);
+        Logger.log('  - Tipe Pembayaran: ' + (kit.tipePembayaran || '(EMPTY!)'));
+        Logger.log('  - Client Name: ' + (kit.clientName || formData.nama));
 
         // Get current last row (updates after each insert)
         lastRow = sheet.getLastRow();

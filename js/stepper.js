@@ -328,7 +328,7 @@ function validateStep3() {
 
     // 🆕 NEW: Check if all selected KITs have valid nominal AND payment type
     let allKitsHaveValidNominal = selectedKits.length > 0 &&
-                                  selectedKits.every(kit => kit.nominal && kit.nominal >= 10000);
+                                  selectedKits.every(kit => kit.nominal && kit.nominal >= 1);
 
     let allKitsHaveValidPaymentType = selectedKits.length > 0 &&
                                       selectedKits.every(kit => kit.tipePembayaran && kit.tipePembayaran !== '');
@@ -338,7 +338,7 @@ function validateStep3() {
         kitNumber: kit.kitNumber,
         nominal: kit.nominal,
         hasNominal: !!kit.nominal,
-        nominalValid: kit.nominal && kit.nominal >= 10000,
+        nominalValid: kit.nominal && kit.nominal >= 1,
         nominalFormatted: kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'NOT SET',
         tipePembayaran: kit.tipePembayaran || 'NOT SET',
         paymentTypeValid: kit.tipePembayaran && kit.tipePembayaran !== ''

@@ -1134,6 +1134,13 @@ async function confirmAndSubmit() {
 
         console.log('📤 Submitting with unique Request ID:', requestId);
         console.log('📤 Total KITs:', selectedKits.length, '| Total Nominal:', totalNominal);
+
+        // 🔍 DEBUG: Log each KIT's payment type before submitting
+        console.log('📤 Per-KIT Payment Types:');
+        selectedKits.forEach((kit, i) => {
+            console.log(`  ${i+1}. ${kit.kitNumber} -> Tipe: ${kit.tipePembayaran || '(EMPTY!)'} | Nominal: ${kit.nominal}`);
+        });
+
         console.log('📤 Form Data being sent:', JSON.stringify(formData, null, 2));
         CONFIG.log('Submitting form data:', formData);
 
