@@ -4342,7 +4342,7 @@ function submitPaymentDataMultiKit(formData) {
           newRowNumber,               // A: Nomor
           formattedDate,              // B: Tanggal
           transactionID,              // C: ID Transaksi
-          formData.nama,              // D: Nama Client
+          kit.clientName || formData.nama,  // D: Nama Client (🔧 FIX: Per-KIT client name)
           kit.kitNumber,              // E: Serial Number (KIT)
           kit.serialNumber || '',     // F: Serial Number
           kit.paket,                  // G: Paket

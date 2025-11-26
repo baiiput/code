@@ -783,6 +783,9 @@ function setupEventListeners() {
                 const data = await api.validateKitMulti(kitNumber, selectedMonth, selectedYear);
 
                 if (data && data.validation && data.validation.status === 'found') {
+                    // 🔧 FIX: Store client name from current validation
+                    const currentClientName = data.validation.data.nama;
+
                     // Add KITs from validation to availableKits
                     if (data.validation.data.allKits) {
                         data.validation.data.allKits.forEach(kit => {
@@ -791,6 +794,7 @@ function setupEventListeners() {
                             if (!exists) {
                                 availableKits.push({
                                     ...kit,
+                                    clientName: currentClientName, // 🆕 FIX: Store client name per-KIT
                                     isSelected: false,
                                     nominal: 0,
                                     tipePembayaran: '', // 🆕 NEW: Per-KIT payment type
@@ -800,11 +804,11 @@ function setupEventListeners() {
                         });
                     }
 
-                    // Update validation result for client name
+                    // Update validation result for client name (first time only for backward compat)
                     if (!validationResult) {
                         validationResult = data;
                         isKitValid = true;
-                        elements.clientNameText.textContent = data.validation.data.nama;
+                        elements.clientNameText.textContent = currentClientName;
                     }
 
                     // Clear input and show success
@@ -1123,7 +1127,8 @@ async function confirmAndSubmit() {
                 serialNumber: kit.serialNumber || '',
                 paket: kit.paket,
                 nominal: kit.nominal, // Per-KIT nominal
-                tipePembayaran: kit.tipePembayaran // 🆕 NEW: Per-KIT payment type
+                tipePembayaran: kit.tipePembayaran, // 🆕 NEW: Per-KIT payment type
+                clientName: kit.clientName || namaValue // 🔧 FIX: Per-KIT client name
             }))
         };
 
@@ -2841,11 +2846,11 @@ function hideKitSelection() {
 function updateKitDisplay() {
     elements.kitList.innerHTML = '';
 
-    // Get client name from validation result
-    const clientName = validationResult?.validation?.data?.nama || 'Unknown Client';
-
     availableKits.forEach((kit, index) => {
         const kitItem = document.createElement('div');
+
+        // 🔧 FIX: Get client name from individual KIT
+        const clientName = kit.clientName || 'Unknown Client';
 
         // Format nominal jika sudah diisi
         const nominalValue = kit.nominal ? formatRupiahInput(kit.nominal) : '';

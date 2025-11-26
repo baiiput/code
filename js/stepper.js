@@ -637,14 +637,16 @@ function updateLocalPreview() {
             const kitNominal = kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'Rp 0';
             const kitPaymentType = kit.tipePembayaran || 'Not Set';
             const paymentIcon = kit.tipePembayaran === 'Aktivasi' ? '🚀' : kit.tipePembayaran === 'Perpanjangan' ? '🔄' : '❓';
+            // 🔧 FIX: Get client name from individual KIT
+            const kitClientName = kit.clientName || 'Unknown Client';
 
-            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage, nominal: kitNominal, paymentType: kitPaymentType});
+            console.log(`📦 KIT ${index + 1}:`, {kitNumber, kitPackage, clientName: kitClientName, nominal: kitNominal, paymentType: kitPaymentType});
 
             kitDetailsHTML += `
                 <div style="background:#1e293b;border:2px solid #3b82f6;border-radius:8px;overflow:hidden;">
                     <!-- Client Name Header -->
                     <div style="background:linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);padding:8px 12px;">
-                        <span style="color:#f0fdfa;font-size:12px;font-weight:600;">👤 ${clientNameText}</span>
+                        <span style="color:#f0fdfa;font-size:12px;font-weight:600;">👤 ${kitClientName}</span>
                     </div>
 
                     <!-- KIT Info -->
