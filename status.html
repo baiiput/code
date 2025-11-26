@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Status Dashboard - OctoBizTech</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0f1a 0%, #1a1d2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 12px 0;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                max-width: 100%;
+                gap: 15px;
+            }
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #1e293b 0%, #2d3748 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-color);
+        }
+
+        .status-card.proses::before { --accent-color: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .status-card.warning-reminder::before { --accent-color: linear-gradient(90deg, #7c2d12, #991b1b); }
+        .status-card.reminder-h1::before { --accent-color: linear-gradient(90deg, #dc2626, #b91c1c); }
+        .status-card.reminder-h2::before { --accent-color: linear-gradient(90deg, #f59e0b, #d97706); }
+        .status-card.reminder-h3::before { --accent-color: linear-gradient(90deg, #2563eb, #1d4ed8); }
+        .status-card.jatuh-tempo::before { --accent-color: linear-gradient(90deg, #ef4444, #dc2626); }
+        .status-card.segera::before { --accent-color: linear-gradient(90deg, #f97316, #ea580c); }
+        .status-card.observasi::before { --accent-color: linear-gradient(90deg, #10b981, #059669); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .card-count {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .client-list {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #2d3748;
+        }
+
+        .client-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .client-list::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 3px;
+        }
+
+        .client-list::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        .client-item {
+            margin-bottom: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .client-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 3px solid var(--item-color);
+            transition: all 0.2s ease;
+        }
+
+        .client-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(3px);
+        }
+
+        .proses .client-header { --item-color: #3b82f6; }
+        .warning-reminder .client-header { --item-color: #7c2d12; }
+        .reminder-h1 .client-header { --item-color: #dc2626; }
+        .reminder-h2 .client-header { --item-color: #f59e0b; }
+        .reminder-h3 .client-header { --item-color: #2563eb; }
+        .jatuh-tempo .client-header { --item-color: #ef4444; }
+        .segera .client-header { --item-color: #f97316; }
+        .observasi .client-header { --item-color: #10b981; }
+
+        .client-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #f1f5f9;
+        }
+
+        .expand-icon {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .client-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .client-details {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 15px;
+            border-left: 3px solid var(--item-color);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: none;
+        }
+
+        .client-item.expanded .client-details {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                padding: 0 15px;
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+                padding: 15px;
+            }
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #cbd5e1;
+            min-width: 120px;
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .login-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 5px;
+        }
+
+        .login-text {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        /* 🆕 Kit Number Items Styling (Updated) */
+        .kit-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            padding: 6px 8px;
+            background: rgba(66, 153, 225, 0.1);
+            border-radius: 5px;
+            border-left: 3px solid #60a5fa;
+        }
+
+        .kit-text {
+            flex: 1;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #60a5fa;
+            word-break: break-all;
+        }
+
+        .copy-kit-btn {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            min-width: 45px;
+            font-weight: 500;
+        }
+
+        .copy-kit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+        }
+
+        .copy-kit-btn.copied {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* 🆕 Serial Number Items Styling (Updated) */
+        .sn-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            padding: 6px 8px;
+            background: rgba(52, 211, 153, 0.1);
+            border-radius: 5px;
+            border-left: 3px solid #34d399;
+        }
+
+        .sn-text {
+            flex: 1;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #34d399;
+            word-break: break-all;
+        }
+
+        .copy-sn-btn {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            min-width: 45px;
+            font-weight: 500;
+        }
+
+        .copy-sn-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(52, 211, 153, 0.4);
+        }
+
+        .copy-sn-btn.copied {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            min-width: 45px;
+            font-weight: 500;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .copy-btn.copied {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transform: scale(1.1);
+        }
+
+        .wa-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .wa-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 12px rgba(37, 211, 102, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .wa-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .wa-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 12px rgba(37, 211, 102, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+        }
+
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #2d3748;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            color: #fecaca;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+
+        .empty-state svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .refresh-button {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .refresh-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* 🆕 FULL ACCORDION SYSTEM */
+        .accordion-card {
+            transition: all 0.3s ease;
+        }
+
+        .accordion-header {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .accordion-expand-icon {
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .accordion-card.expanded .accordion-expand-icon {
+            transform: rotate(180deg);
+            opacity: 1;
+        }
+
+        .accordion-content {
+            display: none;
+            overflow: hidden;
+        }
+
+        .accordion-card.expanded .accordion-content {
+            display: block;
+            animation: accordionSlideDown 0.4s ease-out;
+        }
+
+        @keyframes accordionSlideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                max-height: 2000px;
+                transform: translateY(0);
+            }
+        }
+
+        /* Enhanced card styling when expanded */
+        .accordion-card.expanded {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Special indicator for expanded state */
+        .accordion-card.expanded::after {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 8px;
+            height: 8px;
+            background: #34d399;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #34d399;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Card title enhancement */
+        .accordion-card .card-title {
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* Count badge enhancement for accordion */
+        .accordion-card.expanded .card-count {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            box-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Smooth transitions for all elements */
+        .accordion-card .card-count {
+            transition: all 0.3s ease;
+        }
+
+        .accordion-card .card-icon {
+            transition: all 0.3s ease;
+        }
+
+        .accordion-card.expanded .card-icon {
+            color: #34d399;
+            transform: scale(1.1);
+        }
+
+        /* 🆕 PARENT-CHILD CATEGORY STYLING (Updated) */
+        .reminder-parent::before { 
+            --accent-color: linear-gradient(90deg, #25d366, #128c7e); 
+        }
+
+        .reminder-total-count {
+            background: linear-gradient(135deg, #25d366, #128c7e) !important;
+            color: white !important;
+            font-weight: bold !important;
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3) !important;
+        }
+
+        .reminder-subcategories {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 0 15px 15px;
+            margin-top: 0;
+        }
+
+        .sub-card {
+            margin: 10px 0;
+            margin-left: 20px;
+            border-left: 3px solid var(--sub-accent-color);
+            position: relative;
+        }
+
+        .sub-card::before {
+            height: 3px;
+            background: var(--sub-accent-color);
+        }
+
+        .sub-card.warning-reminder { --sub-accent-color: #7c2d12; }
+        .sub-card.reminder-h1 { --sub-accent-color: #dc2626; }
+        .sub-card.reminder-h2 { --sub-accent-color: #f59e0b; }
+        .sub-card.reminder-h3 { --sub-accent-color: #2563eb; }
+
+        .sub-header {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .sub-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        .sub-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .sub-count {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .sub-card .client-list {
+            padding: 0 15px 10px 15px;
+        }
+
+        /* Sub-category hover effects */
+        .sub-header:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(5px);
+        }
+
+        /* Connector lines for visual hierarchy */
+        .sub-card::after {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 25px;
+            width: 15px;
+            height: 2px;
+            background: var(--sub-accent-color);
+            opacity: 0.4;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header p {
+                font-size: 0.75rem;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .detail-label {
+                min-width: auto;
+            }
+
+            /* Mobile accordion adjustments */
+            .sub-card {
+                margin-left: 10px;
+            }
+            
+            .sub-card::after {
+                left: -10px;
+                width: 8px;
+            }
+            
+            .reminder-subcategories {
+                padding: 10px;
+            }
+
+            .accordion-card.expanded::after {
+                right: 10px;
+                top: 10px;
+            }
+        }
+
+        /* 🆕 Copy Toast Notification */
+        .copy-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 300px;
+            word-break: break-word;
+        }
+
+        .copy-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .copy-toast svg {
+            flex-shrink: 0;
+        }
+
+        /* Mobile toast adjustments */
+        @media (max-width: 768px) {
+            .copy-toast {
+                top: 15px;
+                right: 15px;
+                left: 15px;
+                max-width: none;
+                transform: translateY(-100%);
+            }
+            
+            .copy-toast.show {
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script src="config.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Client Status Dashboard</h1>
+            <p>OctoBizTech - Starlink Management System (Updated Column Mapping)</p>
+        </div>
+
+        <div class="stats-grid">
+            <!-- 1. Client Proses Hari Ini -->
+            <div class="status-card proses accordion-card" id="proses-card">
+                <div class="card-header accordion-header" onclick="toggleAccordion('proses-card')">
+                    <div class="card-title">
+                        <svg class="card-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        Client Proses Hari Ini
+                        <svg class="accordion-expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="card-count" id="proses-count">0</div>
+                </div>
+                <div class="accordion-content" id="proses-content">
+                    <div class="client-list" id="proses-list">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Memuat data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Client Reminder WhatsApp (Parent Category) -->
+            <div class="status-card reminder-parent accordion-card" id="reminder-card">
+                <div class="card-header accordion-header" onclick="toggleAccordion('reminder-card')">
+                    <div class="card-title">
+                        <svg class="card-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.473 3.787"/>
+                        </svg>
+                        Client Reminder WhatsApp
+                        <svg class="accordion-expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="card-count reminder-total-count" id="reminder-total-count">0</div>
+                </div>
+                <div class="accordion-content" id="reminder-content">
+                    <!-- Sub-categories -->
+                    <div class="reminder-subcategories">
+                        
+                        <!-- 2.1 Client WARNING Reminder Terakhir Hari ini -->
+                        <div class="status-card sub-card warning-reminder">
+                            <div class="card-header sub-header">
+                                <div class="card-title sub-title">
+                                    <svg class="card-icon sub-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Client WARNING Reminder Terakhir Hari ini
+                                </div>
+                                <div class="card-count sub-count" id="warning-reminder-count">0</div>
+                            </div>
+                            <div class="client-list" id="warning-reminder-list">
+                                <div class="loading">
+                                    <div class="loading-spinner"></div>
+                                    Memuat data...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2.2 Client Reminder H-1 -->
+                        <div class="status-card sub-card reminder-h1">
+                            <div class="card-header sub-header">
+                                <div class="card-title sub-title">
+                                    <svg class="card-icon sub-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Client Reminder H-1
+                                </div>
+                                <div class="card-count sub-count" id="reminder-h1-count">0</div>
+                            </div>
+                            <div class="client-list" id="reminder-h1-list">
+                                <div class="loading">
+                                    <div class="loading-spinner"></div>
+                                    Memuat data...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2.3 Client Reminder H-2 -->
+                        <div class="status-card sub-card reminder-h2">
+                            <div class="card-header sub-header">
+                                <div class="card-title sub-title">
+                                    <svg class="card-icon sub-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Client Reminder H-2
+                                </div>
+                                <div class="card-count sub-count" id="reminder-h2-count">0</div>
+                            </div>
+                            <div class="client-list" id="reminder-h2-list">
+                                <div class="loading">
+                                    <div class="loading-spinner"></div>
+                                    Memuat data...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2.4 Client Reminder H-3 -->
+                        <div class="status-card sub-card reminder-h3">
+                            <div class="card-header sub-header">
+                                <div class="card-title sub-title">
+                                    <svg class="card-icon sub-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 2L3 7v11a1 1 0 001 1h3v-4a4 4 0 018 0v4h3a1 1 0 001-1V7l-7-5z"></path>
+                                    </svg>
+                                    Client Reminder H-3
+                                </div>
+                                <div class="card-count sub-count" id="reminder-h3-count">0</div>
+                            </div>
+                            <div class="client-list" id="reminder-h3-list">
+                                <div class="loading">
+                                    <div class="loading-spinner"></div>
+                                    Memuat data...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Client Jatuh Tempo -->
+            <div class="status-card jatuh-tempo accordion-card" id="jatuh-tempo-card">
+                <div class="card-header accordion-header" onclick="toggleAccordion('jatuh-tempo-card')">
+                    <div class="card-title">
+                        <svg class="card-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        Client Jatuh Tempo
+                        <svg class="accordion-expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="card-count" id="jatuh-tempo-count">0</div>
+                </div>
+                <div class="accordion-content" id="jatuh-tempo-content">
+                    <div class="client-list" id="jatuh-tempo-list">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Memuat data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Client Segera -->
+            <div class="status-card segera accordion-card" id="segera-card">
+                <div class="card-header accordion-header" onclick="toggleAccordion('segera-card')">
+                    <div class="card-title">
+                        <svg class="card-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                        Client Segera
+                        <svg class="accordion-expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="card-count" id="segera-count">0</div>
+                </div>
+                <div class="accordion-content" id="segera-content">
+                    <div class="client-list" id="segera-list">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Memuat data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Client Observasi -->
+            <div class="status-card observasi accordion-card" id="observasi-card">
+                <div class="card-header accordion-header" onclick="toggleAccordion('observasi-card')">
+                    <div class="card-title">
+                        <svg class="card-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Client Observasi
+                        <svg class="accordion-expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="card-count" id="observasi-count">0</div>
+                </div>
+                <div class="accordion-content" id="observasi-content">
+                    <div class="client-list" id="observasi-list">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Memuat data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-button" onclick="loadData()" title="Refresh Data">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+        </svg>
+    </button>
+
+    <script>
+        // GANTI DENGAN URL GOOGLE APPS SCRIPT WEB APP ANDA
+        const API_BASE_URL = CONFIG.API_URL;
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                const originalClass = button.className;
+                
+                // Update button appearance
+                button.textContent = '✓ Copied';
+                button.classList.add('copied');
+                
+                // Add success feedback
+                button.style.transform = 'scale(1.1)';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.className = originalClass;
+                    button.style.transform = '';
+                }, 2000);
+                
+                // Show toast notification (optional)
+                showCopyToast(text);
+                
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = '✗ Failed';
+                button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function showCopyToast(text) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = 'copy-toast';
+            toast.innerHTML = `
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Copied: ${text.length > 20 ? text.substring(0, 20) + '...' : text}
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 2500);
+        }
+
+        // 🆕 Updated function to create Kit Number items (Column I)
+        function createKitNumberItems(kitData) {
+            if (!kitData) return '<div class="kit-item"><span class="kit-text">Tidak tersedia</span></div>';
+            
+            const kitLines = kitData.split('\n').filter(line => line.trim());
+            return kitLines.map(line => `
+                <div class="kit-item">
+                    <span class="kit-text">${line.trim()}</span>
+                    <button class="copy-btn copy-kit-btn" onclick="copyToClipboard('${line.trim()}', this)">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        // 🆕 Updated function to create Serial Number items (Column J)
+        function createSerialNumberItems(snData) {
+            if (!snData) return '<div class="sn-item"><span class="sn-text">Tidak tersedia</span></div>';
+            
+            const snLines = snData.split('\n').filter(line => line.trim());
+            return snLines.map(line => `
+                <div class="sn-item">
+                    <span class="sn-text">${line.trim()}</span>
+                    <button class="copy-btn copy-sn-btn" onclick="copyToClipboard('${line.trim()}', this)">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function createLoginItems(loginData, type) {
+            if (!loginData) return '<div class="login-item"><span class="login-text">Tidak tersedia</span></div>';
+            
+            const loginLines = loginData.split('\n').filter(line => line.trim());
+            return loginLines.map(line => `
+                <div class="login-item">
+                    <span class="login-text">${line.trim()}</span>
+                    <button class="copy-btn" onclick="copyToClipboard('${line.trim()}', this)">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function renderClientList(containerId, clients, showWAButton = false) {
+            const container = document.getElementById(containerId);
+            
+            if (!clients || clients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                        <p>Tidak ada data client</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = clients.map((client, index) => `
+                <div class="client-item" id="client-${containerId}-${index}">
+                    <div class="client-header" onclick="toggleClientDetails('client-${containerId}-${index}')">
+                        <span class="client-name">${client.nama || 'Nama tidak tersedia'}</span>
+                        <svg class="expand-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="client-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Login Gmail:</span>
+                            <div class="detail-value">
+                                ${createLoginItems(client.loginGmail, 'gmail')}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Login Starlink:</span>
+                            <div class="detail-value">
+                                ${createLoginItems(client.loginStarlink, 'starlink')}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email Client:</span>
+                            <span class="detail-value">${client.emailClient || 'Tidak tersedia'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">No. WA:</span>
+                            <div class="detail-value">
+                                ${client.nomorWA && client.nomorWA !== 'Tidak tersedia' ? `
+                                    <a href="https://web.whatsapp.com/send?phone=${client.nomorWA.replace(/\D/g, '')}" target="_blank" class="wa-link">
+                                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.473 3.787"/>
+                                        </svg>
+                                        ${client.nomorWA}
+                                    </a>
+                                ` : 'Tidak tersedia'}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Kit Number:</span>
+                            <div class="detail-value">
+                                ${createKitNumberItems(client.kitNumber)}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Serial Number:</span>
+                            <div class="detail-value">
+                                ${createSerialNumberItems(client.serialNumber)}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Jatuh Tempo:</span>
+                            <span class="detail-value">${client.jatuhTempo || 'Tidak tersedia'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Paket:</span>
+                            <span class="detail-value">${client.paket || 'Tidak tersedia'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Kode:</span>
+                            <span class="detail-value">${client.kode || 'Tidak tersedia'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Payment:</span>
+                            <span class="detail-value">${client.payment || 'Tidak tersedia'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value">${client.status || 'Tidak tersedia'}</span>
+                        </div>
+                        ${showWAButton && client.waLink ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Action:</span>
+                                <div class="detail-value">
+                                    <a href="${client.waLink}" target="_blank" class="wa-button">
+                                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.473 3.787"/>
+                                        </svg>
+                                        Kirim Reminder WhatsApp
+                                    </a>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function toggleClientDetails(clientId) {
+            const clientItem = document.getElementById(clientId);
+            
+            // Extract category from clientId (e.g., "client-proses-list-0" -> "proses-list")
+            const categoryMatch = clientId.match(/client-(.+)-\d+$/);
+            if (categoryMatch) {
+                const category = categoryMatch[1];
+                
+                // Close all other expanded clients in the same category
+                const categoryContainer = document.getElementById(category);
+                if (categoryContainer) {
+                    const allClientsInCategory = categoryContainer.querySelectorAll('.client-item.expanded');
+                    allClientsInCategory.forEach(item => {
+                        if (item.id !== clientId) {
+                            item.classList.remove('expanded');
+                        }
+                    });
+                }
+            }
+            
+            // Toggle the clicked client with smooth animation
+            if (clientItem.classList.contains('expanded')) {
+                clientItem.classList.remove('expanded');
+            } else {
+                clientItem.classList.add('expanded');
+                
+                // Smooth scroll to client details after expansion
+                setTimeout(() => {
+                    clientItem.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest' 
+                    });
+                }, 300);
+            }
+        }
+
+        function updateCounts(data) {
+            // Update individual counts
+            const warningCount = data.warningReminder?.length || 0;
+            const h1Count = data.reminderH1?.length || 0;
+            const h2Count = data.reminderH2?.length || 0;
+            const h3Count = data.reminderH3?.length || 0;
+            
+            // Calculate total reminder count
+            const totalReminderCount = warningCount + h1Count + h2Count + h3Count;
+            
+            // Update counts
+            document.getElementById('proses-count').textContent = data.proses?.length || 0;
+            document.getElementById('reminder-total-count').textContent = totalReminderCount;
+            document.getElementById('warning-reminder-count').textContent = warningCount;
+            document.getElementById('reminder-h1-count').textContent = h1Count;
+            document.getElementById('reminder-h2-count').textContent = h2Count;
+            document.getElementById('reminder-h3-count').textContent = h3Count;
+            document.getElementById('jatuh-tempo-count').textContent = data.jatuhTempo?.length || 0;
+            document.getElementById('segera-count').textContent = data.segera?.length || 0;
+            document.getElementById('observasi-count').textContent = data.observasi?.length || 0;
+        }
+
+        // 🆕 FULL ACCORDION SYSTEM
+        function toggleAccordion(cardId) {
+            const targetCard = document.getElementById(cardId);
+            const allCards = document.querySelectorAll('.accordion-card');
+            
+            // Close all other accordion cards
+            allCards.forEach(card => {
+                if (card.id !== cardId) {
+                    card.classList.remove('expanded');
+                    const icon = card.querySelector('.accordion-expand-icon');
+                    if (icon) {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                }
+            });
+            
+            // Toggle the target card
+            const isCurrentlyExpanded = targetCard.classList.contains('expanded');
+            if (isCurrentlyExpanded) {
+                targetCard.classList.remove('expanded');
+                const icon = targetCard.querySelector('.accordion-expand-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            } else {
+                targetCard.classList.add('expanded');
+                const icon = targetCard.querySelector('.accordion-expand-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+
+        function autoExpandCategoryWithData() {
+            // Priority order for auto-expansion (highest to lowest priority)
+            const priorityOrder = [
+                { id: 'reminder-card', countId: 'reminder-total-count' },
+                { id: 'jatuh-tempo-card', countId: 'jatuh-tempo-count' },
+                { id: 'segera-card', countId: 'segera-count' },
+                { id: 'proses-card', countId: 'proses-count' },
+                { id: 'observasi-card', countId: 'observasi-count' }
+            ];
+            
+            // Find the first category with data (highest priority)
+            let categoryToExpand = null;
+            
+            for (const category of priorityOrder) {
+                const count = parseInt(document.getElementById(category.countId).textContent);
+                if (count > 0) {
+                    categoryToExpand = category.id;
+                    break;
+                }
+            }
+            
+            // If no category has data, expand the first one (proses)
+            if (!categoryToExpand) {
+                categoryToExpand = 'proses-card';
+            }
+            
+            // Close all cards first
+            const allCards = document.querySelectorAll('.accordion-card');
+            allCards.forEach(card => {
+                card.classList.remove('expanded');
+                const icon = card.querySelector('.accordion-expand-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Expand the target category
+            const targetCard = document.getElementById(categoryToExpand);
+            if (targetCard) {
+                targetCard.classList.add('expanded');
+                const icon = targetCard.querySelector('.accordion-expand-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+            
+            console.log(`Auto-expanded category: ${categoryToExpand}`);
+        }
+
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="error">Error: ${message}</div>`;
+        }
+
+        async function loadData() {
+            try {
+                // Fetch data dari Google Apps Script
+                const response = await fetch(`${API_BASE_URL}?action=getAllStatus&timestamp=${new Date().getTime()}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'error') {
+                    throw new Error(result.message || 'Unknown error from server');
+                }
+                
+                const data = result.data || {};
+                
+                // Update counts
+                updateCounts(data);
+                
+                // Auto-expand category with highest priority data
+                autoExpandCategoryWithData();
+                
+                // Render lists
+                renderClientList('proses-list', data.proses || []);
+                renderClientList('warning-reminder-list', data.warningReminder || [], true);
+                renderClientList('reminder-h1-list', data.reminderH1 || [], true);
+                renderClientList('reminder-h2-list', data.reminderH2 || [], true);
+                renderClientList('reminder-h3-list', data.reminderH3 || [], true);
+                renderClientList('jatuh-tempo-list', data.jatuhTempo || []);
+                renderClientList('segera-list', data.segera || []);
+                renderClientList('observasi-list', data.observasi || []);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                
+                // Show errors in each category's content area
+                const errorCategories = [
+                    { id: 'proses-list', name: 'proses' },
+                    { id: 'warning-reminder-list', name: 'warning reminder' },
+                    { id: 'reminder-h1-list', name: 'reminder H-1' },
+                    { id: 'reminder-h2-list', name: 'reminder H-2' },
+                    { id: 'reminder-h3-list', name: 'reminder H-3' },
+                    { id: 'jatuh-tempo-list', name: 'jatuh tempo' },
+                    { id: 'segera-list', name: 'segera' },
+                    { id: 'observasi-list', name: 'observasi' }
+                ];
+                
+                errorCategories.forEach(category => {
+                    showError(category.id, `Gagal memuat data ${category.name}: ${error.message}`);
+                });
+                
+                // Auto-expand first category to show error
+                toggleAccordion('proses-card');
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        // Auto refresh every 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
