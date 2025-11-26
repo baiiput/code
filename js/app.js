@@ -1046,10 +1046,10 @@ async function confirmAndSubmit() {
     
     try {
         // 🆕 NEW: Validate that all selected KITs have nominal AND payment type
-        const kitsWithoutNominal = selectedKits.filter(kit => !kit.nominal || kit.nominal < 10000);
+        const kitsWithoutNominal = selectedKits.filter(kit => !kit.nominal || kit.nominal < 1);
         if (kitsWithoutNominal.length > 0) {
             const missingKits = kitsWithoutNominal.map(kit => kit.kitNumber).join(', ');
-            throw new Error(`Nominal belum diisi atau kurang dari Rp 10.000 untuk KIT: ${missingKits}`);
+            throw new Error(`Nominal belum diisi atau kurang dari Rp 1 untuk KIT: ${missingKits}`);
         }
 
         const kitsWithoutPaymentType = selectedKits.filter(kit => !kit.tipePembayaran || kit.tipePembayaran === '');
@@ -2904,7 +2904,7 @@ function updateKitDisplay() {
                            value="${nominalValue}"
                            style="width: 100%; padding: 10px 14px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; color: #f1f5f9; font-size: 15px; font-family: 'Roboto Mono', monospace; font-weight: 600; transition: all 0.3s ease;">
                     <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
-                        ℹ️ Minimal Rp 10.000
+                        ℹ️ Minimal Rp 1 - Wajib diisi
                     </small>
                 </div>
 
@@ -2919,9 +2919,10 @@ function updateKitDisplay() {
                         <option value="">-- Pilih Tipe --</option>
                         <option value="Aktivasi" ${kit.tipePembayaran === 'Aktivasi' ? 'selected' : ''}>🚀 Aktivasi</option>
                         <option value="Perpanjangan" ${kit.tipePembayaran === 'Perpanjangan' ? 'selected' : ''}>🔄 Perpanjangan</option>
+                        <option value="Migrasi" ${kit.tipePembayaran === 'Migrasi' ? 'selected' : ''}>🔀 Migrasi</option>
                     </select>
                     <small style="color: #94a3b8; font-size: 11px; display: block; margin-top: 6px;">
-                        ℹ️ Pilih Aktivasi atau Perpanjangan untuk KIT ini
+                        ℹ️ Pilih tipe pembayaran - Wajib diisi
                     </small>
                 </div>
                 </div>
@@ -3026,7 +3027,7 @@ function handleKitNominalInput(kitIndex, value) {
         nominal: numericValue,
         isSelected: availableKits[kitIndex].isSelected,
         selectedKitsCount: selectedKits.length,
-        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 10000)
+        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 1)
     });
 
     updateKitSummary();
@@ -3108,7 +3109,7 @@ function toggleKitSelection(index) {
         kitNumber: availableKits[index].kitNumber,
         isSelected: availableKits[index].isSelected,
         selectedKitsCount: selectedKits.length,
-        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 10000)
+        allSelectedKitsWithNominal: selectedKits.every(kit => kit.nominal && kit.nominal >= 1)
     });
 
     // Re-render to show/hide nominal input

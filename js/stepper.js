@@ -636,7 +636,7 @@ function updateLocalPreview() {
             const kitPackage = kit.paket || 'Unknown';
             const kitNominal = kit.nominal ? `Rp ${kit.nominal.toLocaleString('id-ID')}` : 'Rp 0';
             const kitPaymentType = kit.tipePembayaran || 'Not Set';
-            const paymentIcon = kit.tipePembayaran === 'Aktivasi' ? '🚀' : kit.tipePembayaran === 'Perpanjangan' ? '🔄' : '❓';
+            const paymentIcon = kit.tipePembayaran === 'Aktivasi' ? '🚀' : kit.tipePembayaran === 'Perpanjangan' ? '🔄' : kit.tipePembayaran === 'Migrasi' ? '🔀' : '❓';
             // 🔧 FIX: Get client name from individual KIT
             const kitClientName = kit.clientName || 'Unknown Client';
 
