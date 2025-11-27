@@ -209,12 +209,12 @@ function updateNavigationButtons() {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const submitBtn = document.getElementById('submitBtn');
-    
+
     // Show/Hide Previous button
     if (prevBtn) {
         prevBtn.style.display = currentStep > 1 ? 'flex' : 'none';
     }
-    
+
     // Show/Hide Next vs Submit button
     if (currentStep === totalSteps) {
         if (nextBtn) nextBtn.style.display = 'none';
@@ -227,7 +227,14 @@ function updateNavigationButtons() {
         if (nextBtn) {
             nextBtn.style.display = 'flex';
             // Enable/Disable Next button based on validation
-            nextBtn.disabled = !validateCurrentStep();
+            const isCurrentStepValid = validateCurrentStep();
+            nextBtn.disabled = !isCurrentStepValid;
+
+            console.log('🔘 Next Button Update:', {
+                currentStep: currentStep,
+                isValid: isCurrentStepValid,
+                buttonDisabled: nextBtn.disabled
+            });
         }
         if (submitBtn) submitBtn.style.display = 'none';
     }
