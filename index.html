@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Form Pembayaran Starlink - Stepper</title>
+<script src="../config.js?v=13"></script>
+<script src="js/app.js?v=12"></script>
+<link rel="stylesheet" href="style/style-stepper.css">
+</head>
+<body>
+<div id="connectionStatus" class="connection-status testing">🔄 Testing Connection...</div>
+
+<div class="container">
+<div class="header">
+<h1>🛰️ Form Pembayaran Starlink</h1>
+<p>Input data pembayaran perpanjangan atau aktivasi layanan Starlink</p>
+</div>
+
+<!-- 🎯 STEPPER PROGRESS BAR -->
+<div class="stepper-wrapper">
+<div class="stepper-container">
+<div class="step-item active" data-step="1">
+<div class="step-circle">
+<span class="step-number">1</span>
+<span class="step-check">✓</span>
+</div>
+<div class="step-label">
+<span class="step-title">Search & Date</span>
+<span class="step-subtitle">Metode & Tanggal</span>
+</div>
+</div>
+<div class="step-line"></div>
+<div class="step-item" data-step="2">
+<div class="step-circle">
+<span class="step-number">2</span>
+<span class="step-check">✓</span>
+</div>
+<div class="step-label">
+<span class="step-title">KIT Selection</span>
+<span class="step-subtitle">Pilih KIT & Client</span>
+</div>
+</div>
+<div class="step-line"></div>
+<div class="step-item" data-step="3">
+<div class="step-circle">
+<span class="step-number">3</span>
+<span class="step-check">✓</span>
+</div>
+<div class="step-label">
+<span class="step-title">Payment</span>
+<span class="step-subtitle">Tipe & Nominal</span>
+</div>
+</div>
+<div class="step-line"></div>
+<div class="step-item" data-step="4">
+<div class="step-circle">
+<span class="step-number">4</span>
+<span class="step-check">✓</span>
+</div>
+<div class="step-label">
+<span class="step-title">Review</span>
+<span class="step-subtitle">Konfirmasi Data</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="form-container">
+<div id="warningBanner" class="warning-banner"></div>
+<div id="errorBanner" class="error-banner"></div>
+<div id="successBanner" class="success-banner"></div>
+
+<!-- Quick Actions (Always visible) -->
+<div class="action-buttons">
+<button type="button" class="btn btn-duplicate-check" id="duplicateCheckBtn">🔍 Cek Duplikasi</button>
+</div>
+
+<form id="paymentForm">
+<!-- ============================================ -->
+<!-- STEP 1: SEARCH METHOD & DATE -->
+<!-- ============================================ -->
+<div class="step-content active" data-step-content="1">
+<div class="step-card">
+<div class="step-card-header">
+<h3>📋 Step 1: Pilih Metode Pencarian & Tanggal</h3>
+<p>Tentukan cara mencari data client dan tanggal pembayaran</p>
+</div>
+
+<!-- Search Mode Selector -->
+<div class="form-group">
+<label for="searchMode">Search Method *</label>
+<div class="search-mode-dropdown">
+<div class="search-mode-selected" id="searchModeSelected">
+<div class="mode-option-content">
+<span class="mode-icon">📋</span>
+<div class="mode-text">
+<span class="mode-title">KIT Number</span>
+<span class="mode-subtitle">Search by device serial number</span>
+</div>
+</div>
+<span class="dropdown-arrow">▼</span>
+</div>
+<div class="search-mode-options" id="searchModeOptions">
+<div class="mode-option" data-value="kit">
+<span class="mode-icon">📋</span>
+<div class="mode-text">
+<span class="mode-title">KIT Number</span>
+<span class="mode-subtitle">Search by device serial number</span>
+</div>
+<span class="mode-check">✓</span>
+</div>
+<div class="mode-option" data-value="name">
+<span class="mode-icon">🔍</span>
+<div class="mode-text">
+<span class="mode-title">Client Name</span>
+<span class="mode-subtitle">Search by customer name</span>
+</div>
+<span class="mode-check">✓</span>
+</div>
+</div>
+<input type="hidden" id="searchMode" name="searchMode" value="kit">
+</div>
+</div>
+
+<!-- Date Input -->
+<div class="form-group">
+<label for="tanggalPembayaran">Tanggal Pembayaran *</label>
+<input type="hidden" id="tanggalPembayaran" name="tanggalPembayaran">
+<div id="dateDisplay" style="width:100%;padding:12px 15px;border:2px solid #475569;border-radius:8px;background:#334155;color:#f1f5f9;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:44px;transition:all 0.3s ease;" tabindex="0">
+<span id="dateText">Klik untuk pilih tanggal</span>
+<span style="color:#94a3b8;">📅</span>
+</div>
+<div style="margin-top:8px;padding:12px 15px;background:linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);border-radius:8px;color:white;font-weight:600;text-align:center;box-shadow:0 4px 15px rgba(59, 130, 246, 0.2);">
+📅 <span id="tanggalIndonesia">Memuat...</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- STEP 2: KIT SELECTION & CLIENT -->
+<!-- ============================================ -->
+<div class="step-content" data-step-content="2">
+<div class="step-card">
+<div class="step-card-header">
+<h3>🔍 Step 2: Cari & Pilih KIT</h3>
+<p>Input nomor KIT atau nama client untuk memilih KIT yang akan diperpanjang</p>
+</div>
+
+<!-- Search Input Section -->
+<div class="form-group">
+<div id="kitNumberSection">
+<label for="nomorKit">Nomor KIT / Serial Number *</label>
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+<input type="text" id="nomorKit" name="nomorKit" placeholder="Masukkan 1 KIT atau Serial Number" style="flex: 1; padding: 12px 15px; border: 2px solid #475569; border-radius: 8px; font-size: 16px; background: #334155; color: #f1f5f9; font-family: 'Roboto Mono', monospace; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+<button type="button" id="addKitBtn" style="padding: 12px 24px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;">
+<span style="font-size: 16px;">➕</span> Tambah KIT
+</button>
+</div>
+<div style="margin-top: 8px; padding: 10px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 6px; color: white; font-size: 12px;">
+💡 <strong>Tips:</strong> Input 1 KIT, klik <strong>Tambah KIT</strong>, ulangi untuk KIT berikutnya. Validasi otomatis akan dilakukan untuk setiap KIT yang ditambahkan.
+</div>
+
+<!-- Loading indicator for KIT validation -->
+<div id="addKitLoading" style="display: none; margin-top: 10px; padding: 10px; background: #1e293b; border-radius: 6px; text-align: center; color: #94a3b8;">
+<div style="display: inline-block; animation: spin 1s linear infinite;">⏳</div> Memvalidasi KIT...
+</div>
+
+<!-- List of added KITs (pending validation) -->
+<div id="pendingKitsList" style="margin-top: 12px;"></div>
+</div>
+<div id="clientNameSection" style="display:none;">
+<label for="clientNameSearch">Client Name *</label>
+<div class="client-name-searchable">
+<div class="client-search-input-container">
+<input type="text" id="clientNameSearch" name="clientNameSearch" placeholder="Type to search clients..." autocomplete="off">
+<span class="search-dropdown-arrow" id="clientDropdownArrow">▼</span>
+</div>
+<div class="client-search-results" id="clientSearchResults">
+<div class="search-results-header">
+<span class="results-count" id="resultsCount">0 clients found</span>
+</div>
+<div class="search-results-list" id="searchResultsList"></div>
+<div class="search-no-results" id="searchNoResults">
+<span>No clients found</span>
+<small>Try a different search term</small>
+</div>
+</div>
+</div>
+<div class="loading" id="clientNamesLoading">Loading clients...</div>
+</div>
+<div class="loading" id="kitLoading">Memvalidasi nomor KIT...</div>
+<div class="validation-message" id="kitValidation"></div>
+
+<!-- KIT Selection -->
+<div class="kit-selection-section" id="kitSelectionSection">
+<h4>📋 Pilih KIT yang akan diperpanjang:</h4>
+<div class="select-all-controls">
+<button type="button" class="btn btn-secondary btn-small" id="selectAllBtn">✅ Pilih Semua</button>
+<button type="button" class="btn btn-secondary btn-small" id="deselectAllBtn">❌ Batal Semua</button>
+</div>
+<div class="kit-list" id="kitList"></div>
+<div class="kit-selection-summary" id="kitSummary"><strong>Dipilih: 0 KIT</strong></div>
+</div>
+</div>
+
+<!-- Client Name Display (HIDDEN - shown in each KIT box instead) -->
+<div class="form-group" style="display: none;">
+<label for="namaClient">Nama Client *</label>
+<div id="namaClient" class="client-name-display">
+<span id="clientNameText">Akan terisi otomatis setelah nomor KIT valid</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- STEP 3: PAYMENT DETAILS -->
+<!-- ============================================ -->
+<div class="step-content" data-step-content="3">
+<div class="step-card">
+<div class="step-card-header">
+<h3>💳 Step 3: Detail Pembayaran</h3>
+<p>Tentukan tipe pembayaran dan nominal total</p>
+</div>
+
+<!-- Transaction ID Display -->
+<div id="transactionIdDisplay" class="transaction-id-display">
+<span id="transactionIdText">ID Transaksi akan ter-generate otomatis</span>
+</div>
+
+<!-- Payment Type Dropdown (HIDDEN - now per KIT in Step 2) -->
+<div class="form-group" style="display: none;">
+<label for="tipePembayaran">Tipe Pembayaran *</label>
+<div class="payment-type-dropdown">
+<div class="payment-type-selected" id="paymentTypeSelected">
+<div class="payment-option-content">
+<span class="payment-icon">💳</span>
+<div class="payment-text">
+<span class="payment-title">Select payment type</span>
+<span class="payment-subtitle">Choose activation or extension</span>
+</div>
+</div>
+<span class="dropdown-arrow">▼</span>
+</div>
+<div class="payment-type-options" id="paymentTypeOptions">
+<div class="payment-option" data-value="Aktivasi">
+<span class="payment-icon">🚀</span>
+<div class="payment-text">
+<span class="payment-title">Aktivasi</span>
+<span class="payment-subtitle">New service activation</span>
+</div>
+<span class="payment-check">✓</span>
+</div>
+<div class="payment-option" data-value="Perpanjangan">
+<span class="payment-icon">🔄</span>
+<div class="payment-text">
+<span class="payment-title">Perpanjangan</span>
+<span class="payment-subtitle">Service renewal/extension</span>
+</div>
+<span class="payment-check">✓</span>
+</div>
+</div>
+<input type="hidden" id="tipePembayaran" name="tipePembayaran" value="" required>
+</div>
+</div>
+
+<!-- Nominal (HIDDEN - now per KIT in Step 2) -->
+<div class="form-group" style="display: none;">
+<label for="nominal">Nominal Total *</label>
+<div class="rupiah-input">
+<input type="text" id="nominal" name="nominal" placeholder="Auto-calculated from per-KIT nominals" min="10000" step="1000">
+</div>
+<small style="color:#94a3b8;font-size:12px;">Total nominal dihitung otomatis dari nominal per KIT di Step 2</small>
+</div>
+
+<!-- Nominal Summary Display -->
+<div class="form-group">
+<label>📊 Ringkasan Nominal</label>
+<div id="nominalSummaryDisplay" style="padding: 15px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 8px; color: white;">
+<div style="font-size: 14px; margin-bottom: 10px;">
+<strong>Total KIT Dipilih:</strong> <span id="totalKitsCount">0</span> KIT
+</div>
+<div style="font-size: 18px; font-weight: bold;">
+<strong>Total Nominal:</strong> <span id="totalNominalDisplay">Rp 0</span>
+</div>
+<div style="font-size: 12px; margin-top: 10px; color: #dbeafe;">
+💡 Setiap KIT akan disubmit sebagai entry terpisah ke spreadsheet
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- STEP 4: PREVIEW & CONFIRMATION -->
+<!-- ============================================ -->
+<div class="step-content" data-step-content="4">
+<div class="step-card">
+<div class="step-card-header">
+<h3>✅ Step 4: Review & Konfirmasi</h3>
+<p>Periksa kembali semua data sebelum submit</p>
+</div>
+
+<!-- Hidden Preview Button for app.js compatibility -->
+<button type="button" id="previewBtn" style="display:none;">Preview</button>
+
+<!-- Preview Section - Will be filled dynamically by stepper.js -->
+<div class="preview-section" id="previewSection">
+<div style="text-align:center;padding:40px;color:#94a3b8;">
+<div style="font-size:48px;margin-bottom:15px;">⏳</div>
+<p style="font-size:16px;font-weight:600;color:#f1f5f9;margin-bottom:8px;">Loading Preview...</p>
+<p style="font-size:13px;">Preview akan muncul sebentar lagi</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 🎯 STEPPER NAVIGATION BUTTONS -->
+<div class="stepper-buttons">
+<button type="button" class="btn btn-secondary btn-prev" id="prevBtn" style="display:none;">
+<span>←</span> Previous
+</button>
+<button type="button" class="btn btn-primary btn-next" id="nextBtn">
+Next <span>→</span>
+</button>
+<button type="submit" class="btn btn-primary btn-submit" id="submitBtn" style="display:none;">
+✅ Submit Data
+</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Duplicate Checker Modal -->
+<div id="duplicateModal" class="modal-overlay">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">🔍 Cek Duplikasi Report</h2>
+<button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
+</div>
+<div class="modal-body">
+<p style="color:#94a3b8;margin-bottom:20px;font-size:14px;">Pilih bulan dan tahun untuk mengecek duplikasi KIT dalam laporan.</p>
+<div class="form-row">
+<div class="form-group">
+<label for="duplicateMonth">Bulan</label>
+<select id="duplicateMonth" required>
+<option value="">Pilih Bulan</option>
+<option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+<option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+</select>
+</div>
+<div class="form-group">
+<label for="duplicateYear">Tahun</label>
+<select id="duplicateYear" required><option value="">Pilih Tahun</option></select>
+</div>
+</div>
+<button type="button" class="btn btn-primary" id="checkDuplicateBtn" style="width:100%;">🔍 Mulai Cek Duplikasi</button>
+<div class="modal-loading" id="modalLoading"><div class="spinner"></div><p>Mengecek duplikasi...</p></div>
+<div class="duplicate-results" id="duplicateResults">
+<div class="duplicate-summary" id="duplicateSummary"></div>
+<div class="duplicate-table" id="duplicateTable" style="display:none;"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Custom Date Picker Modal -->
+<div id="datePickerModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center;">
+<div style="background:#1e293b;border:2px solid #475569;border-radius:15px;padding:20px;min-width:300px;box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+<h3 style="color:#f1f5f9;margin-bottom:15px;text-align:center;">📅 Pilih Tanggal Pembayaran</h3>
+<div style="display:flex;gap:10px;margin-bottom:15px;justify-content:center;">
+<select id="monthSelect" style="padding:8px;border-radius:6px;background:#334155;color:#f1f5f9;border:1px solid #475569;">
+<option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option><option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+<option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option><option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
+</select>
+<select id="yearSelect" style="padding:8px;border-radius:6px;background:#334155;color:#f1f5f9;border:1px solid #475569;"></select>
+</div>
+<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:5px;margin-bottom:15px;"></div>
+<div style="display:flex;gap:10px;justify-content:center;">
+<button id="datePickerToday" style="padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;">Hari Ini</button>
+<button id="datePickerCancel" style="padding:8px 16px;background:#64748b;color:white;border:none;border-radius:6px;cursor:pointer;">Batal</button>
+</div>
+</div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal-overlay">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">🔍 Konfirmasi Submit Data</h3>
+<button type="button" class="modal-close" id="confirmationModalClose">&times;</button>
+</div>
+<div class="modal-body">
+<p style="color:#94a3b8;margin-bottom:15px;font-size:14px;">Pastikan data berikut sudah benar sebelum melanjutkan:</p>
+<div id="confirmationDetails"></div>
+</div>
+<div class="modal-buttons">
+<button type="button" class="btn-confirm" id="confirmSubmitBtn">✅ Ya, Submit Data</button>
+<button type="button" class="btn-cancel" id="cancelSubmitBtn">❌ Batal</button>
+</div>
+</div>
+</div>
+
+<script src="js/stepper.js"></script>
+</body>
+</html>
