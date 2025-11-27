@@ -289,22 +289,37 @@ function validateStep2() {
     const selectedKits = document.querySelectorAll('.kit-checkbox:checked');
     const clientNameText = document.getElementById('clientNameText');
     const clientName = clientNameText ? clientNameText.textContent.trim() : '';
-    
+
     // Check if client name is filled (not the default placeholder text)
-    const isClientNameValid = clientName && 
+    const isClientNameValid = clientName &&
                               clientName !== 'Akan terisi otomatis setelah nomor KIT valid' &&
                               clientName !== '';
-    
-    // Valid if at least 1 KIT selected AND client name is filled
-    const isValid = selectedKits.length > 0 && isClientNameValid;
-    
+
+    // 🔧 FIX: Check per-KIT payment type and nominal from window.selectedKits (from app.js)
+    let allKitsHavePaymentType = true;
+    let allKitsHaveValidNominal = true;
+
+    if (window.selectedKits && window.selectedKits.length > 0) {
+        allKitsHavePaymentType = window.selectedKits.every(kit =>
+            kit.tipePembayaran && kit.tipePembayaran !== ''
+        );
+        allKitsHaveValidNominal = window.selectedKits.every(kit =>
+            kit.nominal && kit.nominal >= 10000
+        );
+    }
+
+    // Valid if at least 1 KIT selected AND client name is filled AND all KITs have payment type and nominal
+    const isValid = selectedKits.length > 0 && isClientNameValid && allKitsHavePaymentType && allKitsHaveValidNominal;
+
     console.log('🔍 Step 2 Validation:', {
         selectedKitsCount: selectedKits.length,
         clientName: clientName,
         isClientNameValid: isClientNameValid,
+        allKitsHavePaymentType: allKitsHavePaymentType,
+        allKitsHaveValidNominal: allKitsHaveValidNominal,
         isValid: isValid
     });
-    
+
     if (isValid) {
         formData.selectedKits = Array.from(selectedKits).map(cb => ({
             kitNumber: cb.dataset.kit,
@@ -312,7 +327,7 @@ function validateStep2() {
         }));
         formData.clientName = clientName;
     }
-    
+
     return isValid;
 }
 
