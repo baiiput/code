@@ -2943,15 +2943,16 @@ function updateKitDisplay() {
             toggleKitSelection(index);
         });
 
-        // Click on box to toggle
-        kitItem.addEventListener('click', function(e) {
-            // Don't toggle if clicking on input field or dropdown
-            if (e.target.classList.contains('nominal-input-per-kit') ||
-                e.target.classList.contains('payment-type-per-kit')) {
-                return;
-            }
-            toggleKitSelection(index);
-        });
+        // 🔧 FIX: REMOVED - Click on box to toggle
+        // User only wants checkbox itself to be clickable, not the whole box
+        // kitItem.addEventListener('click', function(e) {
+        //     // Don't toggle if clicking on input field or dropdown
+        //     if (e.target.classList.contains('nominal-input-per-kit') ||
+        //         e.target.classList.contains('payment-type-per-kit')) {
+        //         return;
+        //     }
+        //     toggleKitSelection(index);
+        // });
 
         // Nominal input handler
         const nominalInput = kitItem.querySelector('.nominal-input-per-kit');
