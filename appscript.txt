@@ -3563,6 +3563,7 @@ function kirimWhatsApp() {
     var jatuhTempoRaw = data[i][COLUMNS.JATUH_TEMPO]; // K: Jatuh Tempo ✅ MOVED
     var paket = data[i][COLUMNS.PAKET]; // P: Paket ✅ MOVED
     var status = data[i][statusColumnIndex]; // O: Status ✅ MOVED
+    var tipePelanggan = data[i][COLUMNS.TIPE_PELANGGAN]; // S: Tipe Pelanggan ✅ NEW
     
     // ✅ UPDATED: Cell references dengan kolom baru
     var tandaCell = sheet.getRange(i + 1, tandaColumnIndex + 1); // U: Tanda "Jatuh Tempo"
@@ -3686,6 +3687,7 @@ function kirimWhatsApp() {
       paket: paket,
       jatuhTempoDate: jatuhTempoDate,
       status: status,
+      tipePelanggan: tipePelanggan,
       cell: cell,
       i: i
     }, logs); // ✅ Pass logs object by reference
@@ -3702,13 +3704,13 @@ function kirimWhatsApp() {
  * ✅ FIXED: Process reminder logic (now properly modifies logs object)
  */
 function processReminderLogic(selisihHari, isEligible, clientData, logs) {
-  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, cell, i } = clientData;
+  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, tipePelanggan, cell, i } = clientData;
   
   if (selisihHari === 3) {
     // H-3: Reminder H-3
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3');
+        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3', tipePelanggan);
         setReminderCell(cell, "📅 Reminder H-3", waLinkH3, "#2563eb");
         logs.clientReminderH3Log += `${i + 1}. - ${nama} (H-3, Status: ${status}) | ${waLinkH3}\n\n`;
       } else {
@@ -3722,7 +3724,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-2: Reminder H-2
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2');
+        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2', tipePelanggan);
         setReminderCell(cell, "⚠️ Reminder H-2", waLinkH2, "#f59e0b");
         logs.clientReminderH2Log += `${i + 1}. - ${nama} (H-2, Status: ${status}) | ${waLinkH2}\n\n`;
       } else {
@@ -3736,7 +3738,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-1: Reminder H-1
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1');
+        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1', tipePelanggan);
         setReminderCell(cell, "🚨 Reminder H-1", waLinkH1, "#dc2626");
         logs.clientReminderH1Log += `${i + 1}. - ${nama} (H-1, Status: ${status}) | ${waLinkH1}\n\n`;
       } else {
@@ -3750,7 +3752,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // HARI H: Warning Reminder
     if (isEligible) {
       if (nomorWA) {
-        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING');
+        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING', tipePelanggan);
         setReminderCell(cell, "💀 Warning Reminder", waLinkHariH, "#7c2d12");
         logs.clientWarningLog += `${i + 1}. - ${nama} (Warning, Status: ${status}) | ${waLinkHariH}\n\n`;
       } else {
