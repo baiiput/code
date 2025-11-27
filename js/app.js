@@ -1625,10 +1625,13 @@ function resetFormAfterSuccess() {
     clearClientData();
     hideKitSelection();
     elements.previewSection.style.display = 'none';
+
+    // 🔧 CRITICAL FIX: Reset ALL state variables
     isKitValid = false;
+    validationResult = null; // Added to fix Next button staying disabled
     availableKits = [];
     selectedKits = [];
-    
+
     // Reset payment type dropdown to empty state
     const paymentTypeSelected = document.getElementById('paymentTypeSelected');
     if (paymentTypeSelected) {
@@ -1636,11 +1639,17 @@ function resetFormAfterSuccess() {
         paymentTypeSelected.querySelector('.payment-title').textContent = 'Select payment type';
         paymentTypeSelected.querySelector('.payment-subtitle').textContent = 'Choose activation or extension';
     }
-    
+
     updateButtonStates();
-    
+
     // Reset custom date picker to today
     setupCustomDatePicker();
+
+    // Clear any lingering validation messages
+    clearValidation();
+    hideAllBanners();
+
+    console.log('✅ All state variables reset - Form ready for new entry');
 }
 
 // [CONTINUING WITH REST OF THE FUNCTIONS...]
@@ -3300,6 +3309,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // 🌍 EXPORT selectedKits to window scope for stepper.js validation
 window.selectedKits = selectedKits;
 window.availableKits = availableKits;
+
+// 🌍 EXPORT resetFormAfterSuccess for stepper.js to call after auto-reset
+window.resetFormAfterSuccess = resetFormAfterSuccess;
 
 // 🔧 GLOBAL ERROR HANDLER
 window.addEventListener('error', function(e) {

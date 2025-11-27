@@ -837,10 +837,19 @@ function setupSuccessDetection() {
 function resetFormAndStepper() {
     console.log('🔄 Resetting form and stepper to Step 1...');
 
+    // 🔧 CRITICAL FIX: Call app.js resetFormAfterSuccess to properly reset all state
+    // This ensures isKitValid, availableKits, selectedKits, and other states are cleared
+    if (typeof window.resetFormAfterSuccess === 'function') {
+        console.log('✅ Calling app.js resetFormAfterSuccess to reset all state variables...');
+        window.resetFormAfterSuccess();
+    } else {
+        console.warn('⚠️ window.resetFormAfterSuccess not found - some states may not reset properly');
+    }
+
     // 🔧 RE-ENABLED: Reset stepper to step 1 after success
     // User wants form to auto-reset for new entry
     currentStep = 1;
-    
+
     // Reset formData
     formData = {
         searchMode: 'kit',
@@ -852,20 +861,20 @@ function resetFormAndStepper() {
         nominal: '',
         transactionId: ''
     };
-    
+
     // Clear form fields
     const nomorKitInput = document.getElementById('nomorKit');
     if (nomorKitInput) nomorKitInput.value = '';
-    
+
     const clientNameText = document.getElementById('clientNameText');
     if (clientNameText) clientNameText.textContent = 'Akan terisi otomatis setelah nomor KIT valid';
-    
+
     const tipePembayaran = document.getElementById('tipePembayaran');
     if (tipePembayaran) tipePembayaran.value = '';
-    
+
     const nominal = document.getElementById('nominal');
     if (nominal) nominal.value = '';
-    
+
     const tanggalIndonesia = document.getElementById('tanggalIndonesia');
     const tanggalPembayaran = document.getElementById('tanggalPembayaran');
 
@@ -900,7 +909,7 @@ function resetFormAndStepper() {
             dateText.textContent = 'Klik untuk pilih tanggal';
         }
     }
-    
+
     // Uncheck all KIT checkboxes
     document.querySelectorAll('.kit-checkbox').forEach(checkbox => {
         checkbox.checked = false;
@@ -915,14 +924,14 @@ function resetFormAndStepper() {
     // Mark step 1 as active
     const step1 = document.querySelector('.step-item[data-step="1"]');
     if (step1) step1.classList.add('active');
-    
+
     // Update UI
     updateStepperUI();
     updateNavigationButtons();
-    
+
     // Scroll to top
     scrollToTop();
-    
+
     console.log('✅ Form reset complete - Ready for new entry');
 }
 
