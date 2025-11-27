@@ -773,8 +773,15 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
 /**
  * Setup Success Detection (Multiple Strategies)
  */
+// Global variable to track if reset is already scheduled
+let resetScheduled = false;
+let pollingIntervalId = null;
+
 function setupSuccessDetection() {
     console.log('🔍 Setting up success detection - will auto-reset to step 1 after success');
+
+    // Reset flag when setting up detection
+    resetScheduled = false;
 
     // 🔧 RE-ENABLED: Automatic form reset after success
     // Wait for success banner, then reset form to step 1 for new entry
@@ -786,9 +793,18 @@ function setupSuccessDetection() {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
                     const display = successBanner.style.display;
-                    if (display === 'block' && successBanner.textContent.trim() !== '') {
+                    if (display === 'block' && successBanner.textContent.trim() !== '' && !resetScheduled) {
                         console.log('✅ Success banner detected, will reset form in 3 seconds...');
+                        resetScheduled = true; // Prevent multiple resets
                         observer.disconnect();
+
+                        // Clear polling interval to prevent double trigger
+                        if (pollingIntervalId) {
+                            clearInterval(pollingIntervalId);
+                            pollingIntervalId = null;
+                            console.log('⏹️ Polling stopped - reset already scheduled');
+                        }
+
                         setTimeout(() => {
                             resetFormAndStepper();
                         }, 3000); // Wait 3s for user to see success message
@@ -809,13 +825,16 @@ function setupSuccessDetection() {
     let checkCount = 0;
     const maxChecks = 15; // Check for 15 seconds
 
-    const intervalId = setInterval(() => {
+    pollingIntervalId = setInterval(() => {
         checkCount++;
 
         const successBanner = document.getElementById('successBanner');
-        if (successBanner && successBanner.style.display === 'block' && successBanner.textContent.trim() !== '') {
+        if (successBanner && successBanner.style.display === 'block' && successBanner.textContent.trim() !== '' && !resetScheduled) {
             console.log('✅ Success detected via polling, resetting form...');
-            clearInterval(intervalId);
+            resetScheduled = true; // Prevent multiple resets
+            clearInterval(pollingIntervalId);
+            pollingIntervalId = null;
+
             setTimeout(() => {
                 resetFormAndStepper();
             }, 3000);
@@ -824,7 +843,8 @@ function setupSuccessDetection() {
         // Stop checking after maxChecks
         if (checkCount >= maxChecks) {
             console.log('⏹️ Stopped checking for success (timeout)');
-            clearInterval(intervalId);
+            clearInterval(pollingIntervalId);
+            pollingIntervalId = null;
         }
     }, 1000);
 
@@ -836,6 +856,21 @@ function setupSuccessDetection() {
  */
 function resetFormAndStepper() {
     console.log('🔄 Resetting form and stepper to Step 1...');
+
+    // 🔧 CRITICAL FIX: Clear polling interval to prevent double reset
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+        pollingIntervalId = null;
+        console.log('⏹️ Polling interval cleared during reset');
+    }
+
+    // 🔧 CRITICAL FIX: Hide success banner to prevent false positive detection
+    const successBanner = document.getElementById('successBanner');
+    if (successBanner) {
+        successBanner.style.display = 'none';
+        successBanner.textContent = '';
+        console.log('👁️ Success banner hidden to prevent re-detection');
+    }
 
     // 🔧 CRITICAL FIX: Call app.js resetFormAfterSuccess to properly reset all state
     // This ensures isKitValid, availableKits, selectedKits, and other states are cleared
@@ -931,6 +966,16 @@ function resetFormAndStepper() {
 
     // Scroll to top
     scrollToTop();
+
+    // 🔧 CRITICAL FIX: Reset the flag to allow detection for next submission
+    resetScheduled = false;
+    console.log('🔄 Reset flag cleared - Success detection ready for next entry');
+
+    // 🔧 CRITICAL FIX: Setup success detection again for next submission
+    setTimeout(() => {
+        setupSuccessDetection();
+        console.log('👁️ Success detection re-initialized for next submission');
+    }, 500);
 
     console.log('✅ Form reset complete - Ready for new entry');
 }
