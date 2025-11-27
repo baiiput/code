@@ -774,8 +774,13 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
  * Setup Success Detection (Multiple Strategies)
  */
 function setupSuccessDetection() {
-    console.log('🔍 Setting up success detection...');
-    
+    console.log('🔍 Success detection DISABLED - User stays on current step after submit');
+
+    // 🔧 FIX: DISABLED automatic form reset after success
+    // This was causing the form to jump back to step 1 after successful submission
+    // Now user stays on step 4 to see the success message properly
+
+    /*
     // Strategy 1: Watch for successBanner to appear
     const successBanner = document.getElementById('successBanner');
     if (successBanner) {
@@ -793,22 +798,24 @@ function setupSuccessDetection() {
                 }
             });
         });
-        
+
         observer.observe(successBanner, {
             attributes: true,
             attributeFilter: ['style']
         });
-        
+
         console.log('👁️ MutationObserver watching successBanner');
     }
-    
+    */
+
+    /*
     // Strategy 2: Polling check (backup method)
     let checkCount = 0;
     const maxChecks = 15; // Check for 15 seconds
-    
+
     const intervalId = setInterval(() => {
         checkCount++;
-        
+
         const successBanner = document.getElementById('successBanner');
         if (successBanner && successBanner.style.display === 'block' && successBanner.textContent.trim() !== '') {
             console.log('✅ Success detected via polling, resetting form...');
@@ -817,15 +824,16 @@ function setupSuccessDetection() {
                 resetFormAndStepper();
             }, 2000);
         }
-        
+
         // Stop checking after maxChecks
         if (checkCount >= maxChecks) {
             console.log('⏹️ Stopped checking for success (timeout)');
             clearInterval(intervalId);
         }
     }, 1000);
-    
+
     console.log('🔄 Polling check started');
+    */
 }
 
 /**
@@ -833,9 +841,10 @@ function setupSuccessDetection() {
  */
 function resetFormAndStepper() {
     console.log('🔄 Resetting form and stepper to Step 1...');
-    
-    // Reset stepper to step 1
-    currentStep = 1;
+
+    // 🔧 FIX: DON'T reset stepper to step 1 automatically
+    // Let user stay on step 4 to see success message
+    // currentStep = 1;
     
     // Reset formData
     formData = {
@@ -901,15 +910,17 @@ function resetFormAndStepper() {
     document.querySelectorAll('.kit-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
-    
+
+    // 🔧 FIX: DON'T reset step markers - keep user on current step
+    // This allows user to see success message on step 4 without being kicked back
     // Reset all step markers
-    document.querySelectorAll('.step-item').forEach(stepItem => {
-        stepItem.classList.remove('active', 'completed');
-    });
-    
+    // document.querySelectorAll('.step-item').forEach(stepItem => {
+    //     stepItem.classList.remove('active', 'completed');
+    // });
+
     // Mark step 1 as active
-    const step1 = document.querySelector('.step-item[data-step="1"]');
-    if (step1) step1.classList.add('active');
+    // const step1 = document.querySelector('.step-item[data-step="1"]');
+    // if (step1) step1.classList.add('active');
     
     // Update UI
     updateStepperUI();
