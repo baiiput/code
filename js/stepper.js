@@ -776,12 +776,14 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
 // Global variable to track if reset is already scheduled
 let resetScheduled = false;
 let pollingIntervalId = null;
+let successDetectionActive = false; // Track if detection should be active
 
 function setupSuccessDetection() {
     console.log('🔍 Setting up success detection - will auto-reset to step 1 after success');
 
     // Reset flag when setting up detection
     resetScheduled = false;
+    successDetectionActive = true; // Enable detection
 
     // 🔧 RE-ENABLED: Automatic form reset after success
     // Wait for success banner, then reset form to step 1 for new entry
@@ -793,9 +795,19 @@ function setupSuccessDetection() {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
                     const display = successBanner.style.display;
-                    if (display === 'block' && successBanner.textContent.trim() !== '' && !resetScheduled) {
-                        console.log('✅ Success banner detected, will reset form in 3 seconds...');
+
+                    // 🔧 CRITICAL: Only trigger if we're on step 4 AND detection is active AND not already scheduled
+                    const onSubmitStep = currentStep === 4;
+
+                    if (display === 'block' &&
+                        successBanner.textContent.trim() !== '' &&
+                        !resetScheduled &&
+                        successDetectionActive &&
+                        onSubmitStep) {
+
+                        console.log('✅ Success banner detected on step 4, will reset form in 3 seconds...');
                         resetScheduled = true; // Prevent multiple resets
+                        successDetectionActive = false; // Disable further detection
                         observer.disconnect();
 
                         // Clear polling interval to prevent double trigger
@@ -829,9 +841,20 @@ function setupSuccessDetection() {
         checkCount++;
 
         const successBanner = document.getElementById('successBanner');
-        if (successBanner && successBanner.style.display === 'block' && successBanner.textContent.trim() !== '' && !resetScheduled) {
-            console.log('✅ Success detected via polling, resetting form...');
+
+        // 🔧 CRITICAL: Only trigger if we're on step 4 AND detection is active AND not already scheduled
+        const onSubmitStep = currentStep === 4;
+
+        if (successBanner &&
+            successBanner.style.display === 'block' &&
+            successBanner.textContent.trim() !== '' &&
+            !resetScheduled &&
+            successDetectionActive &&
+            onSubmitStep) {
+
+            console.log('✅ Success detected via polling on step 4, resetting form...');
             resetScheduled = true; // Prevent multiple resets
+            successDetectionActive = false; // Disable further detection
             clearInterval(pollingIntervalId);
             pollingIntervalId = null;
 
@@ -969,13 +992,12 @@ function resetFormAndStepper() {
 
     // 🔧 CRITICAL FIX: Reset the flag to allow detection for next submission
     resetScheduled = false;
-    console.log('🔄 Reset flag cleared - Success detection ready for next entry');
+    successDetectionActive = false; // Keep detection disabled until next submission
+    console.log('🔄 Reset flags cleared - Detection will re-enable on next submission');
 
-    // 🔧 CRITICAL FIX: Setup success detection again for next submission
-    setTimeout(() => {
-        setupSuccessDetection();
-        console.log('👁️ Success detection re-initialized for next submission');
-    }, 500);
+    // 🔧 REMOVED: Don't auto re-initialize success detection
+    // It will be initialized when user actually submits next time
+    // This prevents false positive detection from lingering success banners
 
     console.log('✅ Form reset complete - Ready for new entry');
 }
@@ -985,5 +1007,6 @@ window.stepperNav = {
     getCurrentStep: () => currentStep,
     goToStep: goToStep,
     updateNavigationButtons: updateNavigationButtons,
+    setupSuccessDetection: setupSuccessDetection, // Export for app.js to call on submit
     formData: formData
 };

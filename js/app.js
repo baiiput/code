@@ -1011,7 +1011,7 @@ async function confirmAndSubmit() {
         showSlowLoadingMessage();
         return;
     }
-    
+
     // 🚫 CRITICAL: Check if there's already an active submission with same data
     const tempRequestId = Date.now() + '_' + btoa(selectedKits.map(k => k.kitNumber).join()).slice(-8);
     if (currentRequestId === tempRequestId) {
@@ -1019,7 +1019,7 @@ async function confirmAndSubmit() {
         showSlowLoadingMessage();
         return;
     }
-    
+
     // 🚫 CRITICAL: Cancel any previous request if still pending
     if (activeSubmissionRequest) {
         console.log('⚠️ Cancelling previous pending request...');
@@ -1030,8 +1030,16 @@ async function confirmAndSubmit() {
         }
         activeSubmissionRequest = null;
     }
-    
+
     console.log('🚀 Starting confirmAndSubmit...');
+
+    // 🔧 CRITICAL FIX: Setup success detection for this submission
+    // This ensures detection is ready when success banner appears
+    if (typeof window.stepperNav !== 'undefined' && typeof window.stepperNav.setupSuccessDetection === 'function') {
+        window.stepperNav.setupSuccessDetection();
+        console.log('👁️ Success detection initialized for this submission');
+    }
+
     isSubmitting = true;
     submitStartTime = Date.now();
     
