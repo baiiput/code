@@ -303,34 +303,98 @@
         transform: translateY(-1px);
     }
     
-    .checkbox-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: center;
+    /* Dropdown Multi-Select Styles */
+    .dropdown-multiselect {
+        position: relative;
+        min-width: 200px;
     }
 
-    .checkbox-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
+    .dropdown-toggle {
+        width: 100%;
+        padding: 10px 16px;
         background: var(--bg-primary);
-        border-radius: 8px;
         border: 2px solid var(--border-color);
-        transition: all 0.3s ease;
+        border-radius: 10px;
         cursor: pointer;
-        white-space: nowrap;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        color: var(--text-primary);
+        font-weight: 500;
     }
 
-    .checkbox-item:hover {
+    .dropdown-toggle:hover {
         border-color: var(--accent-primary);
         background: var(--hover-bg);
-        transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
     }
 
-    .checkbox-item input[type="checkbox"] {
+    .dropdown-toggle.active {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .dropdown-arrow {
+        font-size: 12px;
+        transition: transform 0.3s ease;
+    }
+
+    .dropdown-toggle.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: var(--bg-primary);
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        box-shadow: var(--shadow-lg);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        animation: dropdownFadeIn 0.2s ease-out;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-item {
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+        background: var(--hover-bg);
+    }
+
+    .dropdown-item input[type="checkbox"] {
         width: 18px;
         height: 18px;
         cursor: pointer;
@@ -338,13 +402,25 @@
         margin: 0;
     }
 
-    .checkbox-item label {
-        font-size: 13px;
+    .dropdown-item label {
+        font-size: 14px;
         font-weight: 500;
         cursor: pointer;
         user-select: none;
         color: var(--text-primary);
         margin: 0;
+        flex: 1;
+    }
+
+    .dropdown-badge {
+        background: var(--accent-primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 24px;
+        text-align: center;
     }
     
     .table-container {
@@ -416,6 +492,8 @@
         padding: 4px 8px;
         border-radius: 6px;
         display: inline-block;
+        vertical-align: middle;
+        line-height: 1.4;
     }
     
     .loading {
@@ -537,14 +615,26 @@
             </div>
         </div>
 
-        <div class="filter-row" style="gap: 30px;">
-            <div class="filter-group" style="flex: 1; display: flex; align-items: center; gap: 12px;">
-                <label class="filter-label" style="margin-bottom: 0;">📦 Paket:</label>
-                <div class="checkbox-group" id="paketCheckboxes"></div>
+        <div class="filter-row" style="gap: 20px;">
+            <div class="filter-group" style="flex: 1;">
+                <label class="filter-label">📦 Paket</label>
+                <div class="dropdown-multiselect">
+                    <div class="dropdown-toggle" onclick="toggleDropdown('paket')">
+                        <span id="paketLabel">Semua Paket</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="paketDropdown"></div>
+                </div>
             </div>
-            <div class="filter-group" style="flex: 1; display: flex; align-items: center; gap: 12px;">
-                <label class="filter-label" style="margin-bottom: 0;">💳 Pembayaran:</label>
-                <div class="checkbox-group" id="paymentCheckboxes"></div>
+            <div class="filter-group" style="flex: 1;">
+                <label class="filter-label">💳 Tipe Pembayaran</label>
+                <div class="dropdown-multiselect">
+                    <div class="dropdown-toggle" onclick="toggleDropdown('payment')">
+                        <span id="paymentLabel">Semua Pembayaran</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="paymentDropdown"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -699,40 +789,89 @@
     }
 
     function createFilterCheckboxes() {
-        const paketContainer = document.getElementById('paketCheckboxes');
-        const paymentContainer = document.getElementById('paymentCheckboxes');
-        
+        const paketContainer = document.getElementById('paketDropdown');
+        const paymentContainer = document.getElementById('paymentDropdown');
+
         paketContainer.innerHTML = '';
         paymentContainer.innerHTML = '';
-        
+
         Array.from(paketOptions).sort().forEach(paket => {
             const div = document.createElement('div');
-            div.className = 'checkbox-item';
+            div.className = 'dropdown-item';
             div.innerHTML = `
-                <input type="checkbox" id="paket_${paket}" value="${paket}" checked onchange="applyFilters()">
+                <input type="checkbox" id="paket_${paket}" value="${paket}" checked onchange="updateDropdownLabel('paket'); applyFilters();">
                 <label for="paket_${paket}">${paket}</label>
             `;
             paketContainer.appendChild(div);
         });
-        
+
         Array.from(paymentOptions).sort().forEach(payment => {
             const div = document.createElement('div');
-            div.className = 'checkbox-item';
+            div.className = 'dropdown-item';
             div.innerHTML = `
-                <input type="checkbox" id="payment_${payment}" value="${payment}" checked onchange="applyFilters()">
+                <input type="checkbox" id="payment_${payment}" value="${payment}" checked onchange="updateDropdownLabel('payment'); applyFilters();">
                 <label for="payment_${payment}">${payment}</label>
             `;
             paymentContainer.appendChild(div);
         });
+
+        updateDropdownLabel('paket');
+        updateDropdownLabel('payment');
     }
+
+    function toggleDropdown(type) {
+        const dropdown = document.getElementById(type + 'Dropdown');
+        const toggle = dropdown.previousElementSibling;
+        const allDropdowns = document.querySelectorAll('.dropdown-menu');
+        const allToggles = document.querySelectorAll('.dropdown-toggle');
+
+        // Close other dropdowns
+        allDropdowns.forEach(dd => {
+            if (dd !== dropdown) {
+                dd.classList.remove('show');
+            }
+        });
+        allToggles.forEach(tog => {
+            if (tog !== toggle) {
+                tog.classList.remove('active');
+            }
+        });
+
+        // Toggle current dropdown
+        dropdown.classList.toggle('show');
+        toggle.classList.toggle('active');
+    }
+
+    function updateDropdownLabel(type) {
+        const checkboxes = document.querySelectorAll(`#${type}Dropdown input[type="checkbox"]`);
+        const checked = Array.from(checkboxes).filter(cb => cb.checked);
+        const label = document.getElementById(type + 'Label');
+        const total = checkboxes.length;
+
+        if (checked.length === 0) {
+            label.innerHTML = `Tidak ada dipilih`;
+        } else if (checked.length === total) {
+            label.innerHTML = type === 'paket' ? 'Semua Paket' : 'Semua Pembayaran';
+        } else {
+            label.innerHTML = `${checked.length} dipilih <span class="dropdown-badge">${checked.length}</span>`;
+        }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dropdown-multiselect')) {
+            document.querySelectorAll('.dropdown-menu').forEach(dd => dd.classList.remove('show'));
+            document.querySelectorAll('.dropdown-toggle').forEach(tog => tog.classList.remove('active'));
+        }
+    });
 
     function applyFilters() {
         const searchTerm = document.getElementById('searchBox').value.toLowerCase();
         const dateFrom = document.getElementById('dateFrom').value;
         const dateTo = document.getElementById('dateTo').value;
 
-        const selectedPakets = Array.from(document.querySelectorAll('#paketCheckboxes input:checked')).map(cb => cb.value);
-        const selectedPayments = Array.from(document.querySelectorAll('#paymentCheckboxes input:checked')).map(cb => cb.value);
+        const selectedPakets = Array.from(document.querySelectorAll('#paketDropdown input:checked')).map(cb => cb.value);
+        const selectedPayments = Array.from(document.querySelectorAll('#paymentDropdown input:checked')).map(cb => cb.value);
 
         const filteredData = allData.filter(row => {
             // Search filter
