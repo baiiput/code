@@ -39,7 +39,7 @@ const COLUMNS = {
   PAKET: 15,            // P
   LAST_4_DIGIT: 16,     // Q
   NO_REGISTER: 17,      // R
-  CADANGAN_1: 18,       // S ✅ NEW: Kosong
+  TIPE_PELANGGAN: 18,   // S ✅ NEW: Tipe Pelanggan
   CADANGAN_2: 19,       // T ✅ NEW: Kosong
   LABEL_JATUH_TEMPO: 20, // U ✅ MOVED: "JATUH TEMPO"
   LABEL_PROSES: 21,     // V ✅ MOVED: "PROSES"
@@ -662,12 +662,14 @@ function sendEmailNotificationMultiKitWithTransactionID(formData, sheetName, tra
     
     var selectedKitsList = formData.selectedKits.map(function(kit, index) {
       var nominal = kit.nominal || formData.nominal || 0;
-      // ✅ MINOR UPDATE: Tampilkan info KIT Number dan Serial Number terpisah
+      var paymentType = kit.tipePembayaran || '-';
+      var paymentIcon = paymentType === 'Aktivasi' ? '🚀' : paymentType === 'Perpanjangan' ? '🔄' : '❓';
+      // 🆕 UPDATED: Tampilkan KIT dengan payment type per-KIT
       var kitInfo = `${index + 1}. KIT: ${kit.kitNumber}`;
       if (kit.serialNumber) {
         kitInfo += ` | SN: ${kit.serialNumber}`;
       }
-      kitInfo += ` (${kit.paket}) - ${formatRupiah(nominal)}`;
+      kitInfo += ` (${kit.paket}) - ${paymentIcon} ${paymentType} - ${formatRupiah(nominal)}`;
       return kitInfo;
     }).join('\n');
     
@@ -702,7 +704,6 @@ Transaction ID: ${transactionID}
 
 👤 Client: ${formData.nama}
 📅 Tanggal Transaksi: ${formattedTransactionDate}
-🔧 Tipe: ${formData.tipe}
 📊 Sheet: ${sheetName}
 
 🛰️ KIT yang Diperpanjang (${formData.selectedKits.length} KIT):
@@ -3562,6 +3563,7 @@ function kirimWhatsApp() {
     var jatuhTempoRaw = data[i][COLUMNS.JATUH_TEMPO]; // K: Jatuh Tempo ✅ MOVED
     var paket = data[i][COLUMNS.PAKET]; // P: Paket ✅ MOVED
     var status = data[i][statusColumnIndex]; // O: Status ✅ MOVED
+    var tipePelanggan = data[i][COLUMNS.TIPE_PELANGGAN]; // S: Tipe Pelanggan ✅ NEW
     
     // ✅ UPDATED: Cell references dengan kolom baru
     var tandaCell = sheet.getRange(i + 1, tandaColumnIndex + 1); // U: Tanda "Jatuh Tempo"
@@ -3685,6 +3687,7 @@ function kirimWhatsApp() {
       paket: paket,
       jatuhTempoDate: jatuhTempoDate,
       status: status,
+      tipePelanggan: tipePelanggan,
       cell: cell,
       i: i
     }, logs); // ✅ Pass logs object by reference
@@ -3701,13 +3704,13 @@ function kirimWhatsApp() {
  * ✅ FIXED: Process reminder logic (now properly modifies logs object)
  */
 function processReminderLogic(selisihHari, isEligible, clientData, logs) {
-  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, cell, i } = clientData;
+  var { nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, status, tipePelanggan, cell, i } = clientData;
   
   if (selisihHari === 3) {
     // H-3: Reminder H-3
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3');
+        var waLinkH3 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-3', tipePelanggan);
         setReminderCell(cell, "📅 Reminder H-3", waLinkH3, "#2563eb");
         logs.clientReminderH3Log += `${i + 1}. - ${nama} (H-3, Status: ${status}) | ${waLinkH3}\n\n`;
       } else {
@@ -3721,7 +3724,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-2: Reminder H-2
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2');
+        var waLinkH2 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-2', tipePelanggan);
         setReminderCell(cell, "⚠️ Reminder H-2", waLinkH2, "#f59e0b");
         logs.clientReminderH2Log += `${i + 1}. - ${nama} (H-2, Status: ${status}) | ${waLinkH2}\n\n`;
       } else {
@@ -3735,7 +3738,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // H-1: Reminder H-1
     if (isEligible) {
       if (nomorWA) {
-        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1');
+        var waLinkH1 = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'H-1', tipePelanggan);
         setReminderCell(cell, "🚨 Reminder H-1", waLinkH1, "#dc2626");
         logs.clientReminderH1Log += `${i + 1}. - ${nama} (H-1, Status: ${status}) | ${waLinkH1}\n\n`;
       } else {
@@ -3749,7 +3752,7 @@ function processReminderLogic(selisihHari, isEligible, clientData, logs) {
     // HARI H: Warning Reminder
     if (isEligible) {
       if (nomorWA) {
-        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING');
+        var waLinkHariH = generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, 'WARNING', tipePelanggan);
         setReminderCell(cell, "💀 Warning Reminder", waLinkHariH, "#7c2d12");
         logs.clientWarningLog += `${i + 1}. - ${nama} (Warning, Status: ${status}) | ${waLinkHariH}\n\n`;
       } else {
@@ -3785,37 +3788,37 @@ function sendConsolidatedEmail(logs) {
 }
 
 /**
- * ✅ NEW: Generate WhatsApp link dengan KIT Number dan Serial Number
+ * ✅ NEW: Generate WhatsApp link dengan KIT Number, Serial Number, dan Tipe Pelanggan
  */
-function generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, type) {
+function generateWhatsAppLink(nama, nomorWA, kitNumber, serialNumber, paket, jatuhTempoDate, type, tipePelanggan) {
   var kitInfo = '';
-  
+
   // Handle KIT Number dan Serial Number
   if (kitNumber || serialNumber) {
     var kitLines = [];
     var kitArray = kitNumber ? (kitNumber.includes('\n') ? kitNumber.split('\n') : [kitNumber]) : ['Data KIT tidak tersedia'];
     var serialArray = serialNumber ? (serialNumber.includes('\n') ? serialNumber.split('\n') : [serialNumber]) : ['Data Serial tidak tersedia'];
     var paketArray = paket ? (paket.includes('\n') ? paket.split('\n') : [paket]) : ['Data paket tidak tersedia'];
-    
+
     var maxLength = Math.max(kitArray.length, serialArray.length, paketArray.length);
-    
+
     for (var j = 0; j < maxLength; j++) {
       var kitItem = kitArray[j] || kitArray[0] || 'N/A';
       var serialItem = serialArray[j] || serialArray[0] || 'N/A';
       var paketItem = paketArray[j] || paketArray[0] || 'N/A';
       kitLines.push(`   ✅ KIT: ${kitItem} | SN: ${serialItem} (${paketItem})`);
     }
-    
+
     kitInfo = kitLines.join('\n');
   }
-  
+
   var messages = {
-    'H-3': generateH3Message(nama, kitInfo, jatuhTempoDate),
-    'H-2': generateH2Message(nama, kitInfo, jatuhTempoDate),
-    'H-1': generateH1Message(nama, kitInfo, jatuhTempoDate),
-    'WARNING': generateWarningMessage(nama, kitInfo, jatuhTempoDate)
+    'H-3': generateH3Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'H-2': generateH2Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'H-1': generateH1Message(nama, kitInfo, jatuhTempoDate, tipePelanggan),
+    'WARNING': generateWarningMessage(nama, kitInfo, jatuhTempoDate, tipePelanggan)
   };
-  
+
   var message = messages[type] || messages['H-3'];
   return `https://web.whatsapp.com/send?phone=${nomorWA}&text=${encodeURIComponent(message)}`;
 }
@@ -3844,30 +3847,35 @@ function setReminderCell(cell, text, url, color) {
 /**
  * ✅ NEW: Message generators
  */
-function generateH3Message(nama, kitInfo, jatuhTempoDate) {
+function generateH3Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
   var satuHariSebelumJatuhTempo = new Date(jatuhTempoDate);
   satuHariSebelumJatuhTempo.setDate(satuHariSebelumJatuhTempo.getDate() - 1);
   var namaHariSebelumnya = getNamaHari(satuHariSebelumJatuhTempo);
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
 
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
-    `📅 Kami ingin menginformasikan bahwa layanan Starlink Anda akan jatuh tempo dalam 3 hari pada tanggal tersebut.\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo +
+    `\n📅 Kami ingin menginformasikan bahwa layanan Starlink Anda akan jatuh tempo dalam 3 hari pada tanggal tersebut.\n\n` +
     `Untuk memastikan kesinambungan layanan internet Anda, mohon konfirmasi perpanjangan layanan maksimal pada hari *${namaHariSebelumnya}*.\n\n` +
     `Jika memerlukan bantuan atau informasi lebih lanjut, silakan hubungi kami.\n\n` +
     `Terima kasih atas perhatian dan kepercayaan Anda.\n\n` +
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateH2Message(nama, kitInfo, jatuhTempoDate) {
+function generateH2Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
-    `⚠️ Pemberitahuan penting: layanan Starlink Anda akan jatuh tempo dalam 2 hari pada tanggal tersebut.\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo +
+    `\n⚠️ Pemberitahuan penting: layanan Starlink Anda akan jatuh tempo dalam 2 hari pada tanggal tersebut.\n\n` +
     `Untuk menghindari gangguan layanan, kami merekomendasikan agar perpanjangan segera dilakukan.\n\n` +
     `⏰ Waktu perpanjangan semakin terbatas, mohon segera lakukan konfirmasi.\n\n` +
     `Jika memerlukan bantuan atau informasi lebih lanjut, silakan hubungi kami.\n\n` +
@@ -3875,13 +3883,16 @@ function generateH2Message(nama, kitInfo, jatuhTempoDate) {
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateH1Message(nama, kitInfo, jatuhTempoDate) {
+function generateH1Message(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `📡 *Halo ${nama}, Pengguna Layanan Internet Starlink* 📡\n\n` +
     `📌 *Informasi Layanan Anda:*\n` +
     `🔹 *Nama:* ${nama}\n` +
-    `🔹 *Detail Starlink:*\n${kitInfo}\n` + 
-    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n\n` +
-    `🚨 Peringatan urgent: layanan Starlink Anda akan jatuh tempo BESOK pada tanggal tersebut.\n\n` +
+    `🔹 *Detail Starlink:*\n${kitInfo}\n` +
+    `🔹 *Tanggal Jatuh Tempo:* ${formatTanggalIndonesia(jatuhTempoDate)}\n` +
+    tipePelangganInfo +
+    `\n🚨 Peringatan urgent: layanan Starlink Anda akan jatuh tempo BESOK pada tanggal tersebut.\n\n` +
     `Mohon konfirmasi perpanjangan layanan HARI INI untuk menghindari terputusnya koneksi internet.\n\n` +
     `⏰ Ini adalah pengingat terakhir sebelum masa aktif berakhir.\n\n` +
     `Jika memerlukan bantuan atau informasi lebih lanjut, silakan hubungi kami segera.\n\n` +
@@ -3889,11 +3900,14 @@ function generateH1Message(nama, kitInfo, jatuhTempoDate) {
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
 }
 
-function generateWarningMessage(nama, kitInfo, jatuhTempoDate) {
+function generateWarningMessage(nama, kitInfo, jatuhTempoDate, tipePelanggan) {
+  var tipePelangganInfo = tipePelanggan ? `🔹 *Tipe Pelanggan:* ${tipePelanggan}\n` : '';
+
   return `⚠️ *PENTING: Layanan Internet Starlink Berakhir Hari Ini* ⚠️\n\n` +
     `👤 *${nama}*\n` +
-    `📅 *Masa Aktif Berakhir: HARI INI* (${formatTanggalIndonesia(jatuhTempoDate)})\n\n` +
-    `🛰️ *Starlink yang terpengaruh:*\n${kitInfo}\n\n` +
+    `📅 *Masa Aktif Berakhir: HARI INI* (${formatTanggalIndonesia(jatuhTempoDate)})\n` +
+    tipePelangganInfo +
+    `\n🛰️ *Starlink yang terpengaruh:*\n${kitInfo}\n\n` +
     `⏰ *Mohon konfirmasi perpanjangan secepatnya untuk menghindari pemutusan layanan.*\n\n` +
     `Untuk informasi perpanjangan atau bantuan teknis, silakan hubungi kami.\n\n` +
     `🚀 *Octolink.id - Starlink UnOfficial Support* 🚀`;
@@ -4300,74 +4314,172 @@ function submitPaymentDataMultiKit(formData) {
       };
     }
     
-    var transactionID = generateTransactionID(tanggal, month, year);
-    Logger.log('Generated Transaction ID: ' + transactionID);
-    
     var sheet = getReportSheet(month, year, true);
-    
+
     // ✅ NEW: Remove existing filters BEFORE processing
     removeExistingFiltersFromReportSheet(sheet);
-    
+
     var lastRow = sheet.getLastRow();
-    
+
     var day = tanggal.getDate().toString().padStart(2, '0');
     var monthStr = month.toString().padStart(2, '0');
     var yearStr = year.toString();
     var formattedDate = `${day}/${monthStr}/${yearStr}`;
-    
-    var newRowNumber = lastRow;
-    
-    // ✅ CRITICAL: Prepare serialNumbers untuk multiple kit
-    var serialNumbers = '';
-    if (formData.isMultipleKit && formData.kitCount > 1) {
-      var serialNumArray = formData.selectedKits.map(function(kit) {
-        return kit.serialNumber || '';
-      });
-      serialNumbers = serialNumArray.join('\n');
-      Logger.log('Prepared serial numbers for multiple kit: ' + serialNumbers);
-    } else if (formData.selectedKits.length === 1) {
-      serialNumbers = formData.selectedKits[0].serialNumber || '';
-      Logger.log('Single kit serial number: ' + serialNumbers);
-    }
-    
-    var rowData;
-    if (formData.isMultipleKit && formData.kitCount > 1) {
-      // ✅ NEW: Struktur 11 kolom dengan Serial Number terpisah
-      rowData = [
-        newRowNumber,         // A: Nomor
-        formattedDate,        // B: Tanggal  
-        transactionID,        // C: ID Transaksi
-        formData.nama,        // D: Nama Client
-        formData.kitNumbers,  // E: Serial Number (KIT) ← dari KIT Number client
-        serialNumbers,        // F: Serial Number ← BARU dari Serial Number client
-        formData.kitPackages, // G: Paket ← GESER dari F
-        formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
-        formData.nominal      // I: Nominal ← GESER dari H
-        // J: Jumlah Total akan dihitung running total ← GESER dari I
-        // K: Total Harian akan di-merge ← GESER dari J
-      ];
+
+    // 🆕 NEW LOGIC: Check if should submit as multiple entries (one row per KIT)
+    // 🔧 FIX: Changed > 1 to >= 1 to include single KIT with per-KIT payment type
+    if (formData.submitAsMultipleEntries && formData.selectedKits.length >= 1) {
+      Logger.log('🔄 Processing as MULTIPLE SEPARATE ENTRIES (one row per KIT)');
+      Logger.log('📊 Total KITs to insert: ' + formData.selectedKits.length);
+
+      var insertedTransactionIDs = [];
+      var insertedRows = [];
+
+      // Loop each KIT and insert as separate entry
+      for (var kitIndex = 0; kitIndex < formData.selectedKits.length; kitIndex++) {
+        var kit = formData.selectedKits[kitIndex];
+
+        // Generate unique transaction ID for each KIT
+        var transactionID = generateTransactionID(tanggal, month, year);
+        insertedTransactionIDs.push(transactionID);
+
+        Logger.log('Processing KIT ' + (kitIndex + 1) + '/' + formData.selectedKits.length + ': ' + kit.kitNumber);
+        Logger.log('  - Transaction ID: ' + transactionID);
+        Logger.log('  - Nominal: ' + kit.nominal);
+        Logger.log('  - Tipe Pembayaran: ' + (kit.tipePembayaran || '(EMPTY!)'));
+        Logger.log('  - Client Name: ' + (kit.clientName || formData.nama));
+
+        // Get current last row (updates after each insert)
+        lastRow = sheet.getLastRow();
+        var newRowNumber = lastRow;
+
+        // Create row data for this KIT
+        var rowData = [
+          newRowNumber,               // A: Nomor
+          formattedDate,              // B: Tanggal
+          transactionID,              // C: ID Transaksi
+          kit.clientName || formData.nama,  // D: Nama Client (🔧 FIX: Per-KIT client name)
+          kit.kitNumber,              // E: Serial Number (KIT)
+          kit.serialNumber || '',     // F: Serial Number
+          kit.paket,                  // G: Paket
+          kit.tipePembayaran || '',   // H: Tipe Pembayaran (🆕 NOW PER-KIT)
+          kit.nominal                 // I: Nominal (per-KIT nominal)
+        ];
+
+        // Insert this row
+        sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
+        insertedRows.push(rowData);
+
+        Logger.log('✅ Inserted row ' + (kitIndex + 1) + ': ' + JSON.stringify(rowData));
+      }
+
+      Logger.log('✅ All ' + formData.selectedKits.length + ' KITs inserted as separate entries');
+      Logger.log('📋 Transaction IDs: ' + insertedTransactionIDs.join(', '));
+
+      // Sort and organize after all inserts
+      sortAndOrganizeWithNew11ColumnStructure(sheet);
+
+      // Apply filter based on transaction date
+      applyDateFilterToReportSheet(sheet, tanggal);
+
+      // 🔧 FIX: Update client data with transaction IDs - each KIT gets its own transaction ID
+      var allUpdateResults = { updated: [], notFound: [] };
+
+      for (var kitIndex = 0; kitIndex < formData.selectedKits.length; kitIndex++) {
+        var kit = formData.selectedKits[kitIndex];
+        var transactionID = insertedTransactionIDs[kitIndex]; // Match by index
+
+        Logger.log('Updating client data for KIT ' + (kitIndex + 1) + ': ' + kit.kitNumber + ' with Transaction ID: ' + transactionID);
+
+        // Update this specific KIT with its own transaction ID
+        var updateResult = updateClientDataWithTransactionID([kit], transactionID);
+
+        // Merge results
+        allUpdateResults.updated = allUpdateResults.updated.concat(updateResult.updated);
+        allUpdateResults.notFound = allUpdateResults.notFound.concat(updateResult.notFound);
+      }
+
+      Logger.log('✅ Client data updates completed: ' + allUpdateResults.updated.length + ' updated, ' + allUpdateResults.notFound.length + ' not found');
+
+      // Send email notification
+      try {
+        sendEmailNotificationMultiKitWithTransactionID(formData, sheet.getName(), insertedTransactionIDs.join(', '), allUpdateResults);
+      } catch (emailError) {
+        Logger.log('⚠️ Email notification failed but submission successful: ' + emailError.message);
+      }
+
+      return {
+        status: 'success',
+        message: 'Data berhasil disubmit! ' + formData.selectedKits.length + ' KIT diproses sebagai entry terpisah.',
+        transactionIDs: insertedTransactionIDs,
+        totalEntries: formData.selectedKits.length,
+        requestId: formData.requestId,
+        sheetName: sheet.getName(),
+        clientUpdates: allUpdateResults,
+        timestamp: new Date().toISOString()
+      };
+
     } else {
-      var kit = formData.selectedKits[0];
-      // ✅ NEW: Struktur 11 kolom untuk single kit
-      rowData = [
-        newRowNumber,         // A: Nomor
-        formattedDate,        // B: Tanggal
-        transactionID,        // C: ID Transaksi
-        formData.nama,        // D: Nama Client
-        kit.kitNumber,        // E: Serial Number (KIT) ← dari KIT Number client
-        kit.serialNumber || '', // F: Serial Number ← BARU dari Serial Number client
-        kit.paket,           // G: Paket ← GESER dari F
-        formData.tipe,        // H: Tipe Pembayaran ← GESER dari G
-        kit.nominal || formData.nominal // I: Nominal ← GESER dari H
-        // J: Jumlah Total akan dihitung running total ← GESER dari I
-        // K: Total Harian akan di-merge ← GESER dari J
-      ];
+      // Original logic for single entry (backward compatibility)
+      Logger.log('📝 Processing as SINGLE ENTRY (original behavior)');
+
+      var transactionID = generateTransactionID(tanggal, month, year);
+      Logger.log('Generated Transaction ID: ' + transactionID);
+
+      var newRowNumber = lastRow;
+
+      // ✅ CRITICAL: Prepare serialNumbers untuk multiple kit
+      var serialNumbers = '';
+      if (formData.isMultipleKit && formData.kitCount > 1) {
+        var serialNumArray = formData.selectedKits.map(function(kit) {
+          return kit.serialNumber || '';
+        });
+        serialNumbers = serialNumArray.join('\n');
+        Logger.log('Prepared serial numbers for multiple kit: ' + serialNumbers);
+      } else if (formData.selectedKits.length === 1) {
+        serialNumbers = formData.selectedKits[0].serialNumber || '';
+        Logger.log('Single kit serial number: ' + serialNumbers);
+      }
+
+      var rowData;
+      if (formData.isMultipleKit && formData.kitCount > 1) {
+        // ✅ NEW: Struktur 11 kolom dengan Serial Number terpisah
+        rowData = [
+          newRowNumber,         // A: Nomor
+          formattedDate,        // B: Tanggal
+          transactionID,        // C: ID Transaksi
+          formData.nama,        // D: Nama Client
+          formData.kitNumbers,  // E: Serial Number (KIT) ← dari KIT Number client
+          serialNumbers,        // F: Serial Number ← BARU dari Serial Number client
+          formData.kitPackages, // G: Paket ← GESER dari F
+          formData.selectedKits[0].tipePembayaran || formData.tipe || '',  // H: Tipe Pembayaran (🔧 FIX: Use per-KIT)
+          formData.nominal      // I: Nominal ← GESER dari H
+          // J: Jumlah Total akan dihitung running total ← GESER dari I
+          // K: Total Harian akan di-merge ← GESER dari J
+        ];
+      } else {
+        var kit = formData.selectedKits[0];
+        // ✅ NEW: Struktur 11 kolom untuk single kit
+        rowData = [
+          newRowNumber,         // A: Nomor
+          formattedDate,        // B: Tanggal
+          transactionID,        // C: ID Transaksi
+          formData.nama,        // D: Nama Client
+          kit.kitNumber,        // E: Serial Number (KIT) ← dari KIT Number client
+          kit.serialNumber || '', // F: Serial Number ← BARU dari Serial Number client
+          kit.paket,           // G: Paket ← GESER dari F
+          kit.tipePembayaran || formData.tipe || '',  // H: Tipe Pembayaran (🔧 FIX: Use per-KIT first)
+          kit.nominal || formData.nominal // I: Nominal ← GESER dari H
+          // J: Jumlah Total akan dihitung running total ← GESER dari I
+          // K: Total Harian akan di-merge ← GESER dari J
+        ];
+      }
+
+      // Insert data (sampai kolom I saja, J dan K akan dihitung)
+      sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
+      Logger.log('✅ Data inserted with NEW 11-column structure');
+      Logger.log('Row data: ' + JSON.stringify(rowData));
     }
-    
-    // Insert data (sampai kolom I saja, J dan K akan dihitung)
-    sheet.getRange(lastRow + 1, 1, 1, rowData.length).setValues([rowData]);
-    Logger.log('✅ Data inserted with NEW 11-column structure');
-    Logger.log('Row data: ' + JSON.stringify(rowData));
     
     // ✅ CRITICAL: Panggil fungsi dengan nama BARU
     sortAndOrganizeWithNew11ColumnStructure(sheet);
@@ -4523,90 +4635,61 @@ function checkDuplicateInReportMultiKit(kitNumbers, month, year) {
 // ========================================
 
 /**
- * 🔄 UPDATED: Validate KIT dengan kolom mapping baru
+ * 🔄 UPDATED: Validate KIT dengan kolom mapping baru + Serial Number validation
  */
 function validateKitForFormMultiKit(kitNumber) {
   try {
     const sheetNames = ["Client Aktif", "Client Non Aktif", "Client Lepas"];
-    
+
+    Logger.log('🔍 Validating input: ' + kitNumber);
+    Logger.log('   - Searching in both KIT Number and Serial Number columns');
+
     for (let sheetName of sheetNames) {
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
       if (!sheet) continue;
-      
+
       var data = sheet.getDataRange().getValues();
-      
+
       for (var i = 1; i < data.length; i++) {
         var kitCell = data[i][COLUMNS.KIT_NUMBER]; // I: KIT Number ✅ NEW
-        
-        if (!kitCell) continue;
-        
-        var kitString = kitCell.toString().trim();
-        var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
-        
-        for (var j = 0; j < kitArray.length; j++) {
-          if (kitArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
-            
-            var nama = data[i][COLUMNS.NAMA] || '';
-            var paketCell = data[i][COLUMNS.PAKET] || ''; // P: Paket ✅ MOVED
-            var serialCell = data[i][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number ✅ NEW
-            
-            Logger.log('🔍 DEBUG - Data yang diambil:');
-            Logger.log('   - Nama: ' + nama);
-            Logger.log('   - KIT Cell (col I): ' + kitCell);
-            Logger.log('   - Serial Cell (col J): ' + serialCell);
-            Logger.log('   - Paket Cell (col P): ' + paketCell);
-            
-            var allKits = [];
-            var paketString = paketCell.toString().trim();
-            var paketArray = paketString.includes('\n') ? paketString.split('\n') : [paketString];
-            
-            var serialString = serialCell.toString().trim();
-            var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
-            
-            for (var k = 0; k < kitArray.length; k++) {
-              var kit = kitArray[k].trim();
-              var paket = paketArray[k] || paketArray[0] || '';
-              var serial = serialArray[k] || serialArray[0] || '';
-              
-              if (kit) {
-                allKits.push({
-                  kitNumber: kit,
-                  serialNumber: serial.trim(), // ✅ NEW
-                  paket: paket.trim(),
-                  isSelected: kit.toUpperCase() === kitNumber.toUpperCase()
-                });
-                
-                Logger.log(`   - KIT ${k + 1}: ${kit} | SN: ${serial.trim()} | Paket: ${paket.trim()}`);
-              }
+        var serialCell = data[i][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number ✅ NEW
+
+        // 🔧 FIX: Search in KIT Number column
+        if (kitCell) {
+          var kitString = kitCell.toString().trim();
+          var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
+
+          for (var j = 0; j < kitArray.length; j++) {
+            if (kitArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              Logger.log('✅ Found match in KIT Number column');
+              return buildKitValidationResult(data, i, sheetName, kitNumber, 'KIT Number');
             }
-            
-            return {
-              status: 'found',
-              clientStatus: sheetName,
-              isActive: sheetName === "Client Aktif",
-              data: {
-                nama: nama.toString().trim(),
-                rowNumber: i + 1,
-                sheetName: sheetName,
-                allKits: allKits,
-                totalKits: allKits.length
-              },
-              warning: sheetName !== "Client Aktif" ? 
-                "⚠️ PERHATIAN: Client tidak berada di 'Client Aktif'. Segera update data!" : null
-            };
+          }
+        }
+
+        // 🔧 FIX: Search in Serial Number column (ALWAYS, not just if starts with UT)
+        if (serialCell) {
+          var serialString = serialCell.toString().trim();
+          var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
+
+          for (var j = 0; j < serialArray.length; j++) {
+            if (serialArray[j].trim().toUpperCase() === kitNumber.toUpperCase()) {
+              Logger.log('✅ Found match in Serial Number column');
+              return buildKitValidationResult(data, i, sheetName, kitNumber, 'Serial Number');
+            }
           }
         }
       }
     }
-    
+
     return {
       status: 'not_found',
       clientStatus: null,
       isActive: false,
       data: null,
-      warning: "❌ Nomor KIT tidak ditemukan dalam database!"
+      warning: "❌ KIT/Serial Number tidak ditemukan dalam database!"
     };
-    
+
   } catch (error) {
     return {
       status: 'error',
@@ -4616,6 +4699,75 @@ function validateKitForFormMultiKit(kitNumber) {
       warning: "❌ Error dalam validasi: " + error.message
     };
   }
+}
+
+/**
+ * 🆕 Helper function to build validation result
+ */
+function buildKitValidationResult(data, rowIndex, sheetName, searchValue, foundIn) {
+  var nama = data[rowIndex][COLUMNS.NAMA] || '';
+  var paketCell = data[rowIndex][COLUMNS.PAKET] || ''; // P: Paket
+  var kitCell = data[rowIndex][COLUMNS.KIT_NUMBER] || ''; // I: KIT Number
+  var serialCell = data[rowIndex][COLUMNS.SERIAL_NUMBER] || ''; // J: Serial Number
+
+  Logger.log('🔍 DEBUG - Data yang diambil (found by ' + foundIn + '):');
+  Logger.log('   - Nama: ' + nama);
+  Logger.log('   - KIT Cell (col I): ' + kitCell);
+  Logger.log('   - Serial Cell (col J): ' + serialCell);
+  Logger.log('   - Paket Cell (col P): ' + paketCell);
+
+  var kitString = kitCell.toString().trim();
+  var kitArray = kitString.includes('\n') ? kitString.split('\n') : [kitString];
+
+  var paketString = paketCell.toString().trim();
+  var paketArray = paketString.includes('\n') ? paketString.split('\n') : [paketString];
+
+  var serialString = serialCell.toString().trim();
+  var serialArray = serialString.includes('\n') ? serialString.split('\n') : [serialString];
+
+  var allKits = [];
+
+  for (var k = 0; k < kitArray.length; k++) {
+    var kit = kitArray[k].trim();
+    var paket = paketArray[k] || paketArray[0] || '';
+    var serial = serialArray[k] || serialArray[0] || '';
+
+    if (kit) {
+      var isMatched = false;
+
+      // Check if this kit matches the search value (by KIT or Serial)
+      if (foundIn === 'KIT Number') {
+        isMatched = kit.toUpperCase() === searchValue.toUpperCase();
+      } else if (foundIn === 'Serial Number') {
+        isMatched = serial.trim().toUpperCase() === searchValue.toUpperCase();
+      }
+
+      allKits.push({
+        kitNumber: kit,
+        serialNumber: serial.trim(),
+        paket: paket.trim(),
+        isSelected: isMatched
+      });
+
+      Logger.log(`   - KIT ${k + 1}: ${kit} | SN: ${serial.trim()} | Paket: ${paket.trim()} | Matched: ${isMatched}`);
+    }
+  }
+
+  return {
+    status: 'found',
+    clientStatus: sheetName,
+    isActive: sheetName === "Client Aktif",
+    foundBy: foundIn, // NEW: indicate what field matched
+    data: {
+      nama: nama.toString().trim(),
+      rowNumber: rowIndex + 1,
+      sheetName: sheetName,
+      allKits: allKits,
+      totalKits: allKits.length
+    },
+    warning: sheetName !== "Client Aktif" ?
+      "⚠️ PERHATIAN: Client tidak berada di 'Client Aktif'. Segera update data!" : null
+  };
 }
 
 /**
@@ -4704,31 +4856,37 @@ function getAllClientsByStatus() {
       // ✅ FIXED: Proper extraction dengan debug logging
       var kitNumberRaw = data[i][COLUMNS.KIT_NUMBER]; // Column I (index 8)
       var serialNumberRaw = data[i][COLUMNS.SERIAL_NUMBER]; // Column J (index 9)
-      var kodeRaw = data[i][COLUMNS.KODE]; // Column L (index 11)  
+      var kodeRaw = data[i][COLUMNS.KODE]; // Column L (index 11)
       var paymentRaw = data[i][COLUMNS.PAYMENT]; // Column M (index 12)
-      
+      var tipePelangganRaw = data[i][COLUMNS.TIPE_PELANGGAN]; // Column S (index 18)
+
       // ✅ FIXED: Safe conversion to strings
       var kitNumber = '';
       var serialNumber = '';
       var kode = '';
       var payment = '';
-      
+      var tipePelanggan = '';
+
       if (kitNumberRaw !== null && kitNumberRaw !== undefined) {
         kitNumber = kitNumberRaw.toString().trim();
       }
-      
+
       if (serialNumberRaw !== null && serialNumberRaw !== undefined) {
         serialNumber = serialNumberRaw.toString().trim();
       }
-      
+
       if (kodeRaw !== null && kodeRaw !== undefined) {
         kode = kodeRaw.toString().trim();
       }
-      
+
       if (paymentRaw !== null && paymentRaw !== undefined) {
         payment = paymentRaw.toString().trim();
       }
-      
+
+      if (tipePelangganRaw !== null && tipePelangganRaw !== undefined) {
+        tipePelanggan = tipePelangganRaw.toString().trim();
+      }
+
       var jatuhTempo = data[i][COLUMNS.JATUH_TEMPO] || '';
       var transactionID = data[i][COLUMNS.TRANSACTION_ID] || '';
       var status = data[i][COLUMNS.STATUS] || '';
@@ -4763,10 +4921,11 @@ function getAllClientsByStatus() {
         serialNumber: serialNumber, // ✅ FIXED: Kirim sebagai string, bukan undefined
         jatuhTempo: jatuhTempoFormatted,
         paket: paket.toString(),
-        kode: kode, // ✅ FIXED: Kirim sebagai string, bukan undefined   
+        kode: kode, // ✅ FIXED: Kirim sebagai string, bukan undefined
         payment: payment, // ✅ FIXED: Kirim sebagai string, bukan undefined
         transactionID: transactionID.toString(),
         status: status.toString(),
+        tipePelanggan: tipePelanggan, // ✅ NEW: Tipe Pelanggan dari kolom S
         statusClient: "Client Aktif",
         rowNumber: i + 1
       };
