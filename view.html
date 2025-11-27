@@ -422,6 +422,32 @@
         min-width: 24px;
         text-align: center;
     }
+
+    .reset-filter-btn {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .reset-filter-btn:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .reset-filter-btn:active {
+        transform: translateY(0);
+    }
     
     .table-container {
         background: var(--bg-primary);
@@ -489,11 +515,9 @@
         font-weight: 700;
         color: var(--accent-primary);
         background: rgba(102, 126, 234, 0.1);
-        padding: 4px 8px;
+        padding: 6px 10px;
         border-radius: 6px;
-        display: inline-block;
-        vertical-align: middle;
-        line-height: 1.4;
+        display: inline;
     }
     
     .loading {
@@ -615,7 +639,7 @@
             </div>
         </div>
 
-        <div class="filter-row" style="gap: 20px;">
+        <div class="filter-row" style="gap: 20px; align-items: flex-end;">
             <div class="filter-group" style="flex: 1;">
                 <label class="filter-label">📦 Paket</label>
                 <div class="dropdown-multiselect">
@@ -636,6 +660,9 @@
                     <div class="dropdown-menu" id="paymentDropdown"></div>
                 </div>
             </div>
+            <button class="reset-filter-btn" onclick="resetFilters()" title="Reset semua filter">
+                🔄 Reset Filter
+            </button>
         </div>
     </div>
 
@@ -854,6 +881,39 @@
             label.innerHTML = type === 'paket' ? 'Semua Paket' : 'Semua Pembayaran';
         } else {
             label.innerHTML = `${checked.length} dipilih <span class="dropdown-badge">${checked.length}</span>`;
+        }
+    }
+
+    function resetFilters() {
+        // Clear search box
+        document.getElementById('searchBox').value = '';
+
+        // Clear date filters
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
+
+        // Check all checkboxes in both dropdowns
+        document.querySelectorAll('#paketDropdown input[type="checkbox"]').forEach(cb => {
+            cb.checked = true;
+        });
+        document.querySelectorAll('#paymentDropdown input[type="checkbox"]').forEach(cb => {
+            cb.checked = true;
+        });
+
+        // Update dropdown labels
+        updateDropdownLabel('paket');
+        updateDropdownLabel('payment');
+
+        // Apply filters to show all data
+        applyFilters();
+
+        // Show visual feedback
+        const resetBtn = event.target.closest('.reset-filter-btn');
+        if (resetBtn) {
+            resetBtn.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                resetBtn.style.transform = '';
+            }, 600);
         }
     }
 
