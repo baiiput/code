@@ -1502,11 +1502,18 @@
             document.getElementById('produk-masuk').addEventListener('change', function() {
                 updateProductInfo('masuk', this.value);
                 const selected = this.options[this.selectedIndex];
+                const hargaMasukInput = document.getElementById('harga-masuk');
+
                 if (selected.dataset.harga) {
                     const formattedPrice = formatRupiahInput(selected.dataset.harga);
-                    document.getElementById('harga-masuk').value = formattedPrice;
-                    calculateTotalMasuk();
+                    // Set as placeholder (bayang-bayang), bukan value
+                    hargaMasukInput.placeholder = `Ref: ${formattedPrice} (atau masukkan harga aktual)`;
+                    hargaMasukInput.value = ''; // Clear value agar user bisa input sendiri
+                } else {
+                    hargaMasukInput.placeholder = 'Masukkan harga beli aktual';
+                    hargaMasukInput.value = '';
                 }
+                calculateTotalMasuk();
             });
 
             document.getElementById('qty-keluar').addEventListener('input', function() {
