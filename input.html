@@ -1023,6 +1023,148 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
+
+        /* Searchable Select Styles */
+        .searchable-select-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.9rem;
+            padding-right: 2.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 50px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1),
+                        0 4px 12px rgba(66, 153, 225, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            font-size: 1.2rem;
+        }
+
+        .select-hidden {
+            display: none;
+        }
+
+        .clear-search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .clear-search-icon:hover {
+            background: var(--danger-color);
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .clear-search-icon.show {
+            display: flex;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-color);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: none;
+            margin-top: -8px;
+            animation: slideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .search-result-item.selected {
+            background: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .search-result-item.highlight {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .no-results {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .search-result-code {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .search-result-item:hover .search-result-code {
+            color: white;
+        }
+
+        .search-help-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -1093,9 +1235,21 @@
                     </div>
                     <div class="form-group">
                         <label for="produk-masuk">🥟 Produk</label>
-                        <select id="produk-masuk" required>
-                            <option value="">Pilih Produk...</option>
-                        </select>
+                        <div class="searchable-select-wrapper">
+                            <input
+                                type="text"
+                                id="search-produk-masuk"
+                                class="search-input"
+                                placeholder="🔍 Ketik untuk search produk..."
+                                autocomplete="off"
+                            >
+                            <span class="clear-search-icon" id="clear-masuk">✕</span>
+                            <div class="search-results" id="results-produk-masuk"></div>
+                            <select id="produk-masuk" required class="select-hidden">
+                                <option value="">Pilih Produk...</option>
+                            </select>
+                        </div>
+                        <small class="search-help-text">💡 Ketik nama atau kode produk untuk search</small>
                         <small id="product-info-masuk">
                             Pilih produk untuk melihat info
                         </small>
@@ -1154,9 +1308,21 @@
                     </div>
                     <div class="form-group">
                         <label for="produk-keluar">🥟 Produk</label>
-                        <select id="produk-keluar" required>
-                            <option value="">Pilih Produk...</option>
-                        </select>
+                        <div class="searchable-select-wrapper">
+                            <input
+                                type="text"
+                                id="search-produk-keluar"
+                                class="search-input"
+                                placeholder="🔍 Ketik untuk search produk..."
+                                autocomplete="off"
+                            >
+                            <span class="clear-search-icon" id="clear-keluar">✕</span>
+                            <div class="search-results" id="results-produk-keluar"></div>
+                            <select id="produk-keluar" required class="select-hidden">
+                                <option value="">Pilih Produk...</option>
+                            </select>
+                        </div>
+                        <small class="search-help-text">💡 Ketik nama atau kode produk untuk search</small>
                         <small id="product-info-keluar">
                             Pilih produk untuk melihat info
                         </small>
@@ -2213,13 +2379,13 @@
         function populateSelects() {
             const produkMasuk = document.getElementById('produk-masuk');
             const produkKeluar = document.getElementById('produk-keluar');
-            
+
             produkMasuk.innerHTML = '<option value="">Pilih Produk...</option>';
             produkKeluar.innerHTML = '<option value="">Pilih Produk...</option>';
-            
+
             masterData.produk.forEach(produk => {
                 let optionValue, optionText, hargaRef;
-                
+
                 if (hasProductIDSystem) {
                     // Product_ID system: use Product_ID as value, show both ID and kode in text
                     optionValue = produk[0]; // Product_ID
@@ -2236,7 +2402,7 @@
                     hargaRef = produk[3];
                     optionText = `${produk[0]} - ${nama} (${kemasan}) - Ref: ${formatRupiah(hargaRef)}`;
                 }
-                
+
                 const option = `<option value="${optionValue}" data-harga="${hargaRef}">${optionText}</option>`;
                 produkMasuk.innerHTML += option;
                 produkKeluar.innerHTML += option;
@@ -2244,10 +2410,13 @@
 
             const cabang = document.getElementById('cabang');
             cabang.innerHTML = '<option value="">Pilih Cabang...</option>';
-            
+
             masterData.cabang.forEach(cab => {
                 cabang.innerHTML += `<option value="${cab[0]}">${cab[0]} - ${cab[1]}</option>`;
             });
+
+            // Initialize searchable dropdowns after populating
+            initializeSearchableDropdowns();
         }
 
         function calculateTotalMasuk() {
@@ -2317,6 +2486,190 @@
             if (themeBtn) {
                 themeBtn.innerHTML = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
             }
+        }
+
+        // ========== SEARCHABLE PRODUCT DROPDOWN ==========
+
+        // Storage for product options
+        let productOptionsCache = {
+            masuk: [],
+            keluar: []
+        };
+
+        // Initialize searchable dropdowns after master data is loaded
+        function initializeSearchableDropdowns() {
+            setupSearchableSelect('masuk');
+            setupSearchableSelect('keluar');
+        }
+
+        function setupSearchableSelect(type) {
+            const searchInput = document.getElementById(`search-produk-${type}`);
+            const clearBtn = document.getElementById(`clear-${type}`);
+            const resultsContainer = document.getElementById(`results-produk-${type}`);
+            const hiddenSelect = document.getElementById(`produk-${type}`);
+
+            // Build options cache from hidden select
+            function updateOptionsCache() {
+                productOptionsCache[type] = [];
+                const options = hiddenSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value) {
+                        productOptionsCache[type].push({
+                            value: option.value,
+                            text: option.textContent,
+                            harga: option.dataset.harga || ''
+                        });
+                    }
+                });
+            }
+
+            // Filter and display results
+            function filterResults(query) {
+                if (!query.trim()) {
+                    resultsContainer.innerHTML = '';
+                    resultsContainer.classList.remove('show');
+                    return;
+                }
+
+                const filtered = productOptionsCache[type].filter(option => {
+                    const searchText = option.text.toLowerCase();
+                    const searchQuery = query.toLowerCase();
+                    return searchText.includes(searchQuery);
+                });
+
+                if (filtered.length === 0) {
+                    resultsContainer.innerHTML = '<div class="no-results">❌ Tidak ada produk yang cocok</div>';
+                    resultsContainer.classList.add('show');
+                    return;
+                }
+
+                let html = '';
+                filtered.forEach(option => {
+                    const isSelected = hiddenSelect.value === option.value;
+                    const selectedClass = isSelected ? 'selected' : '';
+                    html += `<div class="search-result-item ${selectedClass}" data-value="${option.value}" data-harga="${option.harga}">
+                        ${option.text}
+                    </div>`;
+                });
+
+                resultsContainer.innerHTML = html;
+                resultsContainer.classList.add('show');
+
+                // Add click handlers to result items
+                resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectProduct(type, this.dataset.value, this.textContent.trim());
+                    });
+                });
+            }
+
+            // Select a product
+            function selectProduct(selectType, value, text) {
+                // Update hidden select
+                hiddenSelect.value = value;
+
+                // Update search input
+                searchInput.value = text;
+
+                // Hide results
+                resultsContainer.classList.remove('show');
+
+                // Show clear button
+                clearBtn.classList.add('show');
+
+                // Trigger change event on hidden select
+                const event = new Event('change', { bubbles: true });
+                hiddenSelect.dispatchEvent(event);
+            }
+
+            // Clear search
+            function clearSearch() {
+                searchInput.value = '';
+                hiddenSelect.value = '';
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.remove('show');
+                clearBtn.classList.remove('show');
+
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                hiddenSelect.dispatchEvent(event);
+
+                // Focus back to search input
+                searchInput.focus();
+            }
+
+            // Event listeners
+            searchInput.addEventListener('input', function() {
+                updateOptionsCache(); // Refresh cache
+                filterResults(this.value);
+
+                // Toggle clear button
+                if (this.value) {
+                    clearBtn.classList.add('show');
+                } else {
+                    clearBtn.classList.remove('show');
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value) {
+                    filterResults(this.value);
+                }
+            });
+
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.remove('show');
+                }
+            });
+
+            // Clear button handler
+            clearBtn.addEventListener('click', clearSearch);
+
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                const items = resultsContainer.querySelectorAll('.search-result-item');
+                const highlighted = resultsContainer.querySelector('.highlight');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!highlighted && items.length > 0) {
+                        items[0].classList.add('highlight');
+                    } else if (highlighted) {
+                        highlighted.classList.remove('highlight');
+                        const next = highlighted.nextElementSibling;
+                        if (next) {
+                            next.classList.add('highlight');
+                            next.scrollIntoView({ block: 'nearest' });
+                        } else {
+                            items[0].classList.add('highlight');
+                        }
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (highlighted) {
+                        highlighted.classList.remove('highlight');
+                        const prev = highlighted.previousElementSibling;
+                        if (prev) {
+                            prev.classList.add('highlight');
+                            prev.scrollIntoView({ block: 'nearest' });
+                        } else {
+                            items[items.length - 1].classList.add('highlight');
+                        }
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlighted) {
+                        highlighted.click();
+                    } else if (items.length === 1) {
+                        items[0].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    resultsContainer.classList.remove('show');
+                    searchInput.blur();
+                }
+            });
         }
     </script>
 </body>
