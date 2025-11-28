@@ -1344,7 +1344,7 @@
                     </div>
                     <div class="form-group">
                         <label for="harga-keluar">💰 Harga per Pack</label>
-                        <input type="text" id="harga-keluar" required placeholder="Pilih produk untuk mendapat harga..." autocomplete="off" class="currency-input">
+                        <input type="text" id="harga-keluar" required placeholder="Pilih produk dulu..." autocomplete="off" class="currency-input">
                         <div id="harga-keluar-info" class="price-info" style="display: none;">
                             <div class="price-breakdown">
                                 <span>📊 Harga Rata-rata:</span>
@@ -2284,20 +2284,26 @@
 
             const refPrice = produk ? (hasProductIDSystem ? produk[4] : produk[3]) : 0;
             const avgData = averageCosts[displayKode];
-            
+
             if (avgData && avgData.avgCost > 0) {
-                hargaKeluarInput.value = formatRupiahInput(avgData.avgCost);
+                // Set as placeholder, bukan value
+                const formattedAvg = formatRupiahInput(avgData.avgCost);
+                hargaKeluarInput.placeholder = `Avg: ${formattedAvg} (atau masukkan harga custom)`;
+                hargaKeluarInput.value = ''; // Clear value
                 avgPriceSpan.textContent = formatRupiah(avgData.avgCost);
                 lastPriceSpan.textContent = formatRupiah(avgData.lastPrice || 0);
             } else {
-                hargaKeluarInput.value = formatRupiahInput(refPrice);
+                // Set reference price as placeholder
+                const formattedRef = formatRupiahInput(refPrice);
+                hargaKeluarInput.placeholder = `Ref: ${formattedRef} (atau masukkan harga custom)`;
+                hargaKeluarInput.value = ''; // Clear value
                 avgPriceSpan.textContent = 'Belum ada data';
                 lastPriceSpan.textContent = 'Belum ada data';
             }
 
             refPriceSpan.textContent = formatRupiah(refPrice);
             priceInfoDiv.style.display = 'block';
-            
+
             calculateTotalKeluar();
         }
 
