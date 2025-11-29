@@ -26,13 +26,14 @@ class CustomDatePicker {
     }
 
     init() {
-        // Create picker element
-        this.createPickerElement();
-
         // Initialize on DOM ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initializeInputs());
+            document.addEventListener('DOMContentLoaded', () => {
+                this.createPickerElement();
+                this.initializeInputs();
+            });
         } else {
+            this.createPickerElement();
             this.initializeInputs();
         }
 
@@ -397,7 +398,7 @@ class CustomDatePicker {
     }
 }
 
-// Initialize when script loads
+// Initialize when script loads (DOM ready check is handled inside the class)
 const customDatePicker = new CustomDatePicker();
 
 // Re-initialize when new content is added (for AJAX loaded content)
