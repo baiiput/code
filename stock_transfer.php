@@ -459,4 +459,72 @@ window.onclick = function(event) {
 }
 </script>
 
+<style>
+/* Date and DateTime picker improvements for mobile */
+input[type="date"],
+input[type="datetime-local"] {
+    min-height: 44px;
+}
+
+/* Detail modal content responsive */
+#detailContent {
+    padding: 24px;
+    max-height: calc(80vh - 100px);
+    overflow-y: auto;
+}
+
+/* Modal responsive max-widths */
+@media (max-width: 900px) {
+    .modal-content[style*="max-width: 900px"],
+    .modal-content[style*="max-width: 800px"] {
+        max-width: calc(100% - 20px) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    input[type="date"],
+    input[type="datetime-local"] {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    #detailContent {
+        padding: 15px;
+        max-height: calc(85vh - 80px);
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        padding: 4px;
+        cursor: pointer;
+    }
+}
+
+@media (max-width: 480px) {
+    input[type="date"],
+    input[type="datetime-local"] {
+        font-size: 13px;
+        padding: 8px;
+        min-height: 40px;
+    }
+
+    #detailContent {
+        padding: 10px;
+        max-height: calc(90vh - 60px);
+    }
+
+    .modal-content[style*="max-width"] {
+        max-width: calc(100% - 10px) !important;
+        margin: 5px auto !important;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        width: 16px;
+        height: 16px;
+        padding: 2px;
+    }
+}
+</style>
+
 <?php include 'includes/footer.php'; ?>
