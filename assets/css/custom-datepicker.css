@@ -1,0 +1,432 @@
+/**
+ * Custom Date Picker Styles
+ * Beautiful, modern, and responsive
+ */
+
+/* Custom Date Input Display */
+.custom-date-input {
+    position: relative;
+    padding-right: 40px !important;
+    cursor: pointer;
+    background: var(--bg-primary) !important;
+    user-select: none;
+}
+
+.custom-date-input:read-only {
+    background: var(--bg-primary) !important;
+    cursor: pointer;
+}
+
+.custom-date-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    pointer-events: auto;
+    transition: color 0.2s;
+    z-index: 1;
+}
+
+.custom-date-icon:hover {
+    color: var(--primary-color);
+}
+
+/* Date Picker Container */
+.custom-datepicker {
+    position: fixed;
+    z-index: 9999;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    min-width: 320px;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.9);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-datepicker.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* Backdrop for mobile */
+.custom-datepicker.active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    animation: fadeIn 0.3s;
+}
+
+/* Header */
+.datepicker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.datepicker-header button {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.datepicker-header button:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.dp-current-month {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+/* Days Header */
+.datepicker-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.dp-day-name {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding: 8px 0;
+}
+
+/* Days Grid */
+.datepicker-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.dp-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+    position: relative;
+    font-weight: 500;
+}
+
+.dp-day.current-month {
+    color: var(--text-primary);
+}
+
+.dp-day.current-month:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.dp-day.prev-month,
+.dp-day.next-month {
+    color: var(--text-secondary);
+    opacity: 0.4;
+    cursor: default;
+}
+
+.dp-day.today {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.dp-day.today::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary-color);
+}
+
+.dp-day.selected {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    transform: scale(1.05);
+}
+
+.dp-day.selected:hover {
+    background: var(--primary-hover);
+    color: white;
+}
+
+/* Time Picker */
+.datepicker-time {
+    padding: 16px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.time-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.time-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.time-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.time-group input {
+    width: 60px;
+    height: 48px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.time-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.time-separator {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 20px;
+}
+
+/* Actions */
+.datepicker-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.datepicker-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dp-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.dp-cancel:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.dp-today {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.dp-today:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.dp-confirm {
+    background: var(--primary-color);
+    color: white;
+}
+
+.dp-confirm:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .custom-datepicker {
+        min-width: auto;
+        max-width: 90vw;
+        width: 340px;
+    }
+
+    .custom-datepicker.active {
+        position: fixed;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) scale(1) !important;
+    }
+
+    .dp-day {
+        font-size: 13px;
+    }
+
+    .time-group input {
+        width: 55px;
+        height: 44px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .custom-datepicker {
+        width: calc(100vw - 20px);
+        padding: 12px;
+    }
+
+    .datepicker-header {
+        margin-bottom: 12px;
+    }
+
+    .dp-current-month {
+        font-size: 14px;
+    }
+
+    .datepicker-header button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .dp-day-name {
+        font-size: 10px;
+        padding: 6px 0;
+    }
+
+    .dp-day {
+        font-size: 12px;
+    }
+
+    .time-group input {
+        width: 50px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .time-group label {
+        font-size: 10px;
+    }
+
+    .datepicker-actions {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .datepicker-actions button {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .dp-cancel,
+    .dp-today {
+        flex: 0.8;
+    }
+
+    .dp-confirm {
+        flex: 1.2;
+    }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .custom-datepicker {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Animation for day selection */
+@keyframes daySelect {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1.05);
+    }
+}
+
+.dp-day.selected {
+    animation: daySelect 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Loading state */
+.custom-datepicker.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Smooth transitions for all elements */
+.custom-datepicker * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles for accessibility */
+.datepicker-actions button:focus,
+.time-group input:focus,
+.datepicker-header button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Prevent text selection */
+.custom-datepicker {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+.time-group input {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+}
