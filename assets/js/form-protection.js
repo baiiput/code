@@ -50,26 +50,14 @@ class FormProtection {
         const formId = form.id || this.generateFormId(form);
         form.setAttribute('data-form-id', formId);
 
-        // Generate unique token for this form
-        const token = this.generateToken();
-        this.submissionTokens.set(formId, token);
-
-        // Add hidden token field
-        let tokenInput = form.querySelector('input[name="__form_token"]');
-        if (!tokenInput) {
-            tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = '__form_token';
-            form.appendChild(tokenInput);
+        // Check if already protected
+        if (form.hasAttribute('data-protection-applied')) {
+            return;
         }
-        tokenInput.value = token;
+        form.setAttribute('data-protection-applied', 'true');
 
-        // Remove any existing listener to avoid duplicates
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-
-        // Add submit event listener
-        newForm.addEventListener('submit', (e) => this.handleSubmit(e, formId));
+        // Add submit event listener in capture phase (runs before other listeners)
+        form.addEventListener('submit', (e) => this.handleSubmit(e, formId), true);
     }
 
     /**
@@ -81,17 +69,8 @@ class FormProtection {
         // Check if form is already being submitted
         if (this.submittingForms.has(formId)) {
             event.preventDefault();
+            event.stopPropagation();
             this.showWarning('Mohon tunggu, form sedang diproses...');
-            return false;
-        }
-
-        // Validate token
-        const token = this.submissionTokens.get(formId);
-        const tokenInput = form.querySelector('input[name="__form_token"]');
-
-        if (!tokenInput || tokenInput.value !== token) {
-            event.preventDefault();
-            this.showWarning('Token form tidak valid. Silakan refresh halaman.');
             return false;
         }
 
