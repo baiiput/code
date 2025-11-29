@@ -117,6 +117,41 @@ $stmt->close();
         grid-template-columns: 1fr;
         gap: 16px;
     }
+
+    .detail-label {
+        font-size: 11px;
+    }
+
+    .detail-value {
+        font-size: 13px;
+    }
+
+    .total-row {
+        padding: 15px;
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-table th,
+    .detail-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    .detail-table th {
+        font-size: 10px;
+    }
+
+    .total-row strong:first-child {
+        font-size: 14px;
+    }
+
+    .total-row strong:last-child {
+        font-size: 18px;
+    }
 }
 </style>
 
@@ -155,30 +190,32 @@ $stmt->close();
     <i class="fas fa-boxes"></i> Detail Barang
 </h3>
 
-<table class="detail-table">
-    <thead>
-        <tr>
-            <th width="5%">No</th>
-            <th width="15%">Kode</th>
-            <th>Nama Barang</th>
-            <th width="12%" class="text-right">Qty</th>
-            <th width="15%" class="text-right">Harga</th>
-            <th width="15%" class="text-right">Subtotal</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($details as $index => $item): ?>
-        <tr>
-            <td class="text-center"><?php echo $index + 1; ?></td>
-            <td><strong><?php echo $item['item_code']; ?></strong></td>
-            <td><?php echo $item['item_name']; ?></td>
-            <td class="text-right"><?php echo formatNumber($item['quantity'], 2); ?> <?php echo $item['unit']; ?></td>
-            <td class="text-right"><?php echo formatRupiah($item['unit_price']); ?></td>
-            <td class="text-right"><strong><?php echo formatRupiah($item['subtotal']); ?></strong></td>
-        </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
+<div class="modal-table-wrapper">
+    <table class="detail-table" style="min-width: 600px;">
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="15%">Kode</th>
+                <th>Nama Barang</th>
+                <th width="12%" class="text-right">Qty</th>
+                <th width="15%" class="text-right">Harga</th>
+                <th width="15%" class="text-right">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($details as $index => $item): ?>
+            <tr>
+                <td class="text-center"><?php echo $index + 1; ?></td>
+                <td><strong><?php echo $item['item_code']; ?></strong></td>
+                <td><?php echo $item['item_name']; ?></td>
+                <td class="text-right"><?php echo formatNumber($item['quantity'], 2); ?> <?php echo $item['unit']; ?></td>
+                <td class="text-right"><?php echo formatRupiah($item['unit_price']); ?></td>
+                <td class="text-right"><strong><?php echo formatRupiah($item['subtotal']); ?></strong></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
 <div class="total-row">
     <strong style="font-size: 18px;">TOTAL</strong>

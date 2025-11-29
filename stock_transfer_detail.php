@@ -44,62 +44,99 @@ $details = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 ?>
 
+<style>
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.info-table td {
+    padding: 8px;
+}
+
+.info-table td:first-child {
+    font-weight: 600;
+    width: 180px;
+}
+
+.info-table tr:nth-child(even) {
+    background: var(--bg-primary);
+}
+
+@media (max-width: 480px) {
+    .info-table td:first-child {
+        width: 120px;
+        font-size: 12px;
+    }
+
+    .info-table td {
+        padding: 6px;
+        font-size: 13px;
+    }
+}
+</style>
+
 <div style="margin-bottom: 20px;">
-    <h3 style="margin-bottom: 16px; color: var(--primary-color);">Informasi Transfer</h3>
-    <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="padding: 8px; font-weight: 600; width: 180px;">Kode Transaksi:</td>
-            <td style="padding: 8px;"><?php echo $transfer['transaction_code']; ?></td>
-        </tr>
-        <tr style="background: var(--bg-primary);">
-            <td style="padding: 8px; font-weight: 600;">Tanggal Transfer:</td>
-            <td style="padding: 8px;"><?php echo date('d/m/Y H:i', strtotime($transfer['transfer_date'])); ?></td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; font-weight: 600;">Dari Warehouse:</td>
-            <td style="padding: 8px;">
-                <strong><?php echo $transfer['from_warehouse_name']; ?></strong>
-                (<?php echo $transfer['from_warehouse_code']; ?>)
-            </td>
-        </tr>
-        <tr style="background: var(--bg-primary);">
-            <td style="padding: 8px; font-weight: 600;">Ke Warehouse:</td>
-            <td style="padding: 8px;">
-                <strong><?php echo $transfer['to_warehouse_name']; ?></strong>
-                (<?php echo $transfer['to_warehouse_code']; ?>)
-            </td>
-        </tr>
-        <tr>
-            <td style="padding: 8px; font-weight: 600;">Catatan:</td>
-            <td style="padding: 8px;"><?php echo $transfer['notes'] ?: '-'; ?></td>
-        </tr>
-        <tr style="background: var(--bg-primary);">
-            <td style="padding: 8px; font-weight: 600;">Dibuat Oleh:</td>
-            <td style="padding: 8px;"><?php echo $transfer['created_by_name']; ?></td>
-        </tr>
-    </table>
+    <h3 style="margin-bottom: 16px; color: var(--primary-color); font-size: 16px;">Informasi Transfer</h3>
+    <div class="modal-table-wrapper">
+        <table class="info-table" style="min-width: 400px;">
+            <tr>
+                <td>Kode Transaksi:</td>
+                <td><?php echo $transfer['transaction_code']; ?></td>
+            </tr>
+            <tr>
+                <td>Tanggal Transfer:</td>
+                <td><?php echo date('d/m/Y H:i', strtotime($transfer['transfer_date'])); ?></td>
+            </tr>
+            <tr>
+                <td>Dari Warehouse:</td>
+                <td>
+                    <strong><?php echo $transfer['from_warehouse_name']; ?></strong>
+                    (<?php echo $transfer['from_warehouse_code']; ?>)
+                </td>
+            </tr>
+            <tr>
+                <td>Ke Warehouse:</td>
+                <td>
+                    <strong><?php echo $transfer['to_warehouse_name']; ?></strong>
+                    (<?php echo $transfer['to_warehouse_code']; ?>)
+                </td>
+            </tr>
+            <tr>
+                <td>Catatan:</td>
+                <td><?php echo $transfer['notes'] ?: '-'; ?></td>
+            </tr>
+            <tr>
+                <td>Dibuat Oleh:</td>
+                <td><?php echo $transfer['created_by_name']; ?></td>
+            </tr>
+        </table>
+    </div>
 </div>
 
-<h3 style="margin-bottom: 16px; color: var(--primary-color);">Detail Items</h3>
-<table style="width: 100%; border-collapse: collapse; border: 1px solid var(--border-color);">
-    <thead>
-        <tr style="background: var(--primary-color); color: white;">
-            <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Kode Item</th>
-            <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Nama Item</th>
-            <th style="padding: 12px; text-align: center; border: 1px solid var(--border-color);">Unit</th>
-            <th style="padding: 12px; text-align: right; border: 1px solid var(--border-color);">Quantity</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($details as $detail): ?>
-        <tr>
-            <td style="padding: 10px; border: 1px solid var(--border-color);"><?php echo $detail['item_code']; ?></td>
-            <td style="padding: 10px; border: 1px solid var(--border-color);"><?php echo $detail['item_name']; ?></td>
-            <td style="padding: 10px; text-align: center; border: 1px solid var(--border-color);"><?php echo $detail['unit']; ?></td>
-            <td style="padding: 10px; text-align: right; border: 1px solid var(--border-color); font-weight: 600;">
-                <?php echo formatNumber($detail['quantity'], 2); ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
+<h3 style="margin-bottom: 16px; color: var(--primary-color); font-size: 16px;">Detail Items</h3>
+<div class="modal-table-wrapper">
+    <table style="width: 100%; min-width: 500px; border-collapse: collapse; border: 1px solid var(--border-color);">
+        <thead>
+            <tr style="background: var(--primary-color); color: white;">
+                <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Kode Item</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Nama Item</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid var(--border-color);">Unit</th>
+                <th style="padding: 12px; text-align: right; border: 1px solid var(--border-color);">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($details as $detail): ?>
+            <tr>
+                <td style="padding: 10px; border: 1px solid var(--border-color);"><?php echo $detail['item_code']; ?></td>
+                <td style="padding: 10px; border: 1px solid var(--border-color);"><?php echo $detail['item_name']; ?></td>
+                <td style="padding: 10px; text-align: center; border: 1px solid var(--border-color);"><?php echo $detail['unit']; ?></td>
+                <td style="padding: 10px; text-align: right; border: 1px solid var(--border-color); font-weight: 600;">
+                    <?php echo formatNumber($detail['quantity'], 2); ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>

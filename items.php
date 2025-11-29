@@ -532,31 +532,98 @@ include 'includes/header.php';
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .filter-form {
         flex-direction: column;
     }
-    
+
     .filter-form input,
     .filter-form select {
         width: 100%;
     }
-    
+
     .table-container {
         overflow-x: auto;
     }
-    
+
     .data-table {
         min-width: 800px;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .modal-content {
-        margin: 20px;
-        max-width: calc(100% - 40px);
+        margin: 10px;
+        max-width: calc(100% - 20px);
+        border-radius: 8px;
+    }
+
+    .modal-header h2 {
+        font-size: 16px;
+    }
+
+    .modal-header h2 i {
+        font-size: 14px;
+    }
+
+    .modal form {
+        padding: 15px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 18px;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .btn-xs {
+        padding: 1px 4px;
+        font-size: 10px;
+    }
+
+    .modal-content {
+        margin: 5px;
+        max-width: calc(100% - 10px);
+    }
+
+    .modal-header {
+        padding: 12px;
+    }
+
+    .modal-header h2 {
+        font-size: 14px;
+        line-height: 1.2;
+    }
+
+    .close {
+        font-size: 24px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 8px 6px;
+        font-size: 12px;
     }
 }
 </style>
@@ -617,7 +684,7 @@ function showStockDetail(itemId, itemName) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                let html = '<table class="data-table"><thead><tr><th>Warehouse</th><th class="text-right">Stok</th><th class="text-right">Harga Avg</th><th class="text-right">Nilai</th></tr></thead><tbody>';
+                let html = '<div class="modal-table-wrapper"><table class="data-table" style="min-width: 500px;"><thead><tr><th>Warehouse</th><th class="text-right">Stok</th><th class="text-right">Harga Avg</th><th class="text-right">Nilai</th></tr></thead><tbody>';
 
                 if (data.stocks.length === 0) {
                     html += '<tr><td colspan="4" class="text-center">Tidak ada stok di warehouse manapun</td></tr>';
@@ -640,7 +707,7 @@ function showStockDetail(itemId, itemName) {
                     html += '</tr>';
                 }
 
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 document.getElementById('stockDetailContent').innerHTML = html;
             } else {
                 document.getElementById('stockDetailContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger-color);">Error: ' + data.message + '</div>';
@@ -691,6 +758,45 @@ function formatRupiahJS(amount) {
 
 .btn-info:hover {
     background: #0891b2;
+}
+
+/* Modal table wrapper for horizontal scroll on mobile */
+.modal-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Styling for stock detail modal content */
+#stockDetailContent {
+    padding: 20px;
+    max-height: calc(80vh - 100px);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    #stockDetailContent {
+        padding: 15px;
+        max-height: calc(90vh - 80px);
+    }
+}
+
+@media (max-width: 480px) {
+    #stockDetailContent {
+        padding: 10px;
+        max-height: calc(95vh - 60px);
+    }
+
+    .modal-table-wrapper .data-table th,
+    .modal-table-wrapper .data-table td {
+        padding: 6px 4px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .modal-table-wrapper .data-table th {
+        font-size: 10px;
+    }
 }
 </style>
 
