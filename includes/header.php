@@ -6,10 +6,10 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <title><?php echo $page_title ?? 'Warehouse Management'; ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/common.css">
-    <link rel="stylesheet" href="assets/css/custom-datepicker.css">
-    <script src="assets/js/form-protection.js"></script>
-    <script src="assets/js/custom-datepicker.js"></script>
+    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/custom-datepicker.css?v=<?php echo time(); ?>">
+    <script src="assets/js/form-protection.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/custom-datepicker.js?v=<?php echo time(); ?>"></script>
     <style>
         * {
             margin: 0;

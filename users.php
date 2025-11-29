@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = $_POST['role'];
         $cabang_id = $role === 'cabang' ? intval($_POST['cabang_id']) : null;
         $warehouse_id = $role === 'staff_warehouse' ? intval($_POST['warehouse_id']) : null;
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
+        $is_active = isset($_POST['is_active_value']) ? intval($_POST['is_active_value']) : 0;
 
         if ($action === 'add') {
             $username = clean($_POST['username']);
@@ -270,7 +270,8 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
             
             <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" name="is_active" id="isActive" checked>
+                    <input type="hidden" name="is_active_value" id="isActiveValue" value="1">
+                    <input type="checkbox" id="isActive" checked onchange="updateIsActiveValue()">
                     <span>User Aktif</span>
                 </label>
             </div>
@@ -288,6 +289,12 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
 </div>
 
 <script>
+function updateIsActiveValue() {
+    const checkbox = document.getElementById('isActive');
+    const hiddenInput = document.getElementById('isActiveValue');
+    hiddenInput.value = checkbox.checked ? '1' : '0';
+}
+
 function showAddModal() {
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus"></i> Tambah User';
     document.getElementById('formAction').value = 'add';
@@ -297,6 +304,8 @@ function showAddModal() {
     document.getElementById('passLabel').textContent = '*';
     document.getElementById('cabangGroup').style.display = 'none';
     document.getElementById('warehouseGroup').style.display = 'none';
+    document.getElementById('isActive').checked = true;
+    document.getElementById('isActiveValue').value = '1';
     document.getElementById('userModal').style.display = 'block';
 }
 
@@ -319,7 +328,9 @@ function editUser(user) {
     document.getElementById('role').value = user.role;
     document.getElementById('cabangId').value = user.cabang_id || '';
     document.getElementById('warehouseId').value = user.warehouse_id || '';
-    document.getElementById('isActive').checked = user.is_active == 1;
+    const isActive = user.is_active == 1;
+    document.getElementById('isActive').checked = isActive;
+    document.getElementById('isActiveValue').value = isActive ? '1' : '0';
     toggleAssignment();
     document.getElementById('userModal').style.display = 'block';
 }
