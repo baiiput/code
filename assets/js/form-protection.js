@@ -92,14 +92,14 @@ class FormProtection {
     }
 
     /**
-     * Disable all form inputs and buttons
+     * Disable form to prevent re-submission
      */
     disableForm(form) {
-        // Disable all inputs
-        const inputs = form.querySelectorAll('input, select, textarea, button');
-        inputs.forEach(input => {
-            input.disabled = true;
-            input.setAttribute('data-was-disabled', input.disabled);
+        // Only disable buttons, NOT inputs (disabled inputs don't send values!)
+        const buttons = form.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.disabled = true;
+            button.setAttribute('data-was-disabled', button.disabled);
         });
 
         // Change submit button text to show loading
@@ -111,9 +111,9 @@ class FormProtection {
             submitBtn.classList.add('btn-loading');
         }
 
-        // Add visual indicator
+        // Add visual indicator to form
         form.classList.add('form-submitting');
-        form.style.opacity = '0.6';
+        form.style.opacity = '0.8';
         form.style.pointerEvents = 'none';
     }
 
@@ -121,14 +121,14 @@ class FormProtection {
      * Re-enable form (in case of error)
      */
     enableForm(form) {
-        // Re-enable all inputs
-        const inputs = form.querySelectorAll('input, select, textarea, button');
-        inputs.forEach(input => {
-            const wasDisabled = input.getAttribute('data-was-disabled') === 'true';
+        // Re-enable buttons
+        const buttons = form.querySelectorAll('button');
+        buttons.forEach(button => {
+            const wasDisabled = button.getAttribute('data-was-disabled') === 'true';
             if (!wasDisabled) {
-                input.disabled = false;
+                button.disabled = false;
             }
-            input.removeAttribute('data-was-disabled');
+            button.removeAttribute('data-was-disabled');
         });
 
         // Restore submit button
