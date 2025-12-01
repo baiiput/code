@@ -762,12 +762,13 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
         showError('Mohon selesaikan semua step terlebih dahulu');
         return;
     }
-    
+
     // Let the original app.js handle the actual submission
     console.log('📤 Form submitted with data:', formData);
-    
-    // Setup success detection with multiple strategies
-    setupSuccessDetection();
+
+    // 🔧 REMOVED: setupSuccessDetection() - dipanggil terlalu awal
+    // Detection akan dipanggil di confirmAndSubmit() setelah user klik "Ya, Submit Data" di modal
+    // setupSuccessDetection();
 });
 
 /**
