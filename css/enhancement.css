@@ -1,0 +1,274 @@
+/* ===================================================================
+   PENAWARAN ENHANCEMENT - ADDITIONAL STYLES
+   Version: 2.0
+   =================================================================== */
+
+/* Navigation Bar */
+.nav-bar {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 15px 30px;
+    margin: -10px -10px 20px -10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-left a {
+    color: white;
+    text-decoration: none;
+    font-size: 0.95em;
+    transition: opacity 0.3s;
+}
+
+.nav-left a:hover {
+    opacity: 0.8;
+}
+
+.nav-title {
+    font-weight: 700;
+    font-size: 1.2em;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-nav {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-nav:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Customer Autocomplete Dropdown */
+.customer-input-wrapper {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #3498db;
+    border-top: none;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 0 0 8px 8px;
+    display: none;
+}
+
+.autocomplete-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover {
+    background: #f0f8ff;
+}
+
+.autocomplete-item strong {
+    color: #2980b9;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.autocomplete-item small {
+    color: #7f8c8d;
+    font-size: 0.85em;
+}
+
+/* Company Profile Section */
+.company-profile-section {
+    background: #f8f9fa;
+    border: 2px dashed #3498db;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.company-profile-section label {
+    color: #2980b9;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.company-profile-section small {
+    color: #7f8c8d;
+    font-size: 0.85em;
+    display: block;
+    margin-top: 5px;
+}
+
+/* Save Buttons Section */
+.save-buttons-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.save-buttons-section .btn {
+    min-width: 180px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-save-draft {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-save-draft:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-save-send {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+}
+
+.btn-save-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+.btn-save-template {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: white;
+}
+
+.btn-save-template:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(149, 165, 166, 0.3);
+}
+
+.btn-quick-customer {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+    font-size: 0.85em;
+    padding: 6px 12px;
+    min-width: auto;
+}
+
+.btn-quick-customer:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(230, 126, 34, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Info Badge */
+.info-badge {
+    background: #e8f4fd;
+    border-left: 4px solid #3498db;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+    font-size: 0.9em;
+    color: #2c3e50;
+}
+
+.info-badge i {
+    color: #3498db;
+    margin-right: 8px;
+}
+
+/* Loading Spinner */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-bar {
+        padding: 12px 15px;
+    }
+
+    .nav-title {
+        font-size: 1em;
+    }
+
+    .save-buttons-section {
+        flex-direction: column;
+    }
+
+    .save-buttons-section .btn {
+        width: 100%;
+    }
+
+    .autocomplete-dropdown {
+        max-height: 180px;
+    }
+}
+
+/* Print hide */
+@media print {
+    .nav-bar,
+    .save-buttons-section,
+    .company-profile-section,
+    .btn-quick-customer,
+    .autocomplete-dropdown {
+        display: none !important;
+    }
+}
