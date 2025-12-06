@@ -546,6 +546,36 @@
 			setTimeout(forceLayout, 100);
 			setTimeout(forceLayout, 500);
 			setTimeout(forceLayout, 1000);
+			setTimeout(forceLayout, 2000);
+
+			// CONTINUOUS ENFORCEMENT - Keep forcing layout every 500ms for first 10 seconds
+			var enforcementInterval = setInterval(forceLayout, 500);
+			setTimeout(function() {
+				clearInterval(enforcementInterval);
+				console.log('🔒 Layout enforcement stopped after 10 seconds');
+			}, 10000);
+
+			// MutationObserver - Watch for style changes and re-apply
+			var observer = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+						var target = mutation.target;
+						if (target.id === 'slide' || target.classList.contains('container-slider')) {
+							// Slider style was changed, force it back
+							setTimeout(forceLayout, 10);
+						}
+					}
+				});
+			});
+
+			// Observe slide element for style changes
+			var slide = document.getElementById('slide');
+			if (slide) {
+				observer.observe(slide, {
+					attributes: true,
+					attributeFilter: ['style', 'class']
+				});
+			}
 		});
 	</script>
 
