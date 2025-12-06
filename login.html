@@ -480,18 +480,29 @@
 			    cfgSlide.staticBackground &&
 			    cfgSlide.staticBackground.enabled) {
 
-				var imagePath = cfgSlide.staticBackground.imagePath;
-
-				// Set background image via CSS
+				var config = cfgSlide.staticBackground;
 				var style = document.createElement('style');
-				style.textContent = `
-					body::before {
-						background-image: url('${imagePath}') !important;
-					}
-				`;
-				document.head.appendChild(style);
 
-				console.log('✅ Static background loaded:', imagePath);
+				// Option 1: Use gradient
+				if (config.useGradient && config.gradient) {
+					style.textContent = `
+						body::before {
+							background: ${config.gradient} !important;
+						}
+					`;
+					console.log('✅ Gradient background loaded');
+				}
+				// Option 2: Use image
+				else if (config.imagePath) {
+					style.textContent = `
+						body::before {
+							background-image: url('${config.imagePath}') !important;
+						}
+					`;
+					console.log('✅ Image background loaded:', config.imagePath);
+				}
+
+				document.head.appendChild(style);
 			}
 		});
 	</script>
