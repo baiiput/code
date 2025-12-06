@@ -69,27 +69,39 @@
 			animation: slideUp 0.3s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
 		}
 
-		/* Full Screen Slider Background Layout */
+		/* Full Screen Slider Background Layout - FORCE OVERRIDE */
 		.flex.flex-col.lg\:flex-row {
 			position: relative !important;
+			overflow: hidden !important;
 		}
 
-		#slide {
-			/* Make slider full screen background */
+		#slide,
+		.container-slider {
+			/* Make slider full screen background - AGGRESSIVE */
 			position: fixed !important;
 			top: 0 !important;
 			left: 0 !important;
 			width: 100vw !important;
 			height: 100vh !important;
 			z-index: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
 		}
 
 		#slide .siema,
 		#slide .siema > div,
-		#slide img {
+		#slide img,
+		.container-slider .siema,
+		.container-slider .siema > div,
+		.container-slider img {
 			width: 100% !important;
+			min-width: 100vw !important;
 			height: 100vh !important;
+			min-height: 100vh !important;
 			object-fit: cover !important;
+			object-position: center !important;
+			margin: 0 !important;
+			padding: 0 !important;
 		}
 
 		/* Glassmorphism Effect for Login Column - Now Floating */
