@@ -68,6 +68,54 @@
 		.modal-content-slide-out {
 			animation: slideUp 0.3s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
 		}
+
+		/* Glassmorphism Effect for Login Column */
+		#column2 {
+			/* Glass background with transparency */
+			background: rgba(30, 41, 59, 0.75) !important;
+
+			/* Backdrop blur for frosted glass effect */
+			backdrop-filter: blur(20px) saturate(180%);
+			-webkit-backdrop-filter: blur(20px) saturate(180%);
+
+			/* Subtle border with gradient */
+			border: 1px solid rgba(255, 255, 255, 0.1);
+
+			/* Shadow for depth */
+			box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+			/* Smooth transition */
+			transition: all 0.3s ease;
+		}
+
+		/* Enhanced glass effect on hover */
+		#column2:hover {
+			background: rgba(30, 41, 59, 0.85) !important;
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+		}
+
+		/* Input fields glass effect */
+		.input {
+			background: rgba(0, 0, 0, 0.3) !important;
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.1) !important;
+			transition: all 0.3s ease;
+		}
+
+		.input:focus {
+			background: rgba(0, 0, 0, 0.4) !important;
+			border: 1px solid rgba(59, 130, 246, 0.5) !important;
+			box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+		}
+
+		/* Button glass effect */
+		.btnBg {
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+		}
 	</style>
 </head>
 
