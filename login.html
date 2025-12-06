@@ -411,14 +411,20 @@
 			return originalWrite.apply(this, arguments);
 		};
 
-		// Method 3: Override innerHTML and textContent setters
+		// Method 3: Override innerHTML - SELECTIVE (only for validation errors, not slider)
 		var originalInnerHTMLSetter = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML').set;
 		Object.defineProperty(Element.prototype, 'innerHTML', {
 			set: function(value) {
+				// Don't block slider content
+				if (this.classList && (this.classList.contains('siema') || this.id === 'slide')) {
+					originalInnerHTMLSetter.call(this, value);
+					return;
+				}
+				// Block validation errors only
 				if (typeof value === 'string' &&
-				    (value.includes('creator') ||
-				     value.includes('Jangan mengubah') ||
-				     value.includes('eriksanjaya'))) {
+				    (value.includes('Jangan mengubah') ||
+				     value.includes('eriksanjaya.com') ||
+				     value.includes('Edit file'))) {
 					console.log('Creator validation blocked');
 					return;
 				}
@@ -547,35 +553,13 @@
 			setTimeout(forceLayout, 500);
 			setTimeout(forceLayout, 1000);
 			setTimeout(forceLayout, 2000);
+			setTimeout(forceLayout, 3000);
 
-			// CONTINUOUS ENFORCEMENT - Keep forcing layout every 500ms for first 10 seconds
-			var enforcementInterval = setInterval(forceLayout, 500);
+			// Final enforcement after slider initialized
 			setTimeout(function() {
-				clearInterval(enforcementInterval);
-				console.log('🔒 Layout enforcement stopped after 10 seconds');
-			}, 10000);
-
-			// MutationObserver - Watch for style changes and re-apply
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
-					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-						var target = mutation.target;
-						if (target.id === 'slide' || target.classList.contains('container-slider')) {
-							// Slider style was changed, force it back
-							setTimeout(forceLayout, 10);
-						}
-					}
-				});
-			});
-
-			// Observe slide element for style changes
-			var slide = document.getElementById('slide');
-			if (slide) {
-				observer.observe(slide, {
-					attributes: true,
-					attributeFilter: ['style', 'class']
-				});
-			}
+				forceLayout();
+				console.log('🔒 Final layout enforcement applied');
+			}, 5000);
 		});
 	</script>
 
