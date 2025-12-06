@@ -69,30 +69,74 @@
 			animation: slideUp 0.3s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
 		}
 
-		/* Glassmorphism Effect for Login Column */
+		/* Full Screen Slider Background Layout */
+		.flex.flex-col.lg\:flex-row {
+			position: relative !important;
+		}
+
+		#slide {
+			/* Make slider full screen background */
+			position: fixed !important;
+			top: 0 !important;
+			left: 0 !important;
+			width: 100vw !important;
+			height: 100vh !important;
+			z-index: 0 !important;
+		}
+
+		#slide .siema,
+		#slide .siema > div,
+		#slide img {
+			width: 100% !important;
+			height: 100vh !important;
+			object-fit: cover !important;
+		}
+
+		/* Glassmorphism Effect for Login Column - Now Floating */
 		#column2 {
+			/* Floating position */
+			position: relative !important;
+			z-index: 10 !important;
+
+			/* Desktop: Float on the right */
+			margin-left: auto !important;
+			max-width: 500px !important;
+			margin-right: 2rem !important;
+
 			/* Glass background with transparency */
-			background: rgba(30, 41, 59, 0.75) !important;
+			background: rgba(30, 41, 59, 0.65) !important;
 
 			/* Backdrop blur for frosted glass effect */
-			backdrop-filter: blur(20px) saturate(180%);
-			-webkit-backdrop-filter: blur(20px) saturate(180%);
+			backdrop-filter: blur(25px) saturate(180%);
+			-webkit-backdrop-filter: blur(25px) saturate(180%);
 
 			/* Subtle border with gradient */
-			border: 1px solid rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.15);
 
 			/* Shadow for depth */
-			box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+			box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+
+			/* Rounded corners */
+			border-radius: 20px !important;
 
 			/* Smooth transition */
 			transition: all 0.3s ease;
 		}
 
+		/* Mobile: Center the login form */
+		@media (max-width: 1023px) {
+			#column2 {
+				margin: 2rem auto !important;
+				max-width: 90% !important;
+			}
+		}
+
 		/* Enhanced glass effect on hover */
 		#column2:hover {
-			background: rgba(30, 41, 59, 0.85) !important;
-			border: 1px solid rgba(255, 255, 255, 0.15);
-			box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+			background: rgba(30, 41, 59, 0.75) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+			transform: translateY(-2px);
 		}
 
 		/* Input fields glass effect */
