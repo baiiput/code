@@ -469,6 +469,87 @@
 	<script src="./assets/md5.js"></script>
 
 	<script>
+		// FORCE FULL SCREEN SLIDER LAYOUT WITH JAVASCRIPT
+		window.addEventListener('DOMContentLoaded', function() {
+			function forceLayout() {
+				// Force slider to full screen background
+				var slide = document.getElementById('slide');
+				var sliderContainer = document.querySelector('.container-slider');
+
+				if (slide) {
+					slide.style.position = 'fixed';
+					slide.style.top = '0';
+					slide.style.left = '0';
+					slide.style.width = '100vw';
+					slide.style.height = '100vh';
+					slide.style.zIndex = '0';
+					slide.style.margin = '0';
+					slide.style.padding = '0';
+				}
+
+				if (sliderContainer) {
+					sliderContainer.style.position = 'fixed';
+					sliderContainer.style.top = '0';
+					sliderContainer.style.left = '0';
+					sliderContainer.style.width = '100vw';
+					sliderContainer.style.height = '100vh';
+					sliderContainer.style.zIndex = '0';
+				}
+
+				// Force slider images to cover full screen
+				var siemaContainers = document.querySelectorAll('.siema, #slide .siema, .container-slider .siema');
+				siemaContainers.forEach(function(siema) {
+					siema.style.width = '100%';
+					siema.style.height = '100vh';
+				});
+
+				var siemaDivs = document.querySelectorAll('.siema > div, #slide .siema > div');
+				siemaDivs.forEach(function(div) {
+					div.style.width = '100vw';
+					div.style.height = '100vh';
+				});
+
+				var slideImages = document.querySelectorAll('#slide img, .siema img, .container-slider img');
+				slideImages.forEach(function(img) {
+					img.style.width = '100%';
+					img.style.height = '100vh';
+					img.style.objectFit = 'cover';
+					img.style.objectPosition = 'center';
+				});
+
+				// Force login column to float
+				var column2 = document.getElementById('column2');
+				if (column2) {
+					column2.style.position = 'relative';
+					column2.style.zIndex = '10';
+					column2.style.marginLeft = 'auto';
+					column2.style.marginRight = '2rem';
+					column2.style.maxWidth = '500px';
+
+					// Glass effect
+					column2.style.background = 'rgba(30, 41, 59, 0.65)';
+					column2.style.backdropFilter = 'blur(25px) saturate(180%)';
+					column2.style.webkitBackdropFilter = 'blur(25px) saturate(180%)';
+					column2.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+					column2.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.5)';
+					column2.style.borderRadius = '20px';
+					column2.style.transition = 'all 0.3s ease';
+				}
+
+				console.log('✅ Full screen slider layout forced with JavaScript');
+			}
+
+			// Apply immediately
+			forceLayout();
+
+			// Apply again after a delay to override any dynamic CSS
+			setTimeout(forceLayout, 100);
+			setTimeout(forceLayout, 500);
+			setTimeout(forceLayout, 1000);
+		});
+	</script>
+
+	<script>
 		// Smooth Slider Animation Override
 		// Override Siema slider configuration for smoother animations
 		window.addEventListener('load', function() {
