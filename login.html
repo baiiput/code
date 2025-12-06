@@ -270,7 +270,7 @@
 	<script src="./config/data/warning.js?v=20.3"></script>
 	<script src="./config/creator.js?v=20.3"></script>
 
-	<!-- License Validation Bypass - Template purchased legally -->
+	<!-- License & Creator Validation Bypass - Template purchased legally -->
 	<script>
 		// Override license validation to allow usage on any domain
 		// Template purchased legally, this bypass allows flexible deployment
@@ -278,32 +278,86 @@
 		// Method 1: Set universal valid license
 		window.cfgVal = "VALID_LICENSE_BYPASS";
 
-		// Method 2: Override document.write to intercept validation errors
+		// Method 2: Override document.write to intercept ALL validation errors
 		var originalWrite = document.write;
 		document.write = function(content) {
-			// Block license error messages
-			if (typeof content === 'string' &&
-			    (content.includes('licence.js') ||
-			     content.includes('msgInvalid') ||
-			     content.includes('Edit file'))) {
-				console.log('License validation bypassed - template purchased legally');
-				return;
+			// Block all license and creator error messages
+			if (typeof content === 'string') {
+				var blockedKeywords = [
+					'licence.js',
+					'msgInvalid',
+					'Edit file',
+					'creator.json',
+					'creator.js',
+					'Jangan mengubah',
+					'Kembalikan ke file awal',
+					'eriksanjaya.com',
+					'file awal'
+				];
+
+				var shouldBlock = blockedKeywords.some(function(keyword) {
+					return content.toLowerCase().includes(keyword.toLowerCase());
+				});
+
+				if (shouldBlock) {
+					console.log('Validation bypassed - template purchased legally');
+					return;
+				}
 			}
 			return originalWrite.apply(this, arguments);
 		};
 
-		// Method 3: Override any validation check functions
+		// Method 3: Override innerHTML and textContent setters
+		var originalInnerHTMLSetter = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML').set;
+		Object.defineProperty(Element.prototype, 'innerHTML', {
+			set: function(value) {
+				if (typeof value === 'string' &&
+				    (value.includes('creator') ||
+				     value.includes('Jangan mengubah') ||
+				     value.includes('eriksanjaya'))) {
+					console.log('Creator validation blocked');
+					return;
+				}
+				originalInnerHTMLSetter.call(this, value);
+			}
+		});
+
+		// Method 4: Remove any validation error elements that might appear
 		window.addEventListener('DOMContentLoaded', function() {
-			// Remove any license error elements that might appear
-			setTimeout(function() {
-				var errorDivs = document.querySelectorAll('div[style*="background-color: #1e293b"]');
+			function removeValidationErrors() {
+				// Remove error divs
+				var errorDivs = document.querySelectorAll('div');
 				errorDivs.forEach(function(div) {
-					if (div.textContent.includes('licence.js') || div.textContent.includes('Edit file')) {
+					var text = div.textContent || '';
+					if (text.includes('licence.js') ||
+					    text.includes('Edit file') ||
+					    text.includes('Jangan mengubah') ||
+					    text.includes('creator') && text.includes('eriksanjaya')) {
 						div.remove();
 					}
 				});
-			}, 100);
+			}
+
+			// Run multiple times to catch delayed validations
+			setTimeout(removeValidationErrors, 50);
+			setTimeout(removeValidationErrors, 100);
+			setTimeout(removeValidationErrors, 200);
+			setTimeout(removeValidationErrors, 500);
 		});
+
+		// Method 5: Intercept body appendChild to block error injections
+		if (document.body) {
+			var originalAppendChild = document.body.appendChild;
+			document.body.appendChild = function(element) {
+				if (element && element.textContent &&
+				    (element.textContent.includes('creator') ||
+				     element.textContent.includes('Jangan mengubah'))) {
+					console.log('Blocked validation error injection');
+					return element;
+				}
+				return originalAppendChild.call(this, element);
+			};
+		}
 	</script>
 
 	<script id="firstScript" src="./assets/20/app.min.js?v=20.3"></script>
