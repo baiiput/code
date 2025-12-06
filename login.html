@@ -102,16 +102,24 @@
 			display: none !important;
 		}
 
+		/* Parent container - enable vertical centering */
+		.flex.flex-col.lg\:flex-row {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			min-height: 100vh !important;
+		}
+
 		/* Glassmorphism Effect for Login Column - Now Floating */
 		#column2 {
 			/* Floating position */
 			position: relative !important;
 			z-index: 10 !important;
 
-			/* Desktop: Float on the right */
-			margin-left: auto !important;
-			max-width: 500px !important;
-			margin-right: 2rem !important;
+			/* Desktop: Smaller width and centered */
+			max-width: 420px !important;
+			width: 100% !important;
+			margin: 0 !important;
 
 			/* Glass background with transparency */
 			background: rgba(30, 41, 59, 0.65) !important;
@@ -131,13 +139,17 @@
 
 			/* Smooth transition */
 			transition: all 0.3s ease;
+
+			/* Compact padding */
+			padding: 2rem 2.5rem !important;
 		}
 
 		/* Mobile: Center the login form */
 		@media (max-width: 1023px) {
 			#column2 {
-				margin: 2rem auto !important;
+				margin: 2rem !important;
 				max-width: 90% !important;
+				padding: 1.5rem 2rem !important;
 			}
 		}
 
