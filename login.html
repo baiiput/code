@@ -69,39 +69,37 @@
 			animation: slideUp 0.3s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
 		}
 
-		/* Full Screen Slider Background Layout - FORCE OVERRIDE */
+		/* Static Background Layout - Clean & Simple */
+		body {
+			position: relative !important;
+			overflow-x: hidden !important;
+		}
+
+		/* Static background image overlay */
+		body::before {
+			content: '';
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			z-index: 0;
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+			/* Background image will be set via JavaScript from config */
+		}
+
+		/* Main container */
 		.flex.flex-col.lg\:flex-row {
 			position: relative !important;
-			overflow: hidden !important;
+			z-index: 1 !important;
 		}
 
+		/* Hide slider element */
 		#slide,
 		.container-slider {
-			/* Make slider full screen background - AGGRESSIVE */
-			position: fixed !important;
-			top: 0 !important;
-			left: 0 !important;
-			width: 100vw !important;
-			height: 100vh !important;
-			z-index: 0 !important;
-			margin: 0 !important;
-			padding: 0 !important;
-		}
-
-		#slide .siema,
-		#slide .siema > div,
-		#slide img,
-		.container-slider .siema,
-		.container-slider .siema > div,
-		.container-slider img {
-			width: 100% !important;
-			min-width: 100vw !important;
-			height: 100vh !important;
-			min-height: 100vh !important;
-			object-fit: cover !important;
-			object-position: center !important;
-			margin: 0 !important;
-			padding: 0 !important;
+			display: none !important;
 		}
 
 		/* Glassmorphism Effect for Login Column - Now Floating */
@@ -475,129 +473,26 @@
 	<script src="./assets/md5.js"></script>
 
 	<script>
-		// FORCE FULL SCREEN SLIDER LAYOUT WITH JAVASCRIPT
+		// STATIC BACKGROUND - Load from config
 		window.addEventListener('DOMContentLoaded', function() {
-			function forceLayout() {
-				// Force slider to full screen background
-				var slide = document.getElementById('slide');
-				var sliderContainer = document.querySelector('.container-slider');
+			// Check if static background is enabled
+			if (typeof cfgSlide !== 'undefined' &&
+			    cfgSlide.staticBackground &&
+			    cfgSlide.staticBackground.enabled) {
 
-				if (slide) {
-					slide.style.position = 'fixed';
-					slide.style.top = '0';
-					slide.style.left = '0';
-					slide.style.width = '100vw';
-					slide.style.height = '100vh';
-					slide.style.zIndex = '0';
-					slide.style.margin = '0';
-					slide.style.padding = '0';
-				}
+				var imagePath = cfgSlide.staticBackground.imagePath;
 
-				if (sliderContainer) {
-					sliderContainer.style.position = 'fixed';
-					sliderContainer.style.top = '0';
-					sliderContainer.style.left = '0';
-					sliderContainer.style.width = '100vw';
-					sliderContainer.style.height = '100vh';
-					sliderContainer.style.zIndex = '0';
-				}
-
-				// Force slider images to cover full screen
-				var siemaContainers = document.querySelectorAll('.siema, #slide .siema, .container-slider .siema');
-				siemaContainers.forEach(function(siema) {
-					siema.style.width = '100%';
-					siema.style.height = '100vh';
-				});
-
-				var siemaDivs = document.querySelectorAll('.siema > div, #slide .siema > div');
-				siemaDivs.forEach(function(div) {
-					div.style.width = '100vw';
-					div.style.height = '100vh';
-				});
-
-				var slideImages = document.querySelectorAll('#slide img, .siema img, .container-slider img');
-				slideImages.forEach(function(img) {
-					img.style.width = '100%';
-					img.style.height = '100vh';
-					img.style.objectFit = 'cover';
-					img.style.objectPosition = 'center';
-				});
-
-				// Force login column to float
-				var column2 = document.getElementById('column2');
-				if (column2) {
-					column2.style.position = 'relative';
-					column2.style.zIndex = '10';
-					column2.style.marginLeft = 'auto';
-					column2.style.marginRight = '2rem';
-					column2.style.maxWidth = '500px';
-
-					// Glass effect
-					column2.style.background = 'rgba(30, 41, 59, 0.65)';
-					column2.style.backdropFilter = 'blur(25px) saturate(180%)';
-					column2.style.webkitBackdropFilter = 'blur(25px) saturate(180%)';
-					column2.style.border = '1px solid rgba(255, 255, 255, 0.15)';
-					column2.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.5)';
-					column2.style.borderRadius = '20px';
-					column2.style.transition = 'all 0.3s ease';
-				}
-
-				console.log('✅ Full screen slider layout forced with JavaScript');
-			}
-
-			// Apply immediately
-			forceLayout();
-
-			// Apply again after a delay to override any dynamic CSS
-			setTimeout(forceLayout, 100);
-			setTimeout(forceLayout, 500);
-			setTimeout(forceLayout, 1000);
-			setTimeout(forceLayout, 2000);
-			setTimeout(forceLayout, 3000);
-
-			// Final enforcement after slider initialized
-			setTimeout(function() {
-				forceLayout();
-				console.log('🔒 Final layout enforcement applied');
-			}, 5000);
-		});
-	</script>
-
-	<script>
-		// Smooth Slider Animation Override
-		// Override Siema slider configuration for smoother animations
-		window.addEventListener('load', function() {
-			setTimeout(function() {
-				// Find and enhance Siema slider if exists
-				var sliderElement = document.querySelector('.siema');
-				if (sliderElement && window.Siema) {
-					// Add smooth transition CSS
-					var style = document.createElement('style');
-					style.textContent = `
-						.siema {
-							transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-						}
-						.siema > div {
-							transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-						}
-						.siema img {
-							transition: opacity 0.6s ease-in-out !important;
-						}
-					`;
-					document.head.appendChild(style);
-
-					// Try to reinitialize Siema with smoother settings if possible
-					try {
-						var siemaInstance = document.querySelector('.siema').__siema;
-						if (siemaInstance && siemaInstance.config) {
-							siemaInstance.config.duration = 800; // Increase from 200ms to 800ms
-							siemaInstance.config.easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-						}
-					} catch(e) {
-						console.log('Siema slider enhanced with CSS transitions');
+				// Set background image via CSS
+				var style = document.createElement('style');
+				style.textContent = `
+					body::before {
+						background-image: url('${imagePath}') !important;
 					}
-				}
-			}, 500);
+				`;
+				document.head.appendChild(style);
+
+				console.log('✅ Static background loaded:', imagePath);
+			}
 		});
 	</script>
 

@@ -1,6 +1,14 @@
 var cfgSlide = {
-  status: 1,  // 1 = aktif, 0 = nonaktif
-  delay: 5,   // Delay dalam detik (lebih lama untuk smooth transition)
+  status: 0,  // 0 = slider disabled, use static background instead
+
+  // Static background configuration
+  staticBackground: {
+    enabled: 1,  // 1 = use static background
+    imagePath: "./public/slide/img-1.webp",  // Path to background image
+  },
+
+  // Old slider config (disabled)
+  delay: 5,
   imagePath: [
     "./public/slide/img-1.webp",
     "./public/slide/img-2.webp",
