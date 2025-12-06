@@ -10,6 +10,65 @@
 	<link rel="icon" type="image/svg+xml" href="./icon.svg" />
 	<link rel="stylesheet" href="./assets/20/style.css?v=20.3">
 	<title>Home</title>
+
+	<style>
+		/* Modal Animations */
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+			}
+			to {
+				opacity: 1;
+			}
+		}
+
+		@keyframes fadeOut {
+			from {
+				opacity: 1;
+			}
+			to {
+				opacity: 0;
+			}
+		}
+
+		@keyframes slideDown {
+			from {
+				opacity: 0;
+				transform: translateY(-50px) scale(0.9);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
+		}
+
+		@keyframes slideUp {
+			from {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
+			to {
+				opacity: 0;
+				transform: translateY(-50px) scale(0.9);
+			}
+		}
+
+		.modal-fade-in {
+			animation: fadeIn 0.3s ease-out forwards;
+		}
+
+		.modal-fade-out {
+			animation: fadeOut 0.3s ease-out forwards;
+		}
+
+		.modal-content-slide-in {
+			animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		}
+
+		.modal-content-slide-out {
+			animation: slideUp 0.3s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
+		}
+	</style>
 </head>
 
 <!-- 
@@ -218,9 +277,32 @@
 		// Warning Modal Functions
 		function closeWarningModal() {
 			const modal = document.getElementById('warningModal');
-			if (modal) {
-				modal.style.display = 'none';
+			const overlay = document.getElementById('modalOverlay');
+			const content = document.getElementById('modalContent');
+
+			if (!modal) return;
+
+			// Tambahkan animasi fade out
+			if (overlay) {
+				overlay.classList.remove('modal-fade-in');
+				overlay.classList.add('modal-fade-out');
 			}
+			if (content) {
+				content.classList.remove('modal-content-slide-in');
+				content.classList.add('modal-content-slide-out');
+			}
+
+			// Tunggu animasi selesai baru sembunyikan modal
+			setTimeout(function() {
+				modal.style.display = 'none';
+				// Reset classes untuk animasi berikutnya
+				if (overlay) {
+					overlay.classList.remove('modal-fade-out');
+				}
+				if (content) {
+					content.classList.remove('modal-content-slide-out');
+				}
+			}, 300);
 		}
 
 		function showWarningModal() {
@@ -254,18 +336,27 @@
 					closeBtn.style.backgroundColor = cfgWarningModal.style.buttonBg || '#3b82f6';
 					closeBtn.style.color = cfgWarningModal.style.buttonTextColor || '#ffffff';
 
-					// Tambahkan hover effect
+					// Tambahkan hover effect dengan smooth transition
+					closeBtn.style.transition = 'all 0.3s ease';
 					closeBtn.onmouseover = function() {
 						this.style.backgroundColor = cfgWarningModal.style.buttonHoverBg || '#2563eb';
+						this.style.transform = 'scale(1.05)';
 					};
 					closeBtn.onmouseout = function() {
 						this.style.backgroundColor = cfgWarningModal.style.buttonBg || '#3b82f6';
+						this.style.transform = 'scale(1)';
 					};
 				}
 			}
 
-			// Tampilkan modal
+			// Tampilkan modal dengan animasi
 			modal.style.display = 'flex';
+
+			// Trigger animasi setelah display diset
+			setTimeout(function() {
+				if (overlay) overlay.classList.add('modal-fade-in');
+				if (content) content.classList.add('modal-content-slide-in');
+			}, 10);
 
 			// Close modal jika klik overlay
 			if (overlay) {
