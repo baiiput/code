@@ -29,6 +29,14 @@ $counthotspotactive = 0;
 $uunit = "items";
 $hunit = "items";
 
+// Initialize interface variables (usually from readcfg.php)
+if (!isset($iface)) {
+  $iface = 1; // Default to first interface
+}
+if (!isset($interface)) {
+  $interface = 'ether1'; // Default interface name
+}
+
 if ($livereport == "disable") {
   $logh = "320px";
   $lreport = "style='display:none;'";
@@ -41,6 +49,28 @@ if ($livereport == "disable") {
 ?>
 
 <style id="compact-dashboard-styles">
+/* Global overflow fix - prevent horizontal scroll */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Center the entire page layout including sidebar */
+#wrapper,
+.wrapper,
+.main-container,
+.page-wrapper {
+  max-width: 1920px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
 :root {
   --bg-primary: #1a1a1a;
   --bg-secondary: #2d2d2d;
@@ -62,9 +92,9 @@ if ($livereport == "disable") {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 15px;
   min-height: 100vh;
-  max-width: 1920px; /* Maximum width for large displays */
-  margin: 0 auto; /* Center the dashboard */
-  width: 100%; /* Full width up to max-width */
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .compact-card {
@@ -74,6 +104,8 @@ if ($livereport == "disable") {
   box-shadow: var(--shadow);
   margin-bottom: 15px;
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .compact-header {
@@ -103,6 +135,8 @@ if ($livereport == "disable") {
   grid-template-columns: 1fr 1fr;
   gap: 15px;
   margin-bottom: 15px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .middle-row-grid {
@@ -110,13 +144,17 @@ if ($livereport == "disable") {
   grid-template-columns: 1fr;
   gap: 15px;
   margin-bottom: 15px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .three-col-grid {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 0.8fr;
+  grid-template-columns: 1.2fr 1.3fr 0.9fr;
   gap: 15px;
   margin-bottom: 15px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* Enhanced System Status Card */
@@ -805,12 +843,18 @@ if ($livereport == "disable") {
   color: var(--text-primary);
   margin-bottom: 2px;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-subtitle {
   font-size: 10px;
   color: var(--text-muted);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Card Arrow */
@@ -2052,9 +2096,9 @@ if ($livereport == "disable") {
     
 <div id="reloadHome" class="compact-dashboard">
 
-  <!-- Top Row: System Status & Income Report -->
+  <!-- Top Row: System Status & Hotspot Management -->
   <div class="top-row-grid">
-    
+
     <!-- System Status Card - Enhanced -->
     <div id="r_1" class="compact-card system-status-card">
       <div class="compact-header system-header">
@@ -2147,70 +2191,6 @@ if ($livereport == "disable") {
       </div>
     </div>
     
-    <!-- Income Report Card - Now Horizontal -->
-    <div <?= $lreport; ?> class="compact-card income-card-enhanced">
-      <div class="compact-header income-header">
-        <div class="header-left">
-          <i class="fa fa-money income-icon"></i>
-          <span>Income Report</span>
-        </div>
-        <div class="income-status">
-          <div class="income-indicator">
-            <div class="money-pulse"></div>
-          </div>
-        </div>
-      </div>
-      <div class="compact-body">
-        <div id="r_4" class="income-display-enhanced">
-          <div id="reloadLreport" class="income-content">
-            <?php 
-            if ($_SESSION[$session.'sdate'] == $_SESSION[$session.'idhr']){
-              echo '<div class="income-stat-card today-card">
-                      <div class="income-stat-icon">
-                        <i class="fa fa-calendar-o"></i>
-                      </div>
-                      <div class="income-stat-content">
-                        <div class="income-stat-label">Today\'s Revenue</div>
-                        <div class="income-stat-value">' . $currency . ' ' . $_SESSION[$session.'dincome'] . '</div>
-                        <div class="income-stat-count">' . $_SESSION[$session.'totalHr'] . ' vouchers sold</div>
-                      </div>
-                      <div class="income-trend up">
-                        <i class="fa fa-arrow-up"></i>
-                      </div>
-                    </div>
-                    <div class="income-stat-card month-card">
-                      <div class="income-stat-icon">
-                        <i class="fa fa-bar-chart"></i>
-                      </div>
-                      <div class="income-stat-content">
-                        <div class="income-stat-label">This Month</div>
-                        <div class="income-stat-value">' . $currency . ' ' . $_SESSION[$session.'mincome'] . '</div>
-                        <div class="income-stat-count">' . $_SESSION[$session.'totalBl'] . ' total vouchers</div>
-                      </div>
-                      <div class="income-trend stable">
-                        <i class="fa fa-line-chart"></i>
-                      </div>
-                    </div>';
-            } else {
-              echo '<div class="income-loading">
-                      <div class="loading-spinner"></div>
-                      <div class="loading-text">
-                        <div class="loading-title">Processing Income Data</div>
-                        <div class="loading-subtitle">Calculating revenue metrics...</div>
-                      </div>
-                    </div>';
-            }
-            ?>
-          </div>                       
-        </div>
-      </div>
-    </div>
-    
-  </div>
-
-  <!-- Three Column Grid: Hotspot Management, Traffic Monitor, and Logs -->
-  <div class="three-col-grid">
-
     <!-- Hotspot Management Card -->
     <div id="r_2" class="compact-card hotspot-management-card">
       <div class="compact-header hotspot-header">
@@ -2228,7 +2208,7 @@ if ($livereport == "disable") {
       </div>
       <div class="compact-body">
         <div class="hotspot-grid-enhanced">
-          
+
           <!-- Active Users -->
           <a class="hotspot-card active-card" onclick="cancelPage()" href="./?hotspot=active&session=<?= $session; ?>">
             <div class="card-icon-container">
@@ -2272,7 +2252,7 @@ if ($livereport == "disable") {
               </div>
             </div>
           </a>
-          
+
           <!-- Add User -->
           <a class="hotspot-card add-card" onclick="cancelPage()" href="./?hotspot-user=add&session=<?= $session; ?>">
             <div class="card-icon-container">
@@ -2293,7 +2273,7 @@ if ($livereport == "disable") {
               </div>
             </div>
           </a>
-          
+
           <!-- Generate Users -->
           <a class="hotspot-card generate-card" onclick="cancelPage()" href="./?hotspot-user=generate&session=<?= $session; ?>">
             <div class="card-icon-container">
@@ -2318,7 +2298,71 @@ if ($livereport == "disable") {
               </div>
             </div>
           </a>
-          
+
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Three Column Grid: Income Report, Traffic Monitor, and Logs -->
+  <div class="three-col-grid">
+
+    <!-- Income Report Card -->
+    <div <?= $lreport; ?> class="compact-card income-card-enhanced">
+      <div class="compact-header income-header">
+        <div class="header-left">
+          <i class="fa fa-money income-icon"></i>
+          <span>Income Report</span>
+        </div>
+        <div class="income-status">
+          <div class="income-indicator">
+            <div class="money-pulse"></div>
+          </div>
+        </div>
+      </div>
+      <div class="compact-body">
+        <div id="r_4" class="income-display-enhanced">
+          <div id="reloadLreport" class="income-content">
+            <?php
+            if ($_SESSION[$session.'sdate'] == $_SESSION[$session.'idhr']){
+              echo '<div class="income-stat-card today-card">
+                      <div class="income-stat-icon">
+                        <i class="fa fa-calendar-o"></i>
+                      </div>
+                      <div class="income-stat-content">
+                        <div class="income-stat-label">Today\'s Revenue</div>
+                        <div class="income-stat-value">' . $currency . ' ' . $_SESSION[$session.'dincome'] . '</div>
+                        <div class="income-stat-count">' . $_SESSION[$session.'totalHr'] . ' vouchers sold</div>
+                      </div>
+                      <div class="income-trend up">
+                        <i class="fa fa-arrow-up"></i>
+                      </div>
+                    </div>
+                    <div class="income-stat-card month-card">
+                      <div class="income-stat-icon">
+                        <i class="fa fa-bar-chart"></i>
+                      </div>
+                      <div class="income-stat-content">
+                        <div class="income-stat-label">This Month</div>
+                        <div class="income-stat-value">' . $currency . ' ' . $_SESSION[$session.'mincome'] . '</div>
+                        <div class="income-stat-count">' . $_SESSION[$session.'totalBl'] . ' total vouchers</div>
+                      </div>
+                      <div class="income-trend stable">
+                        <i class="fa fa-line-chart"></i>
+                      </div>
+                    </div>';
+            } else {
+              echo '<div class="income-loading">
+                      <div class="loading-spinner"></div>
+                      <div class="loading-text">
+                        <div class="loading-title">Processing Income Data</div>
+                        <div class="loading-subtitle">Calculating revenue metrics...</div>
+                      </div>
+                    </div>';
+            }
+            ?>
+          </div>
         </div>
       </div>
     </div>
@@ -2329,10 +2373,6 @@ if ($livereport == "disable") {
         <div class="header-left">
           <i class="fa fa-area-chart traffic-icon"></i>
           <span>Network Traffic Monitor</span>
-          <?php
-          // Interface name will be loaded dynamically
-          $interface = isset($interface) ? $interface : 'eth0';
-          ?>
           <span class="interface-badge"><?= $interface ?></span>
         </div>
         <div class="traffic-status">
