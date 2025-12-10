@@ -451,25 +451,24 @@ body > table[width="100%"] {
 }
 
 .income-content {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 15px !important;
 }
 
 .income-stat-card {
   background: var(--bg-tertiary) !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 8px !important;
-  padding: 12px 16px !important;
+  border-radius: 10px !important;
+  padding: 16px !important;
   display: flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   align-items: center !important;
-  text-align: left !important;
+  text-align: center !important;
   position: relative !important;
   overflow: hidden !important;
   transition: all 0.3s ease !important;
-  gap: 12px !important;
-  min-height: auto !important;
+  min-height: 100px !important;
 }
 
 .income-stat-card:hover {
@@ -497,12 +496,12 @@ body > table[width="100%"] {
 .income-stat-icon {
   width: 40px !important;
   height: 40px !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 16px !important;
-  flex-shrink: 0 !important;
+  font-size: 18px !important;
+  margin-bottom: 12px !important;
 }
 
 .today-card .income-stat-icon {
@@ -516,42 +515,39 @@ body > table[width="100%"] {
 }
 
 .income-stat-content {
-  flex: 1 !important;
-  min-width: 0 !important;
+  width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 4px !important;
 }
 
 .income-stat-label {
-  font-size: 10px !important;
+  font-size: 11px !important;
   color: var(--text-muted) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  line-height: 1 !important;
+  font-weight: 600 !important;
 }
 
 .income-stat-value {
-  font-size: 16px !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   color: var(--text-primary) !important;
   line-height: 1.2 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
 }
 
 .income-stat-count {
-  font-size: 9px !important;
+  font-size: 10px !important;
   color: var(--text-secondary) !important;
-  line-height: 1 !important;
+  margin-top: 2px !important;
 }
 
 .income-trend {
-  flex-shrink: 0 !important;
-  font-size: 16px !important;
-  margin-left: auto !important;
-  opacity: 0.8 !important;
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  font-size: 18px !important;
+  opacity: 0.6 !important;
 }
 
 .income-trend.up {
@@ -2412,7 +2408,27 @@ body > table[width="100%"] {
         </div>
       </div>
       <div class="compact-body traffic-body">
-        <!-- Chart Only - More Compact -->
+        <!-- Traffic Stats in One Row -->
+        <div class="traffic-stats">
+          <div class="traffic-stat upload-stat">
+            <div class="stat-icon">
+              <i class="fa fa-arrow-up"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Upload</div>
+              <div class="stat-value" id="uploadValue">0 bps</div>
+            </div>
+          </div>
+          <div class="traffic-stat download-stat">
+            <div class="stat-icon">
+              <i class="fa fa-arrow-down"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Download</div>
+              <div class="stat-value" id="downloadValue">0 bps</div>
+            </div>
+          </div>
+        </div>
         <div class="chart-container">
           <div id="trafficMonitor"></div>
         </div>
@@ -2780,6 +2796,14 @@ $(document).ajaxComplete(function() {
     return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  // Update traffic stats display
+  function updateTrafficStats(uploadValue, downloadValue) {
+    var uploadEl = document.getElementById('uploadValue');
+    var downloadEl = document.getElementById('downloadValue');
+    if (uploadEl) uploadEl.textContent = formatTrafficBytes(uploadValue);
+    if (downloadEl) downloadEl.textContent = formatTrafficBytes(downloadValue);
+  }
+
   function requestDatta(session,iface) {
     $.ajax({
       url: './traffic/traffic.php?session='+session+'&iface='+iface,
@@ -2794,6 +2818,9 @@ $(document).ajaxComplete(function() {
             shift=chart.series[0].data.length > 19;
             chart.series[0].addPoint([x, TX], true, shift);
             chart.series[1].addPoint([x, RX], true, shift);
+
+            // Update real-time stats display
+            updateTrafficStats(TX, RX);
           }
         } catch(e) {
           console.error("Traffic data parse error:", e);
