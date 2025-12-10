@@ -2467,217 +2467,23 @@ body > table[width="100%"] {
   </div>
 </div>
 
+<!-- Load Highcharts Library for Traffic Monitor Chart -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
 <!-- Enhanced JavaScript for Better AJAX Handling -->
 <script type="text/javascript">
 // Improved CSS persistence and income report stability
 function ensureCompactStyling() {
-  if (!document.getElementById('compact-dashboard-styles')) {
-    var existingStyles = document.head.querySelector('style[id*="compact"]');
-    if (existingStyles) {
-      existingStyles.remove();
-    }
-    
-    var style = document.createElement('style');
-    style.id = 'compact-dashboard-styles';
-    style.innerHTML = `
-      /* Force income report styling stability */
-      .income-display-enhanced { padding: 8px !important; }
-      .income-content { display: flex !important; flex-direction: column !important; gap: 10px !important; }
-      .income-stat-card { 
-        background: #383838 !important; 
-        border: 1px solid #404040 !important; 
-        border-radius: 8px !important; 
-        padding: 10px !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        gap: 10px !important; 
-        transition: all 0.3s ease !important; 
-        position: relative !important; 
-        overflow: hidden !important; 
-      }
-      .income-stat-card::before { 
-        content: '' !important; 
-        position: absolute !important; 
-        top: 0 !important; 
-        left: 0 !important; 
-        bottom: 0 !important; 
-        width: 3px !important; 
-      }
-      .today-card::before { background: linear-gradient(180deg, #00d084 0%, #4a9eff 100%) !important; }
-      .month-card::before { background: linear-gradient(180deg, #4a9eff 0%, #ff9500 100%) !important; }
-      .income-stat-icon { 
-        width: 28px !important; 
-        height: 28px !important; 
-        border-radius: 6px !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        font-size: 12px !important; 
-        flex-shrink: 0 !important; 
-      }
-      .today-card .income-stat-icon { background: linear-gradient(135deg, #00d084 0%, #00b574 100%) !important; color: white !important; }
-      .month-card .income-stat-icon { background: linear-gradient(135deg, #4a9eff 0%, #3a8ae8 100%) !important; color: white !important; }
-      .income-stat-content { flex: 1 !important; min-width: 0 !important; }
-      .income-stat-label { font-size: 9px !important; color: #888888 !important; text-transform: uppercase !important; margin-bottom: 3px !important; }
-      .income-stat-value { font-size: 14px !important; font-weight: 700 !important; color: #ffffff !important; margin-bottom: 2px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-      .income-stat-count { font-size: 8px !important; color: #b0b0b0 !important; }
-      .income-trend { font-size: 10px !important; opacity: 0.7 !important; flex-shrink: 0 !important; }
-      .income-trend.up { color: #00d084 !important; }
-      .income-trend.stable { color: #4a9eff !important; }
-      
-      /* Traffic stats in one row */
-      .traffic-stats { 
-        display: flex !important; 
-        gap: 15px !important; 
-        margin-bottom: 15px !important; 
-        padding: 8px !important; 
-        background: rgba(255,255,255,0.02) !important; 
-        border-radius: 8px !important; 
-        border: 1px solid #404040 !important; 
-      }
-      .traffic-stat { 
-        flex: 1 !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        gap: 10px !important; 
-        padding: 8px 12px !important; 
-        background: #383838 !important; 
-        border-radius: 6px !important; 
-      }
-      .upload-stat { border-left: 3px solid #ff9500 !important; }
-      .download-stat { border-left: 3px solid #00d084 !important; }
-      .traffic-stat .stat-icon { 
-        width: 32px !important; 
-        height: 32px !important; 
-        border-radius: 6px !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        font-size: 14px !important; 
-        flex-shrink: 0 !important; 
-      }
-      .upload-stat .stat-icon { background: linear-gradient(135deg, #ff9500 0%, #e6850e 100%) !important; color: white !important; }
-      .download-stat .stat-icon { background: linear-gradient(135deg, #00d084 0%, #00b574 100%) !important; color: white !important; }
-      .stat-info { flex: 1 !important; min-width: 0 !important; }
-      .traffic-stat .stat-label { font-size: 10px !important; color: #888888 !important; text-transform: uppercase !important; margin-bottom: 4px !important; }
-      .traffic-stat .stat-value { font-size: 14px !important; font-weight: 700 !important; color: #ffffff !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-      
-      /* Enhanced logs loading styles for better UX */
-      .logs-loading { text-align: center !important; padding: 20px !important; color: #888888 !important; background: rgba(255,255,255,0.02) !important; }
-      .logs-loading-content { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 10px !important; }
-      .logs-empty-icon { font-size: 18px !important; color: #4a9eff !important; opacity: 0.7 !important; margin-bottom: 8px !important; }
-      .loading-dots { display: flex !important; gap: 4px !important; }
-      .loading-dots .dot { width: 6px !important; height: 6px !important; background: #4a9eff !important; border-radius: 50% !important; animation: dotPulse 1.4s ease-in-out infinite both !important; }
-      .loading-dots .dot:nth-child(1) { animation-delay: -0.32s !important; }
-      .loading-dots .dot:nth-child(2) { animation-delay: -0.16s !important; }
-      .loading-dots .dot:nth-child(3) { animation-delay: 0s !important; }
-      @keyframes dotPulse { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-      
-      /* Optimized spacing for 1366x768 */
-      .compact-dashboard { padding: 12px; }
-      .top-row-grid { gap: 10px; margin-bottom: 12px; }
-      .main-grid { gap: 12px; }
-      .compact-card { margin-bottom: 12px; }
-      .compact-header { padding: 6px 12px; font-size: 13px; }
-      .compact-body { padding: 10px 12px; }
-      
-      /* FIXED 1366x768 specific optimizations */
-      @media (max-width: 1400px) and (min-width: 1200px) {
-        .compact-dashboard { padding: 8px !important; }
-        .top-row-grid { grid-template-columns: 1.6fr 0.8fr 0.8fr !important; gap: 8px !important; }
-        .compact-header { padding: 4px 8px !important; font-size: 11px !important; }
-        .compact-body { padding: 6px 8px !important; }
-        .hotspot-card { padding: 6px 8px !important; min-height: 50px !important; }
-        .card-title { font-size: 9px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-        .card-subtitle { font-size: 7px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-        .number-display { font-size: 16px !important; }
-        .card-icon { width: 28px !important; height: 28px !important; font-size: 12px !important; }
-        .income-stat-card { padding: 6px !important; gap: 6px !important; min-height: 45px !important; }
-        .income-stat-value { font-size: 11px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-        .traffic-stats { gap: 6px !important; padding: 4px !important; }
-        .traffic-stat { padding: 4px 6px !important; }
-        .traffic-stat .stat-value { font-size: 10px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-      }
-      
-      /* High Resolution Support - 1920x1080 (Conservative scaling) */
-      @media (min-width: 1401px) and (max-width: 2000px) {
-        .compact-dashboard { padding: 16px !important; }
-        .top-row-grid { gap: 16px !important; margin-bottom: 16px !important; }
-        .compact-header { padding: 10px 16px !important; font-size: 15px !important; }
-        .compact-body { padding: 14px 16px !important; }
-        .hotspot-card { padding: 18px 14px !important; gap: 14px !important; min-height: 80px !important; }
-        .card-icon { width: 44px !important; height: 44px !important; font-size: 20px !important; }
-        .number-display { font-size: 26px !important; }
-        .card-title { font-size: 14px !important; }
-        .card-subtitle { font-size: 10px !important; }
-        .income-stat-card { padding: 14px !important; gap: 14px !important; min-height: 70px !important; }
-        .income-stat-icon { width: 32px !important; height: 32px !important; font-size: 14px !important; }
-        .income-stat-value { font-size: 16px !important; }
-        .traffic-stats { gap: 18px !important; padding: 10px !important; }
-        .traffic-stat { padding: 14px 16px !important; gap: 14px !important; }
-        .traffic-stat .stat-icon { width: 36px !important; height: 36px !important; font-size: 16px !important; }
-        .traffic-stat .stat-value { font-size: 15px !important; }
-      }
-      
-      /* Ultra High Resolution Support - 2880x1800 with 200% scale (Conservative) */
-      @media (min-width: 2001px), (min-width: 1400px) and (-webkit-min-device-pixel-ratio: 2) {
-        .compact-dashboard { padding: 20px !important; }
-        .top-row-grid { gap: 20px !important; margin-bottom: 20px !important; }
-        .main-grid { gap: 20px !important; }
-        .compact-header { padding: 12px 20px !important; font-size: 16px !important; }
-        .compact-body { padding: 16px 20px !important; }
-        .hotspot-card { padding: 20px 16px !important; gap: 16px !important; min-height: 90px !important; }
-        .card-icon { width: 48px !important; height: 48px !important; font-size: 22px !important; }
-        .number-display { font-size: 28px !important; }
-        .card-title { font-size: 15px !important; }
-        .card-subtitle { font-size: 11px !important; }
-        .income-stat-card { padding: 16px !important; gap: 16px !important; min-height: 80px !important; }
-        .income-stat-icon { width: 36px !important; height: 36px !important; font-size: 16px !important; }
-        .income-stat-value { font-size: 18px !important; }
-        .income-stat-label { font-size: 11px !important; }
-        .traffic-stats { gap: 20px !important; padding: 12px !important; }
-        .traffic-stat { padding: 16px 18px !important; gap: 16px !important; }
-        .traffic-stat .stat-icon { width: 40px !important; height: 40px !important; font-size: 18px !important; }
-        .traffic-stat .stat-value { font-size: 16px !important; }
-        .traffic-stat .stat-label { font-size: 11px !important; }
-      }
-      
-      @media (max-width: 768px) {
-        .traffic-stats { flex-direction: column !important; gap: 6px !important; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
+  // This function is no longer needed as styles are now properly set in main CSS
+  // Keeping empty function to prevent errors from existing calls
+  return;
 }
 
-// SIMPLIFIED AJAX handling for income report - No more forced styling
+// DISABLED: Income report reload - livereport.php file missing
 function reloadIncomeReport() {
-  var incomeContainer = document.getElementById('reloadLreport');
-  if (incomeContainer && typeof $ !== 'undefined') {
-    $.ajax({
-      url: './include/livereport.php?session=<?= $session ?>',
-      type: 'GET',
-      cache: false,
-      timeout: 10000,
-      success: function(data) {
-        try {
-          var tempDiv = document.createElement('div');
-          tempDiv.innerHTML = data;
-          var newContent = tempDiv.querySelector('.income-content');
-          if (newContent && incomeContainer) {
-            // Simply replace content - livereport.php now has consistent styling
-            incomeContainer.innerHTML = newContent.innerHTML;
-          }
-        } catch (e) {
-          console.log('Error parsing income data:', e);
-        }
-      },
-      error: function() {
-        console.log('Income report reload failed, retrying...');
-        setTimeout(reloadIncomeReport, 5000);
-      }
-    });
-  }
+  // Disabled because livereport.php is not available
+  // Income report will show initial state without live updates
+  return;
 }
 
 // Enhanced logs loading with much better error handling
