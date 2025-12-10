@@ -166,13 +166,20 @@ body > table[width="100%"] {
   overflow: hidden;
 }
 
-.three-col-grid {
+/* Two Column Grid: Left (Income + Logs stacked), Right (Traffic Monitor) */
+.two-col-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1.3fr 0.9fr;
+  grid-template-columns: 1fr 1fr;
   gap: 15px;
   margin-bottom: 15px;
   max-width: 100%;
   overflow: hidden;
+}
+
+.left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 /* Enhanced System Status Card */
@@ -1851,7 +1858,7 @@ body > table[width="100%"] {
     grid-template-columns: 1fr;
   }
 
-  .three-col-grid {
+  .two-col-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -1897,7 +1904,7 @@ body > table[width="100%"] {
     gap: 10px;
   }
 
-  .three-col-grid {
+  .two-col-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
@@ -2328,8 +2335,11 @@ body > table[width="100%"] {
     
   </div>
 
-  <!-- Three Column Grid: Income Report, Traffic Monitor, and Logs -->
-  <div class="three-col-grid">
+  <!-- Two Column Grid: Left (Income + Logs), Right (Traffic Monitor) -->
+  <div class="two-col-grid">
+
+    <!-- Left Stack: Income Report and Logs -->
+    <div class="left-stack">
 
     <!-- Income Report Card -->
     <div <?= $lreport; ?> class="compact-card income-card-enhanced">
@@ -2390,51 +2400,6 @@ body > table[width="100%"] {
       </div>
     </div>
 
-    <!-- Traffic Monitor - Fixed: Upload & Download in One Row -->
-    <div class="compact-card traffic-card-enhanced">
-      <div class="compact-header traffic-header">
-        <div class="header-left">
-          <i class="fa fa-area-chart traffic-icon"></i>
-          <span>Network Traffic Monitor</span>
-          <span class="interface-badge"><?= $interface ?></span>
-        </div>
-        <div class="traffic-status">
-          <div class="traffic-indicator">
-            <div class="signal-bar bar-1"></div>
-            <div class="signal-bar bar-2"></div>
-            <div class="signal-bar bar-3"></div>
-            <div class="signal-bar bar-4"></div>
-          </div>
-        </div>
-      </div>
-      <div class="compact-body traffic-body">
-        <!-- Traffic Stats in One Row -->
-        <div class="traffic-stats">
-          <div class="traffic-stat upload-stat">
-            <div class="stat-icon">
-              <i class="fa fa-arrow-up"></i>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Upload</div>
-              <div class="stat-value" id="uploadValue">0 bps</div>
-            </div>
-          </div>
-          <div class="traffic-stat download-stat">
-            <div class="stat-icon">
-              <i class="fa fa-arrow-down"></i>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Download</div>
-              <div class="stat-value" id="downloadValue">0 bps</div>
-            </div>
-          </div>
-        </div>
-        <div class="chart-container">
-          <div id="trafficMonitor"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Hotspot Logs - Enhanced -->
     <div id="r_3" class="compact-card logs-card-enhanced">
         <div class="compact-header logs-header">
@@ -2480,7 +2445,54 @@ body > table[width="100%"] {
         </div>
       </div>
 
-  </div>
+    </div> <!-- End left-stack -->
+
+    <!-- Traffic Monitor - Fixed: Upload & Download in One Row -->
+    <div class="compact-card traffic-card-enhanced">
+      <div class="compact-header traffic-header">
+        <div class="header-left">
+          <i class="fa fa-area-chart traffic-icon"></i>
+          <span>Network Traffic Monitor</span>
+          <span class="interface-badge"><?= $interface ?></span>
+        </div>
+        <div class="traffic-status">
+          <div class="traffic-indicator">
+            <div class="signal-bar bar-1"></div>
+            <div class="signal-bar bar-2"></div>
+            <div class="signal-bar bar-3"></div>
+            <div class="signal-bar bar-4"></div>
+          </div>
+        </div>
+      </div>
+      <div class="compact-body traffic-body">
+        <!-- Traffic Stats in One Row -->
+        <div class="traffic-stats">
+          <div class="traffic-stat upload-stat">
+            <div class="stat-icon">
+              <i class="fa fa-arrow-up"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Upload</div>
+              <div class="stat-value" id="uploadValue">0 bps</div>
+            </div>
+          </div>
+          <div class="traffic-stat download-stat">
+            <div class="stat-icon">
+              <i class="fa fa-arrow-down"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Download</div>
+              <div class="stat-value" id="downloadValue">0 bps</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <div id="trafficMonitor"></div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End two-col-grid -->
 </div>
 
 <!-- Load Highcharts Library for Traffic Monitor Chart -->
