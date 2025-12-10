@@ -59,15 +59,27 @@ body {
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  background: var(--bg-primary, #1a1a1a) !important;
 }
 
-/* Center the entire page layout including sidebar */
+/* Center the entire page layout including sidebar - COMPREHENSIVE */
+body > *,
+body > div,
+body > table,
+html > body,
 #wrapper,
 .wrapper,
 .main-container,
-.page-wrapper {
-  max-width: 1920px;
-  margin: 0 auto;
+.page-wrapper,
+.container-fluid,
+.main-content,
+.app-wrapper,
+body > table[width="100%"],
+body > div[style*="width"],
+body > *:not(script):not(style) {
+  max-width: 1920px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   overflow-x: hidden;
 }
 
@@ -1050,7 +1062,7 @@ body {
 
 .chart-container {
   position: relative;
-  height: 240px;
+  height: 280px;
   background: rgba(255,255,255,0.02);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -2385,27 +2397,7 @@ body {
         </div>
       </div>
       <div class="compact-body traffic-body">
-        <!-- FIXED: Traffic stats in one row -->
-        <div class="traffic-stats">
-          <div class="traffic-stat upload-stat">
-            <div class="stat-icon">
-              <i class="fa fa-arrow-up"></i>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Upload</div>
-              <div class="stat-value" id="uploadValue">0 bps</div>
-            </div>
-          </div>
-          <div class="traffic-stat download-stat">
-            <div class="stat-icon">
-              <i class="fa fa-arrow-down"></i>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Download</div>
-              <div class="stat-value" id="downloadValue">0 bps</div>
-            </div>
-          </div>
-        </div>
+        <!-- Chart Only - More Compact -->
         <div class="chart-container">
           <div id="trafficMonitor"></div>
         </div>
@@ -2966,15 +2958,7 @@ $(document).ajaxComplete(function() {
     var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
     return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
   }
-  
-  // Update real-time stats
-  function updateTrafficStats(uploadValue, downloadValue) {
-    var uploadEl = document.getElementById('uploadValue');
-    var downloadEl = document.getElementById('downloadValue');
-    if (uploadEl) uploadEl.textContent = formatTrafficBytes(uploadValue);
-    if (downloadEl) downloadEl.textContent = formatTrafficBytes(downloadValue);
-  }
-  
+
   function requestDatta(session,iface) {
     $.ajax({
       url: './traffic/traffic.php?session='+session+'&iface='+iface,
@@ -2984,13 +2968,10 @@ $(document).ajaxComplete(function() {
         if( midata.length > 0 ) {
           var TX=parseInt(midata[0].data);
           var RX=parseInt(midata[1].data);
-          var x = (new Date()).getTime(); 
+          var x = (new Date()).getTime();
           shift=chart.series[0].data.length > 19;
           chart.series[0].addPoint([x, TX], true, shift);
           chart.series[1].addPoint([x, RX], true, shift);
-          
-          // Update real-time stats
-          updateTrafficStats(TX, RX);
         }
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) { 
@@ -3012,7 +2993,7 @@ $(document).ajaxComplete(function() {
         animation: Highcharts.svg,
         type: 'areaspline',
         backgroundColor: 'transparent',
-        height: 240,
+        height: 280,
         spacing: [10, 10, 10, 10],
         events: {
           load: function () {
