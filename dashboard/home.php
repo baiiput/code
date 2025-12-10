@@ -63,24 +63,30 @@ body {
 }
 
 /* Center the entire page layout including sidebar - COMPREHENSIVE */
-body > *,
+.wrapper,
+body > div.wrapper,
+div.wrapper,
+#wrapper,
+body > *:not(script):not(style):not(noscript),
 body > div,
 body > table,
-html > body,
-#wrapper,
-.wrapper,
+html > body > *,
 .main-container,
 .page-wrapper,
 .container-fluid,
 .main-content,
 .app-wrapper,
-body > table[width="100%"],
-body > div[style*="width"],
-body > *:not(script):not(style) {
+body > table[width="100%"] {
   max-width: 1920px !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
+}
+
+/* Force wrapper centering */
+.wrapper {
+  display: block !important;
+  box-sizing: border-box !important;
 }
 
 :root {
@@ -445,24 +451,25 @@ body > *:not(script):not(style) {
 }
 
 .income-content {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 15px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
 }
 
 .income-stat-card {
   background: var(--bg-tertiary) !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 10px !important;
-  padding: 16px !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   align-items: center !important;
-  text-align: center !important;
+  text-align: left !important;
   position: relative !important;
   overflow: hidden !important;
   transition: all 0.3s ease !important;
-  min-height: 100px !important;
+  gap: 12px !important;
+  min-height: auto !important;
 }
 
 .income-stat-card:hover {
@@ -490,12 +497,12 @@ body > *:not(script):not(style) {
 .income-stat-icon {
   width: 40px !important;
   height: 40px !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 18px !important;
-  margin-bottom: 12px !important;
+  font-size: 16px !important;
+  flex-shrink: 0 !important;
 }
 
 .today-card .income-stat-icon {
@@ -510,34 +517,40 @@ body > *:not(script):not(style) {
 
 .income-stat-content {
   flex: 1 !important;
-  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
 }
 
 .income-stat-label {
-  font-size: 11px !important;
+  font-size: 10px !important;
   color: var(--text-muted) !important;
   text-transform: uppercase !important;
-  margin-bottom: 6px !important;
   letter-spacing: 0.5px !important;
+  line-height: 1 !important;
 }
 
 .income-stat-value {
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--text-primary) !important;
-  margin-bottom: 4px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .income-stat-count {
-  font-size: 10px !important;
+  font-size: 9px !important;
   color: var(--text-secondary) !important;
+  line-height: 1 !important;
 }
 
 .income-trend {
-  position: absolute !important;
-  top: 12px !important;
-  right: 12px !important;
-  font-size: 12px !important;
+  flex-shrink: 0 !important;
+  font-size: 16px !important;
+  margin-left: auto !important;
   opacity: 0.8 !important;
 }
 
@@ -1063,6 +1076,7 @@ body > *:not(script):not(style) {
 .chart-container {
   position: relative;
   height: 280px;
+  min-height: 280px;
   background: rgba(255,255,255,0.02);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -1072,6 +1086,7 @@ body > *:not(script):not(style) {
 #trafficMonitor {
   width: 100%;
   height: 100%;
+  min-height: 280px;
 }
 
 /* Enhanced Logs Card CSS - Always Applied */
@@ -2964,19 +2979,24 @@ $(document).ajaxComplete(function() {
       url: './traffic/traffic.php?session='+session+'&iface='+iface,
       datatype: "json",
       success: function(data) {
-        var midata = JSON.parse(data);
-        if( midata.length > 0 ) {
-          var TX=parseInt(midata[0].data);
-          var RX=parseInt(midata[1].data);
-          var x = (new Date()).getTime();
-          shift=chart.series[0].data.length > 19;
-          chart.series[0].addPoint([x, TX], true, shift);
-          chart.series[1].addPoint([x, RX], true, shift);
+        try {
+          var midata = JSON.parse(data);
+          if( midata.length > 0 ) {
+            var TX=parseInt(midata[0].data) || 0;
+            var RX=parseInt(midata[1].data) || 0;
+            var x = (new Date()).getTime();
+            shift=chart.series[0].data.length > 19;
+            chart.series[0].addPoint([x, TX], true, shift);
+            chart.series[1].addPoint([x, RX], true, shift);
+          }
+        } catch(e) {
+          console.error("Traffic data parse error:", e);
         }
       },
-      error: function(XMLHttpRequest, textStatus, errorThrown) { 
-        console.error("Traffic data error: " + textStatus); 
-      }       
+      error: function(XMLHttpRequest, textStatus, errorThrown) {
+        console.log("Traffic data error (expected if traffic.php missing):", textStatus);
+        // Chart will still display, just without live data
+      }
     });
   }	
 
