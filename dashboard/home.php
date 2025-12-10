@@ -62,6 +62,9 @@ if ($livereport == "disable") {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 15px;
   min-height: 100vh;
+  max-width: 1920px; /* Maximum width for large displays */
+  margin: 0 auto; /* Center the dashboard */
+  width: 100%; /* Full width up to max-width */
 }
 
 .compact-card {
@@ -105,6 +108,13 @@ if ($livereport == "disable") {
 .middle-row-grid {
   display: grid;
   grid-template-columns: 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.three-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 0.8fr;
   gap: 15px;
   margin-bottom: 15px;
 }
@@ -1773,7 +1783,12 @@ if ($livereport == "disable") {
   .main-grid {
     grid-template-columns: 1fr;
   }
-  
+
+  .three-col-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .primary-stats {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -1812,6 +1827,11 @@ if ($livereport == "disable") {
   }
   
   .main-grid {
+    gap: 10px;
+  }
+
+  .three-col-grid {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
   
@@ -2188,10 +2208,10 @@ if ($livereport == "disable") {
     
   </div>
 
-  <!-- Middle Row: Hotspot Management -->
-  <div class="middle-row-grid">
-    
-    <!-- Hotspot Management Card - Now Full Width Horizontal -->
+  <!-- Three Column Grid: Hotspot Management, Traffic Monitor, and Logs -->
+  <div class="three-col-grid">
+
+    <!-- Hotspot Management Card -->
     <div id="r_2" class="compact-card hotspot-management-card">
       <div class="compact-header hotspot-header">
         <div class="header-left">
@@ -2302,21 +2322,16 @@ if ($livereport == "disable") {
         </div>
       </div>
     </div>
-    
-  </div>
 
-  <!-- Main Content Grid -->
-  <div class="main-grid">
-    
     <!-- Traffic Monitor - Fixed: Upload & Download in One Row -->
     <div class="compact-card traffic-card-enhanced">
       <div class="compact-header traffic-header">
         <div class="header-left">
           <i class="fa fa-area-chart traffic-icon"></i>
           <span>Network Traffic Monitor</span>
-          <?php 
-          $getinterface = $API->comm("/interface/print");
-          $interface = $getinterface[$iface - 1]['name']; 
+          <?php
+          // Interface name will be loaded dynamically
+          $interface = isset($interface) ? $interface : 'eth0';
           ?>
           <span class="interface-badge"><?= $interface ?></span>
         </div>
@@ -2357,11 +2372,8 @@ if ($livereport == "disable") {
       </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar-stack">
-      
-      <!-- Hotspot Logs - Enhanced -->
-      <div id="r_3" class="compact-card logs-card-enhanced">
+    <!-- Hotspot Logs - Enhanced -->
+    <div id="r_3" class="compact-card logs-card-enhanced">
         <div class="compact-header logs-header">
           <div class="header-left">
             <a onclick="cancelPage()" href="./?hotspot=log&session=<?= $session; ?>" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 8px;">
@@ -2404,8 +2416,7 @@ if ($livereport == "disable") {
           </div>
         </div>
       </div>
-      
-    </div>
+
   </div>
 </div>
 
@@ -2661,7 +2672,7 @@ function loadLogsContent() {
   logsLoading = true;
   
   $.ajax({
-    url: './include/aload.php?load=logs&session=<?= $session ?>',
+    url: './dashboard/aload.php?load=logs&session=<?= $session ?>',
     type: 'GET',
     timeout: 15000,
     cache: false,
