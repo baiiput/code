@@ -219,7 +219,7 @@ function loadSellingData() {
   $.ajax({
     url: url,
     dataType: 'json',
-    timeout: 30000,
+    timeout: 90000, // Increase to 90 seconds for large datasets
     success: function(response) {
       console.log("Selling data received:", response);
 

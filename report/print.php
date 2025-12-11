@@ -25,13 +25,13 @@ if (!isset($_SESSION["mikhmon"])) {
   // load session MikroTik
   $session = $_GET['session'];
 
-  // lang
-  include('../include/lang.php');
-  include('../lang/'.$langid.'.php');
-
-  // load config
+  // load config first (needed for $langid)
   include('../include/config.php');
   include('../include/readcfg.php');
+
+  // lang (after config)
+  include('../include/lang.php');
+  include('../lang/'.$langid.'.php');
 
   // routeros api
   include_once('../lib/routeros_api.class.php');

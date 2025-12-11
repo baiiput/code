@@ -134,8 +134,21 @@ function loadResumeData() {
                 totalresume = response.totalresume;
                 totalvrc = response.totalvrc;
 
+                // Debug logging
+                console.log("Resume data loaded:");
+                console.log("Total VCR:", totalvrc);
+                console.log("Total Income:", totalresume);
+                console.log("Sample dates from data:", response.sampleDates);
+                console.log("Total records:", response.totalRecords);
+                console.log("Dataresume length:", dataresume.length);
+
                 // Generate chart data
                 var chartSeries = [];
+                console.log("Generating chart data for days...");
+                console.log("Month (thisM):", thisM);
+                console.log("Year (thisY):", thisY);
+                console.log("Total days (totD):", totD);
+
                 for (var i = 1; i < totD; i++) {
                     var thisD = i < 10 ? "0" + i : i.toString();
                     var idhr = thisM.toLowerCase() + '/' + thisD + '/' + thisY;
@@ -143,6 +156,12 @@ function loadResumeData() {
                     var dayData = resumePerDay(idhr, dataresume);
                     var total = dayData.total || 0;
                     var count = dayData.count || 0;
+
+                    // Log first few days for debugging
+                    if (i <= 3) {
+                        console.log("Day " + i + " - Searching for date:", idhr);
+                        console.log("  Found count:", count, "Total:", total);
+                    }
 
                     chartSeries.push({
                         name: '<b>' + thisD + ' ' + thisM.charAt(0).toUpperCase() + thisM.slice(1) + ' ' + count + 'vcr</b>',

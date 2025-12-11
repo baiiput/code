@@ -83,6 +83,10 @@ if ($load == "dashstats") {
 if ($load == "sellingdata") {
     header('Content-Type: application/json');
 
+    // Increase limits for large datasets
+    set_time_limit(120); // 2 minutes max execution time
+    ini_set('memory_limit', '256M');
+
     $idhr = isset($_GET['idhr']) ? $_GET['idhr'] : '';
     $idbl = isset($_GET['idbl']) ? $_GET['idbl'] : '';
     $prefix = isset($_GET['prefix']) ? $_GET['prefix'] : '';
@@ -252,6 +256,7 @@ if ($load == "resumedata") {
         $dataresume = "";
         $totalresume = 0;
         $totalvrc = 0;
+        $sampleDates = array(); // For debugging
 
         if ($getData && is_array($getData)) {
             foreach ($getData as $item) {
@@ -259,6 +264,11 @@ if ($load == "resumedata") {
                 if (count($getname) >= 4) {
                     $date = isset($getname[0]) ? $getname[0] : '';
                     $price = isset($getname[3]) ? $getname[3] : '0';
+
+                    // Store sample dates for debugging (first 5 only)
+                    if (count($sampleDates) < 5) {
+                        $sampleDates[] = $date;
+                    }
 
                     $dataresume .= $date . $price;
                     $totalresume += floatval($price);
@@ -272,7 +282,9 @@ if ($load == "resumedata") {
             'dataresume' => $dataresume,
             'totalresume' => $totalresume,
             'totalvrc' => $totalvrc,
-            'idbl' => $idbl
+            'idbl' => $idbl,
+            'sampleDates' => $sampleDates, // For debugging date format
+            'totalRecords' => count($getData)
         ));
 
     } else {
