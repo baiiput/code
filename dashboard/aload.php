@@ -297,6 +297,88 @@ if ($load == "resumedata") {
     exit;
 }
 
+// PPP Secrets endpoint
+if ($load == "pppsecrets") {
+    header('Content-Type: application/json');
+
+    $filterProfile = isset($_GET['profile']) ? $_GET['profile'] : 'all';
+    $filterService = isset($_GET['service']) ? $_GET['service'] : 'all';
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+        $cacheTTL = 30; // Cache for 30 seconds
+
+        $params = array();
+        if ($filterProfile !== 'all') {
+            $params['?profile'] = $filterProfile;
+        }
+        if ($filterService !== 'all') {
+            $params['?service'] = $filterService;
+        }
+
+        $getData = getCachedApiData($API, "/ppp/secret/print", $params, $cacheTTL);
+        $API->disconnect();
+
+        echo json_encode(array(
+            'success' => true,
+            'data' => $getData,
+            'total' => count($getData)
+        ));
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
+// PPP Profiles endpoint
+if ($load == "pppprofiles") {
+    header('Content-Type: application/json');
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+        $cacheTTL = 60; // Cache for 60 seconds
+
+        $getData = getCachedApiData($API, "/ppp/profile/print", array(), $cacheTTL);
+        $API->disconnect();
+
+        echo json_encode(array(
+            'success' => true,
+            'data' => $getData,
+            'total' => count($getData)
+        ));
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
+// PPP Active connections endpoint
+if ($load == "pppactive") {
+    header('Content-Type: application/json');
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+        // Don't cache active connections - need real-time data
+        $getData = $API->comm("/ppp/active/print");
+        $API->disconnect();
+
+        echo json_encode(array(
+            'success' => true,
+            'data' => $getData,
+            'total' => count($getData)
+        ));
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
 if ($load == "logs") {
     // Enhanced Hotspot Logs with Modern Design
 ?>
