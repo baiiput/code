@@ -79,6 +79,72 @@ if ($load == "dashstats") {
     exit;
 }
 
+// New endpoint: Selling report data with caching
+if ($load == "sellingdata") {
+    header('Content-Type: application/json');
+
+    $idhr = isset($_GET['idhr']) ? $_GET['idhr'] : '';
+    $idbl = isset($_GET['idbl']) ? $_GET['idbl'] : '';
+    $prefix = isset($_GET['prefix']) ? $_GET['prefix'] : '';
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+
+        $cacheTTL = 60; // Cache for 60 seconds
+
+        // Determine which data to fetch
+        if (strlen($idhr) > 0) {
+            $getData = getCachedApiData($API, "/system/script/print", array("?source" => "$idhr"), $cacheTTL);
+        } elseif (strlen($idbl) > 0) {
+            $getData = getCachedApiData($API, "/system/script/print", array("?owner" => "$idbl"), $cacheTTL);
+        } else {
+            $getData = getCachedApiData($API, "/system/script/print", array("?comment" => "mikhmon"), $cacheTTL);
+        }
+
+        $API->disconnect();
+
+        // Process data
+        $processedData = array();
+        $totalPrice = 0;
+
+        if ($getData && is_array($getData)) {
+            foreach ($getData as $item) {
+                $getname = explode("-|-", $item['name']);
+
+                // Apply prefix filter if specified
+                if ($prefix != "" && substr($getname[2], 0, strlen($prefix)) != $prefix) {
+                    continue;
+                }
+
+                $row = array(
+                    'date' => isset($getname[0]) ? $getname[0] : '',
+                    'time' => isset($getname[1]) ? $getname[1] : '',
+                    'username' => isset($getname[2]) ? $getname[2] : '',
+                    'price' => isset($getname[3]) ? $getname[3] : '0',
+                    'profile' => isset($getname[7]) ? $getname[7] : '',
+                    'comment' => isset($getname[8]) ? $getname[8] : ''
+                );
+
+                $processedData[] = $row;
+                $totalPrice += floatval($row['price']);
+            }
+        }
+
+        echo json_encode(array(
+            'success' => true,
+            'data' => $processedData,
+            'total' => count($processedData),
+            'totalPrice' => $totalPrice
+        ));
+
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
 if ($load == "logs") {
     // Enhanced Hotspot Logs with Modern Design
 ?>

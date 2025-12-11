@@ -326,8 +326,22 @@ $(document).ready(function(){
 					<th style="text-align:right;"> <?= $_price ?></th>
 				</tr>
 				</thead>
-				<tbody>
+				<tbody id="sellingTableBody">
+				<!-- Skeleton Loader will be replaced by AJAX data -->
+				<tr class="selling-loader-row">
+					<td colspan="7" style="text-align: center; padding: 60px 20px;">
+						<div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+							<div class="selling-spinner"></div>
+							<div style="color: #b0b0b0; font-size: 14px; font-weight: 600;">Loading Selling Report...</div>
+							<div style="color: #808080; font-size: 12px;">Fetching voucher data from Mikrotik</div>
+						</div>
+					</td>
+				</tr>
+				</tbody>
 				<?php
+				// Keep PHP for session variables
+				$dataresume = "";
+				$totalresume = 0;
 			if ($prefix != "") {
 				for ($i = 0; $i < $TotalReg; $i++) {
 					$getname = explode("-|-", $getData[$i]['name']);
