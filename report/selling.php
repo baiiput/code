@@ -78,61 +78,25 @@ if (!isset($_SESSION["mikhmon"])) {
 		$fprefix = "";
 	}
 
-	// Load cache helper if available
-	if (file_exists('../include/cache.php')) {
-		include_once('../include/cache.php');
-	}
-
-	// Fetch selling data with 60 second cache
+	// OPTIMIZED: Don't fetch data here - will be loaded async via JavaScript
+	// Just set the parameters for the AJAX request
 	if (strlen($idhr) > "0") {
-		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-			if (function_exists('getCachedApiData')) {
-				$getData = getCachedApiData($API, "/system/script/print", array("?source" => "$idhr"), 60);
-			} else {
-				$getData = $API->comm("/system/script/print", array("?source" => "$idhr"));
-			}
-			$TotalReg = count($getData);
-		}
 		$filedownload = $idhr;
 		$shf = "hidden";
 		$shd = "inline-block";
 	} elseif (strlen($idbl) > "0") {
-		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-			if (function_exists('getCachedApiData')) {
-				$getData = getCachedApiData($API, "/system/script/print", array("?owner" => "$idbl"), 60);
-			} else {
-				$getData = $API->comm("/system/script/print", array("?owner" => "$idbl"));
-			}
-			$TotalReg = count($getData);
-		}
 		$filedownload = $idbl;
 		$shf = "hidden";
 		$shd = "inline-block";
 	} elseif ($idhr == "" || $idbl == "") {
-		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-			if (function_exists('getCachedApiData')) {
-				$getData = getCachedApiData($API, "/system/script/print", array("?comment" => "mikhmon"), 60);
-			} else {
-				$getData = $API->comm("/system/script/print", array("?comment" => "mikhmon"));
-			}
-			$TotalReg = count($getData);
-		}
 		$filedownload = "all";
 		$shf = "text";
 		$shd = "none";
-	} elseif (strlen($idbl) > "0" ) {
-		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-			if (function_exists('getCachedApiData')) {
-				$getData = getCachedApiData($API, "/system/script/print", array("?owner" => "$idbl"), 60);
-			} else {
-				$getData = $API->comm("/system/script/print", array("?owner" => "$idbl"));
-			}
-			$TotalReg = count($getData);
-		}
-		$filedownload = $idbl;
-		$shf = "hidden";
-		$shd = "inline-block";
 	}
+
+	// Data will be loaded asynchronously
+	$getData = array();
+	$TotalReg = 0;
 	
 }
 ?>

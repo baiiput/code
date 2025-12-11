@@ -34,7 +34,7 @@ if (!isset($iface)) {
   $iface = 1; // Default to first interface
 }
 if (!isset($interface)) {
-  $interface = 'ether1'; // Default interface name
+  $interface = 'ETHER1-INTERNET'; // Default interface name
 }
 
 if ($livereport == "disable") {
@@ -1858,12 +1858,12 @@ body > table[width="100%"] {
   }
 }
 
-@media (max-width: 968px) {
+@media (max-width: 1400px) {
   .top-row-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .main-grid {
     grid-template-columns: 1fr;
   }
