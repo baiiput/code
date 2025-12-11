@@ -2794,12 +2794,18 @@ $(document).ajaxComplete(function() {
 </script>
 
 <!-- Traffic Monitor Script - Enhanced -->
-<script type="text/javascript"> 
+<script type="text/javascript">
   var chart;
   var sessiondata = "<?= $session ?>";
   var interface = "<?= $interface ?>";
   var n = 3000;
-  
+
+  // Debug: Log variables
+  console.log("Traffic Monitor Debug:");
+  console.log("Session:", sessiondata);
+  console.log("Interface:", interface);
+  console.log("Highcharts available:", typeof Highcharts !== 'undefined');
+
   // Format bytes function
   function formatTrafficBytes(bytes) {
     var sizes = ['bps', 'kbps', 'Mbps', 'Gbps', 'Tbps'];
@@ -2817,15 +2823,20 @@ $(document).ajaxComplete(function() {
   }
 
   function requestDatta(session,iface) {
+    var url = './traffic/traffic.php?session='+session+'&iface='+iface;
+    console.log("Fetching traffic data from:", url);
+
     $.ajax({
-      url: './traffic/traffic.php?session='+session+'&iface='+iface,
+      url: url,
       datatype: "json",
       success: function(data) {
+        console.log("Traffic data received:", data);
         try {
           var midata = JSON.parse(data);
           if( midata.length > 0 ) {
             var TX=parseInt(midata[0].data) || 0;
             var RX=parseInt(midata[1].data) || 0;
+            console.log("TX:", TX, "RX:", RX);
             var x = (new Date()).getTime();
             shift=chart.series[0].data.length > 19;
             chart.series[0].addPoint([x, TX], true, shift);
@@ -2835,24 +2846,32 @@ $(document).ajaxComplete(function() {
             updateTrafficStats(TX, RX);
           }
         } catch(e) {
-          console.error("Traffic data parse error:", e);
+          console.error("Traffic data parse error:", e, "Data:", data);
         }
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
-        console.log("Traffic data error (expected if traffic.php missing):", textStatus);
-        // Chart will still display, just without live data
+        console.error("Traffic data AJAX error:", textStatus, errorThrown);
       }
     });
   }	
 
   $(document).ready(function() {
-    Highcharts.setOptions({
-      global: {
-        useUTC: false
-      }
-    });
+    console.log("Initializing Highcharts...");
+    console.log("Container #trafficMonitor exists:", $('#trafficMonitor').length > 0);
 
-    chart = new Highcharts.Chart({
+    if (typeof Highcharts === 'undefined') {
+      console.error("Highcharts library not loaded!");
+      return;
+    }
+
+    try {
+      Highcharts.setOptions({
+        global: {
+          useUTC: false
+        }
+      });
+
+      chart = new Highcharts.Chart({
       chart: {
         renderTo: 'trafficMonitor',
         animation: Highcharts.svg,
@@ -2989,9 +3008,16 @@ $(document).ajaxComplete(function() {
           return '<div style="text-align: center;"><b>Network Traffic</b><br/><small>' + Highcharts.dateFormat('%H:%M:%S', new Date(this.x)) + '</small><br/>' + s.join('<br/>') + '</div>';
         },
         shared: true,
-        useHTML: true                                                   
+        useHTML: true
       }
     });
+
+    console.log("Highcharts chart initialized successfully!");
+    console.log("Chart object:", chart);
+
+    } catch(e) {
+      console.error("Error initializing Highcharts:", e);
+    }
   });
 </script>
 
