@@ -116,12 +116,18 @@ if (!isset($_SESSION["mikhmon"])) {
 	} else {
 		$fprefix = "";
 	}
+
+	// Initialize variables
+	$getData = array();
+	$TotalReg = 0;
+
 	if (strlen($idhr) > "0") {
 		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
 			$getData = $API->comm("/system/script/print", array(
 				"?source" => "$idhr",
 			));
 			$TotalReg = count($getData);
+			$API->disconnect();
 		}
 		$filedownload = $idhr;
 		$shf = "hidden";
@@ -132,6 +138,7 @@ if (!isset($_SESSION["mikhmon"])) {
 				"?owner" => "$idbl",
 			));
 			$TotalReg = count($getData);
+			$API->disconnect();
 		}
 		$filedownload = $idbl;
 		$shf = "hidden";
@@ -142,20 +149,11 @@ if (!isset($_SESSION["mikhmon"])) {
 				"?comment" => "mikhmon",
 			));
 			$TotalReg = count($getData);
+			$API->disconnect();
 		}
 		$filedownload = "all";
 		$shf = "text";
 		$shd = "none";
-	} elseif (strlen($idbl) > "0" ) {
-		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-			$getData = $API->comm("/system/script/print", array(
-				"?owner" => "$idbl",
-			));
-			$TotalReg = count($getData);
-		}
-		$filedownload = $idbl;
-		$shf = "hidden";
-		$shd = "inline-block";
 	}
 	
 }
