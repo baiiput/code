@@ -16,10 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 session_start();
-// hide all error
-error_reporting(0);
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 if (!isset($_SESSION["mikhmon"])) {
 	header("Location:../admin.php?id=login");
+	exit;
 } else {
   
   // load session MikroTik

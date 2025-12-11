@@ -30,11 +30,18 @@ $session = $_GET['session'];
   include('../include/readcfg.php');
 
 $idbl = $_GET['idbl'];
-$thisM = substr($idbl,0,3);
-$thisY = substr($idbl,-4);
+// Fix: idbl format is MMYYYY (e.g., "122025" = December 2025)
+// Extract 2 digits for month, 4 digits for year
+$thisM = substr($idbl, 0, 2);  // First 2 chars = month "12"
+$thisY = substr($idbl, -4);     // Last 4 chars = year "2025"
 
 $ms = array(1 => "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12");
 $mn = array_search($thisM, $ms);
+
+// Month names for display
+$monthNames = array("01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr", "05" => "May", "06" => "Jun",
+                    "07" => "Jul", "08" => "Aug", "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec");
+$thisMonthName = isset($monthNames[$thisM]) ? $monthNames[$thisM] : $thisM;
 
 // https://secure.php.net/manual/en/function.cal-days-in-month.php#38666
 function days_in_month($month, $year)
@@ -149,9 +156,14 @@ function loadResumeData() {
                 console.log("Year (thisY):", thisY);
                 console.log("Total days (totD):", totD);
 
+                // Month name for display
+                var monthName = "<?= $thisMonthName ?>";
+
                 for (var i = 1; i < totD; i++) {
                     var thisD = i < 10 ? "0" + i : i.toString();
-                    var idhr = thisM.toLowerCase() + '/' + thisD + '/' + thisY;
+                    // FIX: Mikrotik uses ISO date format: YYYY-MM-DD
+                    // Sample from data: "2025-12-10"
+                    var idhr = thisY + '-' + thisM + '-' + thisD;
 
                     var dayData = resumePerDay(idhr, dataresume);
                     var total = dayData.total || 0;
@@ -164,7 +176,7 @@ function loadResumeData() {
                     }
 
                     chartSeries.push({
-                        name: '<b>' + thisD + ' ' + thisM.charAt(0).toUpperCase() + thisM.slice(1) + ' ' + count + 'vcr</b>',
+                        name: '<b>' + thisD + ' ' + monthName + ' ' + count + 'vcr</b>',
                         y: total
                     });
                 }
@@ -191,7 +203,14 @@ function loadResumeData() {
 
 // Create Highcharts chart
 function createChart(seriesData, subtitle, thisM, thisY) {
-    Highcharts.chart('container', {
+    // Destroy existing chart first to prevent error #16
+    if (window.resumeChart) {
+        console.log("Destroying existing chart...");
+        window.resumeChart.destroy();
+    }
+
+    // Create new chart
+    window.resumeChart = Highcharts.chart('container', {
         chart: {
             height: 500,
             type: 'area',
