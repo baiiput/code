@@ -166,20 +166,30 @@ body > table[width="100%"] {
   overflow: hidden;
 }
 
-/* Two Column Grid: Left (Income + Logs stacked), Right (Traffic Monitor) */
-.two-col-grid {
+/* Second Row Grid: Income Report + Logs (left) with Traffic Monitor spanning both (right) */
+.second-row-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 15px;
   margin-bottom: 15px;
   max-width: 100%;
   overflow: hidden;
 }
 
-.left-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.traffic-card-enhanced {
+  grid-row: 1 / 3; /* Span 2 rows */
+  grid-column: 2;
+}
+
+.income-card-enhanced {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.logs-card-enhanced {
+  grid-row: 2;
+  grid-column: 1;
 }
 
 /* Enhanced System Status Card */
@@ -1858,9 +1868,15 @@ body > table[width="100%"] {
     grid-template-columns: 1fr;
   }
 
-  .two-col-grid {
+  .second-row-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     gap: 12px;
+  }
+
+  .traffic-card-enhanced {
+    grid-row: auto;
+    grid-column: auto;
   }
 
   .primary-stats {
@@ -1904,9 +1920,15 @@ body > table[width="100%"] {
     gap: 10px;
   }
 
-  .two-col-grid {
+  .second-row-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     gap: 10px;
+  }
+
+  .traffic-card-enhanced {
+    grid-row: auto;
+    grid-column: auto;
   }
   
   .primary-stats {
@@ -2335,11 +2357,8 @@ body > table[width="100%"] {
     
   </div>
 
-  <!-- Two Column Grid: Left (Income + Logs), Right (Traffic Monitor) -->
-  <div class="two-col-grid">
-
-    <!-- Left Stack: Income Report and Logs -->
-    <div class="left-stack">
+  <!-- Second Row Grid: Income Report + Logs (left), Traffic Monitor spans both rows (right) -->
+  <div class="second-row-grid">
 
     <!-- Income Report Card -->
     <div <?= $lreport; ?> class="compact-card income-card-enhanced">
@@ -2445,9 +2464,7 @@ body > table[width="100%"] {
         </div>
       </div>
 
-    </div> <!-- End left-stack -->
-
-    <!-- Traffic Monitor - Fixed: Upload & Download in One Row -->
+    <!-- Traffic Monitor - Spans 2 Rows -->
     <div class="compact-card traffic-card-enhanced">
       <div class="compact-header traffic-header">
         <div class="header-left">
@@ -2492,7 +2509,7 @@ body > table[width="100%"] {
       </div>
     </div>
 
-  </div> <!-- End two-col-grid -->
+  </div> <!-- End second-row-grid -->
 </div>
 
 <!-- Load Highcharts Library for Traffic Monitor Chart -->
@@ -2862,6 +2879,12 @@ $(document).ajaxComplete(function() {
     if (typeof Highcharts === 'undefined') {
       console.error("Highcharts library not loaded!");
       return;
+    }
+
+    // Prevent re-initialization if chart already exists
+    if (typeof chart !== 'undefined' && chart) {
+      console.log("Chart already exists, destroying old instance");
+      chart.destroy();
     }
 
     try {

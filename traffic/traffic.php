@@ -35,35 +35,46 @@ include_once('../lib/formatbytesbites.php');
 $API = new RouterosAPI();
 $API->debug = false;
   
+  $rows = array();
+  $rows2 = array();
+
   if($API->connect( $iphost, $userhost, decrypt($passwdhost))){
 
-//$getinterface = $API->comm("/interface/print");
-    //$interface = $getinterface[$iface-1]['name'];
     $getinterfacetraffic = $API->comm("/interface/monitor-traffic", array(
       "interface" => "$interface",
       "once" => "",
       ));
 
-    $rows = array(); $rows2 = array();
+    // Check if we got valid data
+    if(isset($getinterfacetraffic[0])) {
+      $ftx = isset($getinterfacetraffic[0]['tx-bits-per-second']) ?
+             (int)$getinterfacetraffic[0]['tx-bits-per-second'] : 0;
+      $frx = isset($getinterfacetraffic[0]['rx-bits-per-second']) ?
+             (int)$getinterfacetraffic[0]['rx-bits-per-second'] : 0;
+    } else {
+      // No data from Mikrotik, use defaults
+      $ftx = 0;
+      $frx = 0;
+    }
 
-    $ftx = $getinterfacetraffic[0]['tx-bits-per-second'];
-    $frx = $getinterfacetraffic[0]['rx-bits-per-second'];
+    $rows['name'] = 'Tx';
+    $rows['data'][] = $ftx;
+    $rows2['name'] = 'Rx';
+    $rows2['data'][] = $frx;
 
-      $rows['name'] = 'Tx';
-      $rows['data'][] = $ftx;
-      $rows2['name'] = 'Rx';
-      $rows2['data'][] = $frx;
-      
+    $API->disconnect();
+
   }else{
-		echo "<font color='#ff0000'>Connection Failed!!</font>";
+    // Connection failed, return zero values
+    $rows['name'] = 'Tx';
+    $rows['data'][] = 0;
+    $rows2['name'] = 'Rx';
+    $rows2['data'][] = 0;
   }
-  
-  $API->disconnect();
-  
-  $result = array();
 
-	array_push($result,$rows);
-	array_push($result,$rows2);
+  $result = array();
+  array_push($result,$rows);
+  array_push($result,$rows2);
   print json_encode($result);
 }
 ?>
