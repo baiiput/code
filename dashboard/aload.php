@@ -224,6 +224,66 @@ if ($load == "hotspotusers") {
     exit;
 }
 
+// New endpoint: Resume report data for charts
+if ($load == "resumedata") {
+    header('Content-Type: application/json');
+
+    $idbl = isset($_GET['idbl']) ? $_GET['idbl'] : '';
+
+    if (empty($idbl)) {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Missing idbl parameter'
+        ));
+        exit;
+    }
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+
+        $cacheTTL = 120; // Cache for 2 minutes - report data doesn't change often
+
+        // Fetch selling data for the month
+        $getData = getCachedApiData($API, "/system/script/print",
+                  array("?owner" => $idbl), $cacheTTL);
+
+        $API->disconnect();
+
+        // Process data for resume
+        $dataresume = "";
+        $totalresume = 0;
+        $totalvrc = 0;
+
+        if ($getData && is_array($getData)) {
+            foreach ($getData as $item) {
+                $getname = explode("-|-", $item['name']);
+                if (count($getname) >= 4) {
+                    $date = isset($getname[0]) ? $getname[0] : '';
+                    $price = isset($getname[3]) ? $getname[3] : '0';
+
+                    $dataresume .= $date . $price;
+                    $totalresume += floatval($price);
+                    $totalvrc++;
+                }
+            }
+        }
+
+        echo json_encode(array(
+            'success' => true,
+            'dataresume' => $dataresume,
+            'totalresume' => $totalresume,
+            'totalvrc' => $totalvrc,
+            'idbl' => $idbl
+        ));
+
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
 if ($load == "logs") {
     // Enhanced Hotspot Logs with Modern Design
 ?>
