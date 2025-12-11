@@ -2687,15 +2687,32 @@ function handleLogsError(errorType) {
   }
 }
 
+// Store interval IDs and AJAX requests for cleanup
+var dashboardIntervals = [];
+var activeAjaxRequests = [];
+var isNavigatingAway = false;
+
 // Dashboard stats loader with caching (OPTIMIZED)
 function loadDashboardStats() {
-  $.ajax({
+  if (isNavigatingAway) return; // Don't start new requests if navigating away
+
+  var xhr = $.ajax({
     url: './dashboard/aload.php?load=dashstats&session=<?= $session ?>',
     type: 'GET',
     dataType: 'json',
     cache: false,
     timeout: 10000,
+    beforeSend: function(jqXHR) {
+      activeAjaxRequests.push(jqXHR);
+    },
+    complete: function(jqXHR) {
+      // Remove from active requests
+      var index = activeAjaxRequests.indexOf(jqXHR);
+      if (index > -1) activeAjaxRequests.splice(index, 1);
+    },
     success: function(response) {
+      if (isNavigatingAway) return; // Don't update DOM if navigating away
+
       if (response.success && response.data) {
         var data = response.data;
 
@@ -2749,6 +2766,7 @@ function loadDashboardStats() {
       }
     },
     error: function(xhr, status, error) {
+      if (status === 'abort') return; // Ignore aborted requests
       console.log('Dashboard stats load error:', status);
       // Remove skeleton on error, show current values
       $('.skeleton-loading').removeClass('skeleton-loading');
@@ -2786,10 +2804,6 @@ function formatDTM(seconds) {
   return parts.join(' ') || '0s';
 }
 
-// Store interval IDs for cleanup
-var dashboardIntervals = [];
-var isNavigatingAway = false;
-
 // SIMPLIFIED initialization
 $(document).ready(function() {
   // Load dashboard stats immediately (OPTIMIZED - no blocking)
@@ -2814,23 +2828,41 @@ $(document).ready(function() {
   }, 35000)); // Every 35 seconds
 });
 
-// Clean up intervals when navigating away
+// Clean up intervals and abort AJAX when navigating away
 $(document).on('click', 'a[href]', function(e) {
   var href = $(this).attr('href');
   // Check if navigating away from dashboard
   if (href && !href.includes('home') && !href.includes('#')) {
     isNavigatingAway = true;
+
+    // Abort all pending AJAX requests
+    activeAjaxRequests.forEach(function(xhr) {
+      if (xhr && xhr.abort) {
+        xhr.abort();
+      }
+    });
+    activeAjaxRequests = [];
+
     // Clear all intervals
     dashboardIntervals.forEach(function(intervalId) {
       clearInterval(intervalId);
     });
     dashboardIntervals = [];
-    console.log('🧹 Cleared dashboard intervals before navigation');
+
+    console.log('🧹 Aborted AJAX requests and cleared intervals before navigation');
   }
 });
 
 // Cleanup on page unload
 $(window).on('beforeunload', function() {
+  isNavigatingAway = true;
+
+  // Abort all pending AJAX
+  activeAjaxRequests.forEach(function(xhr) {
+    if (xhr && xhr.abort) xhr.abort();
+  });
+
+  // Clear intervals
   dashboardIntervals.forEach(function(intervalId) {
     clearInterval(intervalId);
   });

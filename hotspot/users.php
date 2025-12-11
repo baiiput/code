@@ -755,18 +755,181 @@ if (!isset($_SESSION["mikhmon"])) {
     .comment-filter-item {
         padding: 10px 12px !important;
     }
-    
+
     .comment-name {
         font-size: 13px !important;
     }
-    
+
     .comment-subtitle {
         font-size: 10px !important;
     }
-    
+
     .comment-count-badge {
         font-size: 10px !important;
         padding: 3px 6px !important;
+    }
+}
+
+/* ==================== RESPONSIVE LAYOUT FOR SCREENS < 1920px ==================== */
+@media (max-width: 1920px) {
+    .card-header h3 {
+        font-size: 16px !important;
+    }
+
+    .card-header h3 span {
+        font-size: 12px !important;
+    }
+}
+
+/* ==================== RESPONSIVE LAYOUT FOR TABLETS ==================== */
+@media (max-width: 1200px) {
+    .filter-container {
+        padding: 15px !important;
+    }
+
+    .filter-container .row {
+        flex-direction: column !important;
+    }
+
+    .filter-container .col-6 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        margin-bottom: 15px !important;
+    }
+
+    .btn {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        margin: 4px 2px !important;
+    }
+}
+
+/* ==================== RESPONSIVE LAYOUT FOR MOBILE ==================== */
+@media (max-width: 768px) {
+    .card-header h3 {
+        font-size: 14px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .card-header h3 span {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+        font-size: 11px !important;
+    }
+
+    .card-header h3 a {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        white-space: nowrap !important;
+    }
+
+    .filter-container {
+        padding: 12px !important;
+        margin: 15px 0 !important;
+    }
+
+    .input-group {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+
+    .input-group-4 {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #filterTable, #profileSelect, #commentSelect {
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+    }
+
+    .btn {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        margin: 3px !important;
+        width: auto !important;
+        display: inline-flex !important;
+    }
+
+    #dataTable thead th {
+        padding: 10px 8px !important;
+        font-size: 10px !important;
+    }
+
+    #dataTable tbody td {
+        padding: 10px 8px !important;
+        font-size: 11px !important;
+    }
+
+    .table-container {
+        margin-top: 15px !important;
+        border-radius: 15px !important;
+    }
+
+    #statusDisplay {
+        padding: 12px !important;
+        margin-bottom: 15px !important;
+        font-size: 12px !important;
+    }
+
+    #statusDisplay > div {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+/* ==================== RESPONSIVE LAYOUT FOR SMALL MOBILE ==================== */
+@media (max-width: 480px) {
+    .card-header {
+        padding: 15px !important;
+    }
+
+    .card-header h3 {
+        font-size: 13px !important;
+    }
+
+    .card-header h3 span a {
+        padding: 5px 8px !important;
+        font-size: 10px !important;
+    }
+
+    .filter-container {
+        padding: 10px !important;
+    }
+
+    .btn {
+        padding: 6px 10px !important;
+        font-size: 10px !important;
+        margin: 2px !important;
+    }
+
+    #filterTable, #profileSelect, #commentSelect {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+
+    #dataTable {
+        font-size: 10px !important;
+    }
+
+    #dataTable thead th {
+        padding: 8px 5px !important;
+        font-size: 9px !important;
+    }
+
+    #dataTable tbody td {
+        padding: 8px 5px !important;
+        font-size: 10px !important;
+    }
+
+    .pagination-btn {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
     }
 }
 
