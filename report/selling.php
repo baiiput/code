@@ -197,8 +197,111 @@ $(document).ready(function(){
     notify("Calculating data");
     window.location = "./?report=resume-report&idbl=<?= $idbl;?>&session=<?= $session;?>"
   });
+
+  // ASYNC DATA LOADING FOR SELLING REPORT
+  loadSellingData();
 });
+
+function loadSellingData() {
+  var session = "<?= $session ?>";
+  var idhr = "<?= $idhr ?>";
+  var idbl = "<?= $idbl ?>";
+  var prefix = "<?= $prefix ?>";
+  var currency = "<?= $currency ?>";
+
+  var url = "../dashboard/aload.php?load=sellingdata&session=" + session;
+  if (idhr) url += "&idhr=" + idhr;
+  if (idbl) url += "&idbl=" + idbl;
+  if (prefix) url += "&prefix=" + prefix;
+
+  console.log("Fetching selling data from:", url);
+
+  $.ajax({
+    url: url,
+    dataType: 'json',
+    timeout: 30000,
+    success: function(response) {
+      console.log("Selling data received:", response);
+
+      if (response.success && response.data) {
+        var tbody = $('#sellingTableBody');
+        tbody.empty(); // Remove skeleton loader
+
+        if (response.data.length === 0) {
+          tbody.html('<tr><td colspan="7" style="text-align:center; padding: 40px; color: #808080;">No data found</td></tr>');
+          $('#total').text(currency + ' 0');
+          return;
+        }
+
+        // Populate table rows
+        var totalPrice = 0;
+        response.data.forEach(function(row, index) {
+          var tr = $('<tr></tr>');
+          tr.append('<td>' + (index + 1) + '</td>');
+          tr.append('<td>' + row.date + '</td>');
+          tr.append('<td>' + row.time + '</td>');
+          tr.append('<td>' + row.username + '</td>');
+          tr.append('<td>' + row.profile + '</td>');
+          tr.append('<td>' + row.comment + '</td>');
+          tr.append('<td style="text-align:right;">' + row.price + '</td>');
+          tbody.append(tr);
+          totalPrice += parseFloat(row.price);
+        });
+
+        // Update total
+        var cekindo = <?= json_encode($cekindo) ?>;
+        if (cekindo && cekindo.indo && cekindo.indo.indexOf(currency) !== -1) {
+          $('#total').text(currency + ' ' + number_format(totalPrice, 0, '', '.'));
+        } else {
+          $('#total').text(currency + ' ' + number_format(totalPrice, 2, '.', ','));
+        }
+
+        console.log("Table populated with " + response.data.length + " rows");
+
+      } else {
+        console.error("Selling data error:", response.error || "Unknown error");
+        $('#sellingTableBody').html(
+          '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #ff6b6b;">' +
+          '<i class="fa fa-exclamation-triangle"></i> Error loading data: ' +
+          (response.error || 'Unknown error') +
+          '</td></tr>'
+        );
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error("AJAX error:", status, error);
+      $('#sellingTableBody').html(
+        '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #ff6b6b;">' +
+        '<i class="fa fa-exclamation-triangle"></i> Failed to load data: ' + status +
+        '<br><button class="btn btn-primary btn-sm" onclick="loadSellingData()" style="margin-top: 10px;">' +
+        '<i class="fa fa-refresh"></i> Retry</button>' +
+        '</td></tr>'
+      );
+    }
+  });
+}
 </script>
+
+<!-- CSS for Skeleton Loader Animation -->
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.selling-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0,208,132,0.2);
+  border-top-color: #00d084;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.selling-loader-row td {
+  background: rgba(255,255,255,0.02);
+}
+</style>
 <div class="row">
 <div class="col-12">
 <div class="card">
