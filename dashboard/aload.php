@@ -145,6 +145,85 @@ if ($load == "sellingdata") {
     exit;
 }
 
+// New endpoint: Hotspot users data with caching
+if ($load == "hotspotusers") {
+    header('Content-Type: application/json');
+
+    $prof = isset($_GET['prof']) ? $_GET['prof'] : 'all';
+    $comm = isset($_GET['comm']) ? $_GET['comm'] : '';
+
+    if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+
+        $cacheTTL = 30; // Cache for 30 seconds - user data is dynamic
+
+        // Fetch users based on filter
+        if ($prof == 'all') {
+            $getuser = getCachedApiData($API, "/ip/hotspot/user/print", array(), $cacheTTL);
+        } else {
+            $getuser = getCachedApiData($API, "/ip/hotspot/user/print",
+                      array("?profile" => $prof), $cacheTTL);
+        }
+
+        $API->disconnect();
+
+        // Process user data with formatting
+        $processedUsers = array();
+
+        if ($getuser && is_array($getuser)) {
+            foreach ($getuser as $user) {
+                // Apply comment filter if specified
+                if ($comm != "" && isset($user['comment']) && substr($user['comment'], 0, strlen($comm)) != $comm) {
+                    continue;
+                }
+
+                // Format data using helper functions
+                $server = isset($user['server']) && $user['server'] !== null ? $user['server'] : '';
+                $macaddress = isset($user['mac-address']) && $user['mac-address'] !== null ? $user['mac-address'] : '';
+                $comment = isset($user['comment']) && $user['comment'] !== null ? $user['comment'] : '';
+                $uptime = isset($user['uptime']) && $user['uptime'] !== null ? formatDTM($user['uptime']) : '';
+                $bytesin = isset($user['bytes-in']) && $user['bytes-in'] !== null ? formatBytes($user['bytes-in'], 2) : '0 B';
+                $bytesout = isset($user['bytes-out']) && $user['bytes-out'] !== null ? formatBytes($user['bytes-out'], 2) : '0 B';
+                $disabled = isset($user['disabled']) && $user['disabled'] !== null ? $user['disabled'] : 'false';
+                $timelimit = isset($user['limit-uptime']) && $user['limit-uptime'] !== null ?
+                            ($user['limit-uptime'] == '1s' ? ' expired' : ' ' . $user['limit-uptime']) : '';
+                $datalimit = isset($user['limit-bytes-total']) && $user['limit-bytes-total'] !== null && $user['limit-bytes-total'] !== '' ?
+                            ' ' . formatBytes($user['limit-bytes-total'], 2) : '';
+
+                $row = array(
+                    'id' => $user['.id'],
+                    'server' => $server,
+                    'name' => $user['name'],
+                    'password' => isset($user['password']) ? $user['password'] : '',
+                    'profile' => isset($user['profile']) ? $user['profile'] : '',
+                    'macaddress' => $macaddress,
+                    'uptime' => $uptime,
+                    'bytesin' => $bytesin,
+                    'bytesout' => $bytesout,
+                    'comment' => $comment,
+                    'disabled' => $disabled,
+                    'timelimit' => $timelimit,
+                    'datalimit' => $datalimit
+                );
+
+                $processedUsers[] = $row;
+            }
+        }
+
+        echo json_encode(array(
+            'success' => true,
+            'data' => $processedUsers,
+            'total' => count($processedUsers)
+        ));
+
+    } else {
+        echo json_encode(array(
+            'success' => false,
+            'error' => 'Failed to connect to Mikrotik'
+        ));
+    }
+    exit;
+}
+
 if ($load == "logs") {
     // Enhanced Hotspot Logs with Modern Design
 ?>
