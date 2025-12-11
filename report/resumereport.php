@@ -110,15 +110,25 @@ var totalvrc = 0;
 
 // Function to calculate resume per day
 function resumePerDay(date, dataresume) {
-    var evalue = dataresume.split(date);
-    var x = evalue.length;
-    var result = 0;
-    for (var i = 0; i < x; i++) {
-        result += parseInt(evalue[i]) || 0;
+    // Split by pipe delimiter to get array: [date, price, date, price, ...]
+    var records = dataresume.split('|');
+    var count = 0;
+    var total = 0;
+
+    // Process pairs: records[0]=date, records[1]=price, records[2]=date, records[3]=price...
+    for (var i = 0; i < records.length - 1; i += 2) {
+        if (records[i] === date) {
+            count++;
+            var price = parseInt(records[i + 1], 10);
+            if (!isNaN(price) && price > 0) {
+                total += price;
+            }
+        }
     }
+
     return {
-        count: (x - 1),
-        total: result
+        count: count,
+        total: total
     };
 }
 
@@ -202,7 +212,7 @@ function loadResumeData() {
 }
 
 // Create Highcharts chart
-function createChart(seriesData, subtitle, thisM, thisY) {
+function createChart(seriesData, subtitle, monthName, thisY) {
     // Destroy existing chart first to prevent error #16
     if (window.resumeChart) {
         console.log("Destroying existing chart...");
@@ -216,7 +226,7 @@ function createChart(seriesData, subtitle, thisM, thisY) {
             type: 'area',
         },
         title: {
-            text: 'Selling Report ' + thisM.charAt(0).toUpperCase() + thisM.slice(1) + ' ' + thisY
+            text: 'Selling Report ' + monthName + ' ' + thisY
         },
 
         subtitle: {

@@ -270,7 +270,8 @@ if ($load == "resumedata") {
                         $sampleDates[] = $date;
                     }
 
-                    $dataresume .= $date . $price;
+                    // Use pipe delimiter to separate date and price
+                    $dataresume .= $date . "|" . $price . "|";
                     $totalresume += floatval($price);
                     $totalvrc++;
                 }
