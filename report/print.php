@@ -67,8 +67,14 @@ if (!isset($_SESSION["mikhmon"])) {
 		$fcomment = explode("!!",$prefix)[1];
 	}else{$fcomment = $fcomment;}
 
-	$gettimezone = $API->comm("/system/clock/print");
-	$timezone = $gettimezone[0]['time-zone-name'];
+	// Set timezone - connect to API first
+	if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
+		$gettimezone = $API->comm("/system/clock/print");
+		$timezone = isset($gettimezone[0]['time-zone-name']) ? $gettimezone[0]['time-zone-name'] : 'Asia/Jakarta';
+		$API->disconnect();
+	} else {
+		$timezone = 'Asia/Jakarta'; // Fallback timezone
+	}
 	date_default_timezone_set($timezone);
 
 	if (isset($remdata)) {
