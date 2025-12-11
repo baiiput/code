@@ -45,9 +45,9 @@ if (!isset($_SESSION["mikhmon"])) {
   $API = new RouterosAPI();
   $API->debug = false;
 
-	$idhr = $_GET['idhr'];
-	$idbl = $_GET['idbl'];
-	$idbl2 = explode("/",$idhr)[0].explode("/",$idhr)[2];
+	$idhr = isset($_GET['idhr']) ? $_GET['idhr'] : '';
+	$idbl = isset($_GET['idbl']) ? $_GET['idbl'] : '';
+	$idbl2 = !empty($idhr) ? explode("/",$idhr)[0].explode("/",$idhr)[2] : '';
 	if ($idhr != ""){
 		$_SESSION['report'] = "&idhr=".$idhr;
 	} elseif ($idbl != ""){
@@ -57,9 +57,10 @@ if (!isset($_SESSION["mikhmon"])) {
 	}
 	$_SESSION['idbl'] = $idbl;
 	$remdata = ($_POST['remdata']);
-	$prefix = $_GET['prefix'];
-	$fcomment = $_GET['comment'];
-	$range = $_GET['range'];
+	$prefix = isset($_GET['prefix']) ? $_GET['prefix'] : '';
+	$fcomment = isset($_GET['comment']) ? $_GET['comment'] : '';
+	$range = isset($_GET['range']) ? $_GET['range'] : '';
+	$trange = "";
 	if(!empty($range)){$trange = "[".$range."]";}
 	
 	$pcomment = substr($prefix, 0,2);
@@ -120,6 +121,9 @@ if (!isset($_SESSION["mikhmon"])) {
 	// Initialize variables
 	$getData = array();
 	$TotalReg = 0;
+	$filedownload = "";
+	$shf = "hidden";
+	$shd = "inline-block";
 
 	if (strlen($idhr) > "0") {
 		if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
