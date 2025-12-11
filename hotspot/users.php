@@ -769,6 +769,25 @@ if (!isset($_SESSION["mikhmon"])) {
         padding: 3px 6px !important;
     }
 }
+
+/* ==================== SPINNER ANIMATION FOR ASYNC LOADING ==================== */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.users-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(0,208,132,0.2);
+    border-top-color: #00d084;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.users-loader-row td {
+    background: rgba(52, 58, 70, 0.8) !important;
+}
 </style>
 <!-- ==================== END CSS ==================== -->
 
@@ -898,7 +917,16 @@ if (!isset($_SESSION["mikhmon"])) {
   </tr>
   </thead>
   <tbody id="tbody">
-    <!-- Users will be loaded here via JavaScript -->
+    <!-- Loading skeleton will be shown here -->
+    <tr class="users-loader-row">
+        <td colspan="10" style="text-align: center; padding: 60px 20px;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                <div class="users-spinner"></div>
+                <div style="color: #b0b0b0; font-size: 14px; font-weight: 600;">Loading Hotspot Users...</div>
+                <div style="color: #808080; font-size: 12px;">Fetching user data from Mikrotik</div>
+            </div>
+        </td>
+    </tr>
   </tbody>
 </table>
 </div>
@@ -1157,9 +1185,6 @@ function showFilterNotification(message) {
 
 // ==================== OPTIMIZED USER DATA LOADING WITH ASYNC ====================
 function loadUserData() {
-    showLoading('Loading user data from Mikrotik...', 'Fetching Users');
-    simulateProgress(2000);
-
     const session = "<?= $session ?>";
     const prof = currentProfile || 'all';
     const comm = currentComment || '';
@@ -1167,37 +1192,30 @@ function loadUserData() {
     const url = `../dashboard/aload.php?load=hotspotusers&session=${session}&prof=${prof}&comm=${comm}`;
 
     console.log('🔄 Fetching users from:', url);
-    updateLoadingMessage('Connecting to Mikrotik...');
+    updateStatus('Loading users from Mikrotik...');
+
+    // Keep skeleton loader visible (already in tbody by default)
 
     $.ajax({
         url: url,
         dataType: 'json',
-        timeout: 30000,
+        timeout: 60000, // Increase to 60 seconds
         success: function(response) {
             console.log('📦 Received response:', response);
 
             if (response.success && response.data) {
-                updateLoadingMessage('Processing user data...', 90);
-
                 allUsers = response.data;
                 filteredUsers = [...allUsers];
 
                 updateStatus(`Loaded ${allUsers.length} users successfully`);
                 console.log(`✅ Loaded ${allUsers.length} users`);
 
-                completeProgress();
-                updateLoadingMessage('Building interface...', 95);
-
-                setTimeout(() => {
-                    buildCommentOptions();
-                    updatePagination();
-                    hideLoading();
-                }, 300);
+                buildCommentOptions();
+                updatePagination();
 
             } else {
                 console.error('❌ Invalid response format:', response);
                 updateStatus('Failed to load users: Invalid data format', true);
-                hideLoading();
 
                 // Show error in table
                 document.getElementById('tbody').innerHTML =
@@ -1210,7 +1228,6 @@ function loadUserData() {
         error: function(xhr, status, error) {
             console.error('❌ AJAX Error:', status, error);
             updateStatus(`Failed to load users: ${status}`, true);
-            hideLoading();
 
             // Show error with retry button
             document.getElementById('tbody').innerHTML =

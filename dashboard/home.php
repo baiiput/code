@@ -2786,6 +2786,10 @@ function formatDTM(seconds) {
   return parts.join(' ') || '0s';
 }
 
+// Store interval IDs for cleanup
+var dashboardIntervals = [];
+var isNavigatingAway = false;
+
 // SIMPLIFIED initialization
 $(document).ready(function() {
   // Load dashboard stats immediately (OPTIMIZED - no blocking)
@@ -2793,20 +2797,53 @@ $(document).ready(function() {
 
   // Load logs with delay
   setTimeout(function() {
-    loadLogsContent();
+    if (!isNavigatingAway) loadLogsContent();
   }, 3000);
 
-  // OPTIMIZED intervals with caching
-  setInterval(loadDashboardStats, 30000); // Every 30 seconds (cached)
-  setInterval(reloadIncomeReport, 25000); // Every 25 seconds
-  setInterval(loadLogsContent, 35000); // Every 35 seconds
+  // OPTIMIZED intervals with caching - Store IDs for cleanup
+  dashboardIntervals.push(setInterval(function() {
+    if (!isNavigatingAway && $('#r_1').length > 0) loadDashboardStats();
+  }, 30000)); // Every 30 seconds (cached)
+
+  dashboardIntervals.push(setInterval(function() {
+    if (!isNavigatingAway && $('#r_1').length > 0) reloadIncomeReport();
+  }, 25000)); // Every 25 seconds
+
+  dashboardIntervals.push(setInterval(function() {
+    if (!isNavigatingAway && $('#r_3').length > 0) loadLogsContent();
+  }, 35000)); // Every 35 seconds
 });
 
-// Force styles on any AJAX completion, but heavily debounced
+// Clean up intervals when navigating away
+$(document).on('click', 'a[href]', function(e) {
+  var href = $(this).attr('href');
+  // Check if navigating away from dashboard
+  if (href && !href.includes('home') && !href.includes('#')) {
+    isNavigatingAway = true;
+    // Clear all intervals
+    dashboardIntervals.forEach(function(intervalId) {
+      clearInterval(intervalId);
+    });
+    dashboardIntervals = [];
+    console.log('🧹 Cleared dashboard intervals before navigation');
+  }
+});
+
+// Cleanup on page unload
+$(window).on('beforeunload', function() {
+  dashboardIntervals.forEach(function(intervalId) {
+    clearInterval(intervalId);
+  });
+});
+
+// Force styles on any AJAX completion, but heavily debounced and only for dashboard
 var styleTimeout;
 $(document).ajaxComplete(function() {
-  clearTimeout(styleTimeout);
-  styleTimeout = setTimeout(ensureCompactStyling, 500); // Longer delay
+  // Only apply styling if still on dashboard
+  if ($('#r_1').length > 0 && !isNavigatingAway) {
+    clearTimeout(styleTimeout);
+    styleTimeout = setTimeout(ensureCompactStyling, 500); // Longer delay
+  }
 });
 </script>
 
