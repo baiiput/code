@@ -63,10 +63,23 @@ if (!isset($_SESSION["mikhmon"])) {
 /* ==================== FILTER BOX ==================== */
 .filter-box {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 20px;
+    padding: 25px;
     border-radius: 15px;
     margin: 20px 0;
     border: 1px solid #dee2e6;
+}
+
+.filter-box label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.filter-box .form-control {
+    font-size: 14px;
+    padding: 10px 15px;
+    height: 45px;
 }
 
 /* ==================== TABLE STYLING ==================== */
@@ -85,17 +98,19 @@ if (!isset($_SESSION["mikhmon"])) {
     color: #ffffff;
     font-weight: 600;
     border: none;
-    padding: 15px 10px;
+    padding: 18px 15px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 10;
+    font-size: 15px;
 }
 
 .table tbody td {
-    padding: 12px 10px;
+    padding: 15px 12px;
     vertical-align: middle;
     border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
 }
 
 .table tbody tr:hover {
@@ -103,13 +118,14 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 
 .btn-action {
-    padding: 5px 10px;
+    padding: 8px 14px;
     margin: 2px;
-    border-radius: 5px;
-    font-size: 12px;
+    border-radius: 6px;
+    font-size: 13px;
     text-decoration: none;
     display: inline-block;
     transition: all 0.3s;
+    font-weight: 500;
 }
 
 .btn-info { background: #3498db; color: white; border: 1px solid #2980b9; }
@@ -125,18 +141,22 @@ if (!isset($_SESSION["mikhmon"])) {
 /* Loading spinner */
 .loading-spinner {
     text-align: center;
-    padding: 40px;
+    padding: 60px;
     font-size: 18px;
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     animation: spin 1s linear infinite;
     margin: 0 auto 20px;
+}
+
+.card-body {
+    padding: 30px;
 }
 
 @keyframes spin {
@@ -145,15 +165,25 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 
 .badge {
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }
 
 .badge-success { background: #27ae60; color: white; }
 .badge-danger { background: #e74c3c; color: white; }
 .badge-warning { background: #f39c12; color: white; }
+
+.total-info {
+    padding: 20px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
 </style>
 
 <div class="row">
@@ -231,8 +261,8 @@ if (!isset($_SESSION["mikhmon"])) {
                             </tbody>
                         </table>
                     </div>
-                    <div style="padding: 15px; text-align: center;">
-                        <strong>Total Secrets: <span id="totalSecrets">0</span></strong>
+                    <div class="total-info">
+                        Total Secrets: <span id="totalSecrets">0</span>
                     </div>
                 </div>
 
