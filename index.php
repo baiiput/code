@@ -109,9 +109,9 @@ if (!isset($_SESSION["mikhmon"])) {
   $pageppp = array('secrets','profiles','active',);
   $pagereport = array('userlog','selling');
 
-  include_once('./include/headhtml.php');
-
-  include_once('./include/menu.php');
+  // Navigation system removed - files don't exist
+  // include_once('./include/headhtml.php');
+  // include_once('./include/menu.php');
 
   $disable_sci = '<script>
   document.getElementById("comment").onkeypress = function(e) {
