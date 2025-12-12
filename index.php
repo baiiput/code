@@ -487,9 +487,7 @@ elseif ($ppp == "edit-profile") {
 
   ?>
 
-</div>
-</div>
-</div>
+<!-- Orphaned closing divs removed - now using headhtml/menu/foothtml structure -->
 <script src="./js/highcharts/highcharts.js"></script>
 <script src="./js/highcharts/themes/hc.<?= $theme; ?>.js"></script>
 <script src="./js/mikhmon-ui.<?= $theme; ?>.min.js"></script>
@@ -592,6 +590,9 @@ $(document).ready(function(){
 }
 
 ?>
-</body>
-</html>
+
+<?php
+// Close main content wrapper and add footer scripts
+include_once('./include/foothtml.php');
+?>
 
