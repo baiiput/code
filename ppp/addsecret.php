@@ -79,75 +79,107 @@ if (!isset($_SESSION["mikhmon"])) {
     color: #3498db !important;
 }
 
+.card {
+    background: rgba(40, 44, 52, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+}
+
+.card-body {
+    background: rgba(45, 52, 64, 0.9) !important;
+    padding: 30px !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
 .form-group {
     margin-bottom: 20px;
 }
 
 .form-group label {
     font-weight: 600;
-    color: #2c3e50;
+    color: #ffffff !important;
     margin-bottom: 8px;
     display: block;
+    font-size: 14px;
 }
 
-.form-control {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px 15px;
-    transition: all 0.3s;
+.form-group label span {
+    color: #e74c3c;
 }
 
-.form-control:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+.form-control, select.form-control {
+    background: rgba(52, 58, 70, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    padding: 12px 18px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: border-color 0.3s ease !important;
+    width: 100%;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-control:focus, select.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    background: rgba(52, 58, 70, 1) !important;
+}
+
+select.form-control {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 16 16'%3e%3cpath d='m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px !important;
+    cursor: pointer !important;
 }
 
 .btn {
-    padding: 10px 25px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.3s;
-    border: none;
+    padding: 12px 25px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s !important;
+    border: none !important;
+    margin: 5px !important;
+    font-size: 14px !important;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    color: white !important;
 }
 
 .btn-secondary {
-    background: #95a5a6;
-    color: white;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+    color: white !important;
 }
 
-.btn-secondary:hover {
-    background: #7f8c8d;
+.btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
 .alert {
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 20px;
+    border: 1px solid;
 }
 
 .alert-danger {
-    background: #ffe6e6;
-    border: 1px solid #e74c3c;
-    color: #c0392b;
-}
-
-.card-body {
-    padding: 30px;
+    background: rgba(231, 76, 60, 0.2);
+    border-color: #e74c3c;
+    color: #ffffff;
 }
 
 .help-text {
     font-size: 12px;
-    color: #7f8c8d;
+    color: rgba(255, 255, 255, 0.6) !important;
     margin-top: 5px;
 }
 </style>
@@ -173,7 +205,7 @@ if (!isset($_SESSION["mikhmon"])) {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Username <span style="color: red;">*</span></label>
+                                <label for="name">Username <span>*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" required placeholder="Enter username">
                                 <small class="help-text">Unique username for PPP connection</small>
                             </div>
@@ -181,7 +213,7 @@ if (!isset($_SESSION["mikhmon"])) {
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="password">Password <span style="color: red;">*</span></label>
+                                <label for="password">Password <span>*</span></label>
                                 <input type="text" class="form-control" id="password" name="password" required placeholder="Enter password">
                                 <small class="help-text">Password for authentication</small>
                             </div>

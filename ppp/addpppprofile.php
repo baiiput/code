@@ -38,14 +38,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_profile'])) {
 <style>
 .card-header {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    border: none !important;
     border-radius: 20px 20px 0 0 !important;
     padding: 20px 25px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
 }
 
 .card-header h3 {
     color: #ffffff !important;
     font-weight: 700 !important;
     margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+.card-header h3 i {
+    font-size: 24px !important;
+    color: #3498db !important;
+}
+
+.card {
+    background: rgba(40, 44, 52, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+}
+
+.card-body {
+    background: rgba(45, 52, 64, 0.9) !important;
+    padding: 30px !important;
+    border-radius: 0 0 20px 20px !important;
 }
 
 .form-group {
@@ -54,38 +77,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_profile'])) {
 
 .form-group label {
     font-weight: 600;
-    color: #2c3e50;
+    color: #ffffff !important;
     margin-bottom: 8px;
     display: block;
+    font-size: 14px;
+}
+
+.form-group label span {
+    color: #e74c3c;
 }
 
 .form-control {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px 15px;
+    background: rgba(52, 58, 70, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    padding: 12px 18px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: border-color 0.3s ease !important;
+    width: 100%;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    background: rgba(52, 58, 70, 1) !important;
 }
 
 .btn {
-    padding: 10px 25px;
-    border-radius: 8px;
-    font-weight: 600;
-    border: none;
-    margin: 5px;
+    padding: 12px 25px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s !important;
+    border: none !important;
+    margin: 5px !important;
+    font-size: 14px !important;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    color: white !important;
 }
 
 .btn-secondary {
-    background: #95a5a6;
-    color: white;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+    color: white !important;
+}
+
+.btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid;
+}
+
+.alert-danger {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: #e74c3c;
+    color: #ffffff;
 }
 
 .help-text {
     font-size: 12px;
-    color: #7f8c8d;
+    color: rgba(255, 255, 255, 0.6) !important;
     margin-top: 5px;
 }
 </style>
@@ -99,12 +163,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_profile'])) {
 
             <div class="card-body">
                 <?php if (isset($error_msg)): ?>
-                    <div class="alert alert-danger"><?= $error_msg ?></div>
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"></i> <?= $error_msg ?>
+                    </div>
                 <?php endif; ?>
 
                 <form method="POST" action="">
                     <div class="form-group">
-                        <label>Profile Name <span style="color: red;">*</span></label>
+                        <label>Profile Name <span>*</span></label>
                         <input type="text" class="form-control" name="name" required placeholder="e.g., 10Mbps">
                         <small class="help-text">Unique name for this profile</small>
                     </div>
