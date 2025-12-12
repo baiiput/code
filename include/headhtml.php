@@ -1,22 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mikhmon - MikroTik Hotspot Monitor</title>
-
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Bootstrap JS -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
-  <style>
+<style>
   /* ==================== MODERN COMPACT NAVIGATION STYLES ==================== */
+  /* Only apply to navigation elements, don't override global styles */
   :root {
     --navbar-height: 60px;
     --sidebar-width: 260px;
@@ -32,17 +16,14 @@
     --transition-speed: 0.3s;
   }
 
-  * {
+  /* Don't override global styles - only apply to navigation */
+  .modern-navbar,
+  .modern-navbar *,
+  .modern-sidebar,
+  .modern-sidebar * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #0f1117;
-    color: var(--text-primary);
-    overflow-x: hidden;
   }
 
   /* ==================== TOP NAVBAR ==================== */
@@ -366,9 +347,9 @@
     padding: 25px;
     min-height: calc(100vh - var(--navbar-height));
     transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
-    background: #0f1117;
     width: calc(100% - var(--sidebar-width));
     box-sizing: border-box;
+    /* Don't override background - let page content use its own */
   }
 
   .sidebar-collapsed .main-content {
@@ -428,9 +409,7 @@
   .collapsed .menu-link:hover::after {
     opacity: 1;
   }
-  </style>
-</head>
-<body>
+</style>
 
 <!-- Top Navbar -->
 <nav class="modern-navbar">

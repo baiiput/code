@@ -5,6 +5,7 @@
 <!-- Additional Scripts -->
 <script>
 // Initialize tooltips and other UI enhancements
+if (typeof $ !== 'undefined') {
 $(document).ready(function() {
   // Add smooth scrolling
   $('a[href^="#"]').on('click', function(e) {
@@ -179,7 +180,6 @@ $(window).on('load', function() {
 $(window).on('beforeunload', function() {
   showLoading();
 });
-</script>
 
-</body>
-</html>
+} // End jQuery check
+</script>
