@@ -1,0 +1,567 @@
+<?php
+session_start();
+// hide all error
+error_reporting(0);
+
+if (!isset($_SESSION["mikhmon"])) {
+  header("Location:../admin.php?id=login");
+} else {
+
+// Include necessary files
+include_once('./lib/routeros_api.class.php');
+
+// Load config to get admin credentials and router data
+// Clear any existing config data to ensure fresh load
+unset($data);
+include('./include/config.php');
+
+// Extract admin credentials - IMPROVED VERSION WITH FALLBACK
+$useradm = "admin"; // default fallback
+$passadm = ""; // default fallback
+
+if (isset($data['mikhmon'])) {
+    // Method 1: Try original parsing
+    if (isset($data['mikhmon'][1]) && strpos($data['mikhmon'][1], '<|<') !== false) {
+        $useradm = explode('<|<', $data['mikhmon'][1])[1];
+    }
+    if (isset($data['mikhmon'][2]) && strpos($data['mikhmon'][2], '>|>') !== false) {
+        $passadm = explode('>|>', $data['mikhmon'][2])[1];
+    }
+} else {
+    // Fallback: scan all data for mikhmon entries
+    foreach ($data as $key => $value) {
+        if ($key == 'mikhmon' && is_array($value)) {
+            if (isset($value[1]) && strpos($value[1], '<|<') !== false) {
+                $useradm = explode('<|<', $value[1])[1];
+            }
+            if (isset($value[2]) && strpos($value[2], '>|>') !== false) {
+                $passadm = explode('>|>', $value[2])[1];
+            }
+            break;
+        }
+    }
+}
+
+// Load language variables (fallback if files not found)
+$_admin_settings = "Admin Settings";
+$_router_list = "Router List";
+$_hotspot_name = "Hotspot Name";
+$_session_name = "Session Name";
+$_open = "Open";
+$_edit = "Edit";
+$_delete = "Delete";
+$_user_name = "Username";
+$_password = "Password";
+$_quick_print = "Quick Print";
+$_save = "Save";
+$_admin = "Admin";
+
+// Try to load language files if they exist
+if (file_exists('./include/lang.php')) {
+  include('./include/lang.php');
+}
+if (isset($langid) && file_exists('./lang/'.$langid.'.php')) {
+  include('./lang/'.$langid.'.php');
+}
+
+// Load quickbt setting
+$qrbt = "enable";
+if (file_exists('./include/quickbt.php')) {
+  include('./include/quickbt.php');
+}
+
+// Array color for router boxes
+$colorClasses = array('bg-blue', 'bg-indigo', 'bg-purple', 'bg-pink', 'bg-red', 'bg-yellow', 'bg-green', 'bg-teal', 'bg-cyan', 'bg-grey');
+
+// IMPROVED FORM PROCESSING - EXACT SAME AS DEBUG VERSION
+if (isset($_POST['save'])) {
+    $suseradm = $_POST['useradm'];
+    $spassadm = encrypt($_POST['passadm']);
+    $qrbt = $_POST['qrbt'];
+    
+    // Method: Direct file content replacement (more reliable than array-based)
+    $config_file = './include/config.php';
+    $content = file_get_contents($config_file);
+    
+    if ($content !== false) {
+        // Replace username pattern
+        $old_user_pattern = "mikhmon<|<$useradm";
+        $new_user_pattern = "mikhmon<|<$suseradm";
+        $content = str_replace($old_user_pattern, $new_user_pattern, $content);
+        
+        // Replace password pattern  
+        $old_pass_pattern = "mikhmon>|>$passadm";
+        $new_pass_pattern = "mikhmon>|>$spassadm";
+        $content = str_replace($old_pass_pattern, $new_pass_pattern, $content);
+        
+        // Write back to file
+        $write_result = file_put_contents($config_file, $content);
+        
+        if ($write_result === false) {
+            $error_msg = "Failed to write config file. Check permissions.";
+        }
+    } else {
+        $error_msg = "Failed to read config file.";
+    }
+    
+    // Save quickbt setting
+    $gen = '<?php $qrbt="' . $qrbt . '";?>';
+    $key = './include/quickbt.php';
+    $handle = fopen($key, 'w');
+    if ($handle) {
+        fwrite($handle, $gen);
+        fclose($handle);
+    }
+    
+    // Clear opcode cache to ensure fresh data
+    if (function_exists('opcache_invalidate')) {
+        opcache_invalidate('./include/config.php');
+        opcache_invalidate('./include/quickbt.php');
+    }
+    
+    if (!isset($error_msg)) {
+        echo "<script>
+        alert('Settings saved successfully!');
+        window.location='./admin.php?id=sessions';
+        </script>";
+    } else {
+        echo "<script>alert('Error: $error_msg');</script>";
+    }
+}
+
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikhMon - Sessions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #64ffda;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title i {
+            font-size: 1.3rem;
+            background: linear-gradient(45deg, #64ffda, #00bcd4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.1), rgba(0, 188, 212, 0.1));
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #64ffda;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .router-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .router-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .router-box.bg-blue { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); }
+        .router-box.bg-indigo { background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%); }
+        .router-box.bg-purple { background: linear-gradient(135deg, #6b21a8 0%, #7c3aed 100%); }
+        .router-box.bg-pink { background: linear-gradient(135deg, #be185d 0%, #db2777 100%); }
+        .router-box.bg-red { background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); }
+        .router-box.bg-yellow { background: linear-gradient(135deg, #a16207 0%, #ca8a04 100%); }
+        .router-box.bg-green { background: linear-gradient(135deg, #166534 0%, #16a34a 100%); }
+        .router-box.bg-teal { background: linear-gradient(135deg, #115e59 0%, #0d9488 100%); }
+        .router-box.bg-cyan { background: linear-gradient(135deg, #155e75 0%, #0891b2 100%); }
+        .router-box.bg-grey { background: linear-gradient(135deg, #374151 0%, #4b5563 100%); }
+
+        .router-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .router-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .router-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .router-info div {
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .router-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .router-actions a, .router-actions span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-table {
+            width: 100%;
+        }
+
+        .form-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+
+        .form-table td:first-child {
+            font-weight: 500;
+            color: #64ffda;
+            width: 100px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #64ffda;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 2px rgba(100, 255, 218, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .input-group input {
+            border-radius: 0;
+            border-right: none;
+            flex: 1;
+        }
+
+        .input-group .show-password {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group .show-password:hover {
+            background: rgba(100, 255, 218, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #64ffda, #00bcd4);
+            color: #0c0c0c;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e6ed;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .router-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-table td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <div class="header-left">
+                    <i class="fas fa-cogs"></i>
+                    <span><?= $_admin_settings ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Router List Section -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-server"></i>
+                        <span><?= $_router_list ?></span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="router-grid">
+                        <?php
+                        foreach ($data as $sessionName => $sessionData) {
+                            if ($sessionName == "" || $sessionName == "mikhmon") {
+                                continue;
+                            }
+                            
+                            $hotspotName = "Unknown";
+                            if (isset($sessionData[4])) {
+                                $hotspotData = $sessionData[4];
+                                $parts = explode('%', $hotspotData);
+                                if (count($parts) > 1) {
+                                    $hotspotName = $parts[1];
+                                } else {
+                                    $hotspotName = $sessionName;
+                                }
+                            }
+                        ?>
+                        <div class="router-box <?= $colorClasses[array_rand($colorClasses)]; ?>">
+                            <div class="router-content">
+                                <div class="router-icon">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                <div class="router-info">
+                                    <div><strong><?= $_hotspot_name ?> :</strong> <?= htmlspecialchars($hotspotName); ?></div>
+                                    <div><strong><?= $_session_name ?> :</strong> <?= htmlspecialchars($sessionName); ?></div>
+                                    <div class="router-actions">
+                                        <span class="connect pointer" id="<?= htmlspecialchars($sessionName); ?>">
+                                            <i class="fas fa-external-link-alt"></i> <?= $_open ?>
+                                        </span>
+                                        <a href="./admin.php?id=settings&session=<?= urlencode($sessionName); ?>">
+                                            <i class="fas fa-edit"></i> <?= $_edit ?>
+                                        </a>
+                                        <a href="javascript:void(0)" 
+                                           onclick="if(confirm('Delete <?= htmlspecialchars($sessionName); ?>?')){
+                                               window.location='./admin.php?id=remove-session&session=<?= urlencode($sessionName); ?>'
+                                           }">
+                                            <i class="fas fa-trash"></i> <?= $_delete ?>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Settings Form -->
+            <div class="form-container">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user-circle"></i>
+                        <span><?= $_admin ?></span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form autocomplete="off" method="post" action="">
+                        <table class="form-table">
+                            <tr>
+                                <td><?= $_user_name ?></td>
+                                <td>
+                                    <input class="form-control" id="useradm" type="text" name="useradm" 
+                                           title="User Admin" value="<?= htmlspecialchars($useradm); ?>" required />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><?= $_password ?></td>
+                                <td>
+                                    <div class="input-group">
+                                        <input class="form-control" id="passadm" type="password" name="passadm" 
+                                               title="Password Admin" value="<?= htmlspecialchars(decrypt($passadm)); ?>" required />
+                                        <div class="show-password" onclick="Pass('passadm')" title="Show/Hide Password">
+                                            <i class="fas fa-eye" id="passadm-eye"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><?= $_quick_print ?> QR</td>
+                                <td>
+                                    <select class="form-control" name="qrbt">
+                                        <option <?= ($qrbt == 'enable') ? 'selected' : '' ?>>enable</option>
+                                        <option <?= ($qrbt == 'disable') ? 'selected' : '' ?>>disable</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <input type="submit" class="btn btn-primary" name="save" value="<?= $_save ?>" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function Pass(id){
+            var x = document.getElementById(id);
+            var eye = document.getElementById(id + '-eye');
+            if (x.type === 'password') {
+                x.type = 'text';
+                eye.className = 'fas fa-eye-slash';
+            } else {
+                x.type = 'password';
+                eye.className = 'fas fa-eye';
+            }
+        }
+    </script>
+</body>
+</html>

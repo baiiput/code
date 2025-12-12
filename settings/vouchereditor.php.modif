@@ -1,0 +1,421 @@
+<?php
+/*
+ *  Copyright (C) 2018 Laksamadi Guko.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+session_start();
+?>
+<?php
+error_reporting(0);
+if (!isset($_SESSION["mikhmon"])) {
+	header("Location:../admin.php?id=login");
+} else {
+// load session MikroTik
+	$session = $_GET['session'];
+
+// load config
+include('../include/config.php');
+include('../include/readcfg.php');
+
+// VOUCHER EDITOR DISABLED FOR SECURITY REASONS
+$editor_disabled = true;
+
+$url = $_SERVER['REQUEST_URI'];
+$telplate = $_GET['template'];
+if ($telplate == "default" || $telplate == "rdefault") {
+	$telplatet = "template";
+} elseif ($telplate == "thermal" || $telplate == "rthermal") {
+	$telplatet = "template-thermal";
+} elseif ($telplate == "small" || $telplate == "rsmall") {
+	$telplatet = "template-small";
+}
+
+// Disabled save functionality
+if (isset($_POST['save']) && !$editor_disabled) {
+	// This code will never execute due to $editor_disabled = true
+	$template = './voucher/' . $telplatet . '.php';
+	$handle = fopen($template, 'w') or die('Cannot open file:  ' . $template);
+	$data = ($_POST['editor']);
+	fwrite($handle, $data);
+}
+
+}
+?>
+<!-- Create a simple CodeMirror instance -->
+<link rel="stylesheet" href="./css/editor.min.css">
+<script src="./js/editor.min.js"></script>	
+
+<style>
+.CodeMirror {
+  border: 1px solid #2f353a;
+  height: 505px;
+  background-color: #f5f5f5;
+  opacity: 0.6;
+}
+textarea{
+  font-size:12px;
+  border: 1px solid #2f353a;
+  background-color: #f5f5f5;
+  opacity: 0.6;
+}
+.disabled-overlay {
+  position: relative;
+}
+.disabled-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.1);
+  z-index: 10;
+  pointer-events: none;
+}
+.security-notice {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.security-notice h3 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+.security-notice p {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.security-notice .contact-info {
+  background: rgba(255,255,255,0.2);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.warning-icon {
+  font-size: 48px;
+  color: #FFD700;
+  margin-bottom: 10px;
+}
+.security-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 60px;
+  color: rgba(220, 53, 69, 0.1);
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+}
+.protected-content {
+  position: relative;
+  overflow: hidden;
+}
+.protected-content::before {
+  content: '🔒 PROTECTED CONTENT';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 15;
+}
+</style>
+
+<!-- Security Notice -->
+<div class="security-notice">
+    <div class="warning-icon">
+        <i class="fa fa-shield-alt"></i>
+    </div>
+    <h3><i class="fa fa-lock"></i> Voucher Editor Dinonaktifkan</h3>
+    <p><strong>Demi keamanan sistem, voucher editor telah dinonaktifkan.</strong></p>
+    <p>Fitur ini dapat mempengaruhi stabilitas dan keamanan sistem voucher.</p>
+    <div class="contact-info">
+        <p><i class="fa fa-info-circle"></i> <strong>Butuh template voucher custom?</strong></p>
+        <p>Silakan hubungi administrator sistem untuk bantuan lebih lanjut.</p>
+        <p><i class="fa fa-envelope"></i> Email: admin@domain.com | <i class="fa fa-phone"></i> Tel: 0812-xxxx-xxxx</p>
+    </div>
+</div>
+
+		<div class="row">
+	    	<div class="col-9">
+	    		<div class="card">
+					<div class="card-header">
+						<h3><i class="fa fa-edit"></i> <?= $_template_editor ?> - <span style="color: #dc3545;">DINONAKTIFKAN</span></h3>
+					</div>
+			<div class="card-body disabled-overlay protected-content">
+				<div class="security-watermark">DINONAKTIFKAN</div>
+				<form autocomplete="off" method="post" action="">
+					<table class="table">
+						<tr>
+							<td>
+							<div class="row">
+								<div class="col-4 col-box-12">
+								<button type="button" title="Editor dinonaktifkan" class="btn bg-secondary disabled-btn" disabled><i class="fa fa-ban"></i> <?= $_save ?> (Disabled)</button>
+								<button type="button" title="Preview dinonaktifkan" class="btn bg-secondary disabled-btn" disabled><i class="fa fa-image"></i> (Disabled)</button>
+								<button type="button" title="QR Preview dinonaktifkan" class="btn bg-secondary disabled-btn" disabled><i class="fa fa-qrcode"></i> (Disabled)</button>
+								</div>
+								<div class="col-8 pd-t-5 pd-b-5 col-box-12">
+								<div class="input-group">
+            					<div class="input-group-3">
+            						<div class="group-item group-item-l pd-2p5 text-center">Template (Read Only)</div>
+            					</div>
+								<div class="input-group-3">
+									<select style="padding:4.2px; opacity: 0.6;" class="group-item group-item-m" disabled>
+	    								<option><?= ucfirst($telplate ? $telplate : 'default'); ?></option>
+	    								<option value="">Default</option>
+	    								<option value="">Thermal</option>
+	    								<option value="">Small</option>
+	    							</select>
+	    						</div>
+								
+								<div class="input-group-3">
+            						<div class="group-item group-item-m pd-2p5 text-center">Reset (Disabled)</div>
+            					</div>
+	    						<div class="input-group-3">
+	    							<select style="padding:4.2px; opacity: 0.6;" class="group-item group-item-r" disabled>
+	    								<option><?= ucfirst($telplate ? $telplate : 'default'); ?></option>
+	    								<option value="">Default</option>
+	    								<option value="">Thermal</option>
+	    								<option value="">Small</option>
+	    							</select>
+	    						</div>
+								</div>
+								</div>
+							</div>
+	    					</td>
+						</tr>
+						</table>
+	        	<textarea class="bg-dark" id="editorMikhmon" name="editor" style="width:100%" height="700" readonly disabled>
+🔒 VOUCHER EDITOR DINONAKTIFKAN UNTUK KEAMANAN SISTEM 🔒
+
+════════════════════════════════════════════════════════════════════
+
+⚠️  AKSES DITOLAK - EDITOR TEMPLATE DINONAKTIFKAN ⚠️
+
+Demi menjaga keamanan dan integritas sistem voucher, 
+akses ke editor template telah dinonaktifkan secara permanen.
+
+════════════════════════════════════════════════════════════════════
+
+📋 INFORMASI TEMPLATE YANG TERSEDIA:
+   • Template Default  - Layout standar voucher
+   • Template Thermal  - Optimized untuk printer thermal  
+   • Template Small    - Ukuran compact untuk voucher kecil
+
+🔐 ALASAN PENONAKTIFAN:
+   • Mencegah modifikasi tidak sah
+   • Melindungi struktur template voucher
+   • Menjaga konsistensi design voucher
+   • Mencegah kesalahan sistem akibat code yang tidak valid
+
+📞 BUTUH TEMPLATE CUSTOM?
+   Silakan hubungi administrator sistem dengan informasi berikut:
+   
+   📧 Email: admin@domain.com
+   📱 WhatsApp: +62 812-xxxx-xxxx  
+   🕐 Jam Kerja: Senin-Jumat 08:00-17:00 WIB
+
+═══════════════════════════════════════════════════════════════════
+
+Template <?= ucfirst($telplate ? $telplate : 'default'); ?> - STATUS: PROTECTED 🛡️
+
+PERINGATAN: Konten template tidak ditampilkan untuk alasan keamanan.
+Segala upaya untuk mengakses atau memodifikasi template akan dicatat dalam log sistem.
+
+════════════════════════════════════════════════════════════════════
+	        </textarea>
+			</form>
+			</div>
+		</div>
+		</div>
+		<div class="col-3">
+			<div class="card">
+				<div class="card-header">
+					<h3>Variable (Read Only)</h3>
+				</div>
+			<div class="card-body disabled-overlay protected-content">
+				<div class="security-watermark">PROTECTED</div>
+				<textarea id="var" class="bg-dark" readonly rows=39 style="width:100%" disabled>
+🔒 VARIABEL TEMPLATE - AKSES DINONAKTIFKAN 🔒
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  INFORMASI VARIABEL TIDAK DITAMPILKAN ⚠️
+
+Demi keamanan sistem, daftar variabel template 
+tidak dapat diakses melalui interface ini.
+
+═══════════════════════════════════════════════════════════════
+
+📋 JENIS VARIABEL YANG TERSEDIA (UMUM):
+
+🏷️  INFORMASI VOUCHER:
+   • Username & Password
+   • Masa berlaku / Expired
+   • Paket data / Bandwidth
+   • Harga voucher
+
+🏢 INFORMASI PROVIDER:
+   • Nama provider / Hotspot
+   • Logo dan branding
+   • Informasi kontak
+   • Alamat dan website  
+
+⚙️  INFORMASI TEKNIS:
+   • QR Code untuk login
+   • MAC Address
+   • Server time
+   • Terms & Conditions
+
+═══════════════════════════════════════════════════════════════
+
+📞 BUTUH DETAIL VARIABEL?
+
+Untuk mendapatkan daftar lengkap variabel yang 
+dapat digunakan dalam template voucher, silakan 
+hubungi administrator sistem.
+
+📧 Email: admin@domain.com  
+📱 WhatsApp: +62 812-xxxx-xxxx
+
+═══════════════════════════════════════════════════════════════
+
+STATUS: PROTECTED 🛡️
+Akses ke detail variabel dibatasi untuk keamanan.
+
+═══════════════════════════════════════════════════════════════
+	    		</textarea>
+			</div>
+			</div>
+		</div>
+</div>
+
+<script>
+// Disabled editor with security notice
+if(typeof(Storage) !== "undefined"){
+    sessionStorage.setItem("MikhmonSession", document.getElementById("MikhmonSession") ? document.getElementById("MikhmonSession").innerHTML : "");
+} else {
+    alert("Please use Google Chrome");
+}
+
+var session = sessionStorage.getItem("MikhmonSession");
+if(session === null || session === ""){
+    console.log("Mikhmon session warning");
+}
+
+// Initialize CodeMirror in read-only mode
+var editor = CodeMirror.fromTextArea(document.getElementById("editorMikhmon"), {
+    lineNumbers: true,
+    matchBrackets: true,
+    mode: "application/x-httpd-php",
+    indentUnit: 4,
+    indentWithTabs: true,
+    lineWrapping: true,
+    viewportMargin: Infinity,
+    readOnly: true, // Make editor read-only
+    theme: "material",
+    matchTags: {bothTags: true},
+    extraKeys: {"Ctrl-J": "toMatchingTag"}
+});
+
+// Additional security: Disable all editing capabilities
+editor.setOption("readOnly", "nocursor");
+editor.setOption("cursorBlinkRate", -1);
+
+// Show security notice
+setTimeout(function() {
+    if (confirm("PERHATIAN: Voucher Editor telah dinonaktifkan untuk keamanan sistem.\n\nKlik OK untuk melanjutkan melihat template dalam mode read-only.\nKlik Cancel untuk kembali ke halaman utama.")) {
+        console.log("User acknowledged security notice");
+    } else {
+        window.history.back();
+    }
+}, 1000);
+
+// Prevent any form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alert('🔒 Editor dinonaktifkan! Hubungi administrator untuk bantuan.');
+    return false;
+});
+
+// Disable right-click context menu on editor area
+document.getElementById('editorMikhmon').addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    alert('🔒 Fitur edit dinonaktifkan untuk keamanan sistem.');
+    return false;
+});
+
+// Disable copy/paste/cut operations
+document.addEventListener('keydown', function(e) {
+    // Disable Ctrl+A (Select All), Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+X (Cut)
+    if (e.ctrlKey && (e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88)) {
+        e.preventDefault();
+        alert('🔒 Operasi copy/paste dinonaktifkan untuk keamanan.');
+        return false;
+    }
+    // Disable F12 (Developer Tools)
+    if (e.keyCode === 123) {
+        e.preventDefault();
+        alert('🔒 Developer tools dinonaktifkan pada halaman ini.');
+        return false;
+    }
+    // Disable Ctrl+Shift+I (Inspect Element)
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+        e.preventDefault();
+        alert('🔒 Inspect element dinonaktifkan untuk keamanan.');
+        return false;
+    }
+    // Disable Ctrl+U (View Source)
+    if (e.ctrlKey && e.keyCode === 85) {
+        e.preventDefault();
+        alert('🔒 View source dinonaktifkan untuk keamanan.');
+        return false;
+    }
+});
+
+// Disable text selection on sensitive areas
+document.getElementById('editorMikhmon').style.userSelect = 'none';
+document.getElementById('editorMikhmon').style.webkitUserSelect = 'none';
+document.getElementById('editorMikhmon').style.mozUserSelect = 'none';
+document.getElementById('editorMikhmon').style.msUserSelect = 'none';
+
+document.getElementById('var').style.userSelect = 'none';
+document.getElementById('var').style.webkitUserSelect = 'none';
+document.getElementById('var').style.mozUserSelect = 'none';
+document.getElementById('var').style.msUserSelect = 'none';
+
+// Additional security message
+console.clear();
+console.log('%c🔒 SISTEM KEAMANAN AKTIF 🔒', 'color: red; font-size: 20px; font-weight: bold;');
+console.log('%cAkses ke template voucher dibatasi untuk keamanan sistem.', 'color: orange; font-size: 14px;');
+console.log('%cHubungi administrator jika membutuhkan bantuan.', 'color: orange; font-size: 14px;');
+</script>
