@@ -2701,7 +2701,7 @@ function loadDashboardStats() {
     type: 'GET',
     dataType: 'json',
     cache: false,
-    timeout: 10000,
+    timeout: 30000, // Increased to 30 seconds
     beforeSend: function(jqXHR) {
       activeAjaxRequests.push(jqXHR);
     },
@@ -2909,13 +2909,17 @@ $(document).ajaxComplete(function() {
   }
 
   function requestDatta(session,iface) {
+    if (isNavigatingAway) return; // Don't make requests if navigating away
+
     var url = './traffic/traffic.php?session='+session+'&iface='+iface;
     console.log("Fetching traffic data from:", url);
 
     $.ajax({
       url: url,
       datatype: "json",
+      timeout: 30000, // 30 second timeout
       success: function(data) {
+        if (isNavigatingAway) return; // Don't process if navigating away
         console.log("Traffic data received:", data);
         try {
           var midata = JSON.parse(data);
@@ -2924,18 +2928,23 @@ $(document).ajaxComplete(function() {
             var RX=parseInt(midata[1].data) || 0;
             console.log("TX:", TX, "RX:", RX);
             var x = (new Date()).getTime();
-            shift=chart.series[0].data.length > 19;
-            chart.series[0].addPoint([x, TX], true, shift);
-            chart.series[1].addPoint([x, RX], true, shift);
 
-            // Update real-time stats display
-            updateTrafficStats(TX, RX);
+            // Check if chart exists before adding points
+            if (typeof chart !== 'undefined' && chart && chart.series) {
+              shift=chart.series[0].data.length > 19;
+              chart.series[0].addPoint([x, TX], true, shift);
+              chart.series[1].addPoint([x, RX], true, shift);
+
+              // Update real-time stats display
+              updateTrafficStats(TX, RX);
+            }
           }
         } catch(e) {
           console.error("Traffic data parse error:", e, "Data:", data);
         }
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
+        if (textStatus === 'abort') return; // Ignore aborted requests
         console.error("Traffic data AJAX error:", textStatus, errorThrown);
       }
     });
@@ -2950,10 +2959,22 @@ $(document).ajaxComplete(function() {
       return;
     }
 
-    // Prevent re-initialization if chart already exists
-    if (typeof chart !== 'undefined' && chart) {
-      console.log("Chart already exists, destroying old instance");
+    // Destroy any existing chart on this container
+    var container = document.getElementById('trafficMonitor');
+    if (container) {
+      // Check if Highcharts chart exists on this container
+      var existingChart = Highcharts.charts[Highcharts.attr(container, 'data-highcharts-chart')];
+      if (existingChart) {
+        console.log("Destroying existing chart instance");
+        existingChart.destroy();
+      }
+    }
+
+    // Also destroy global chart variable if it exists
+    if (typeof chart !== 'undefined' && chart && chart.destroy) {
+      console.log("Destroying global chart variable");
       chart.destroy();
+      chart = null;
     }
 
     try {
