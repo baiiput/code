@@ -1,0 +1,1349 @@
+<?php
+session_start();
+// hide all error
+error_reporting(0);
+
+ini_set('max_execution_time', 300);
+
+if (!isset($_SESSION["mikhmon"])) {
+    header("Location:../admin.php?id=login");
+} else {
+// time zone
+date_default_timezone_set($_SESSION['timezone']);
+
+    $genprof = $_GET['genprof'];
+    if ($genprof != "") {
+        $getprofile = $API->comm("/ip/hotspot/user/profile/print", array(
+            "?name" => "$genprof",
+        ));
+        $ponlogin = $getprofile[0]['on-login'];
+        $getprice = explode(",", $ponlogin)[2];
+        if ($getprice == "0") {
+            $getprice = "";
+        } else {
+            $getprice = $getprice;
+        }
+
+        $getvalid = explode(",", $ponlogin)[3];
+
+        $getlocku = explode(",", $ponlogin)[6];
+        if ($getlocku == "") {
+            $getprice = "Disable";
+        } else {
+            $getlocku = $getlocku;
+        }
+
+        if ($currency == in_array($currency, $cekindo['indo'])) {
+            $getprice = $currency . " " . number_format((float)$getprice, 0, ",", ".");
+        } else {
+            $getprice = $currency . " " . number_format((float)$getprice);
+        }
+        $ValidPrice = "<b>Validity : " . $getvalid . " | Price : " . $getprice . " | Lock User : " . $getlocku . "</b>";
+    } else {
+    }
+
+    $srvlist = $API->comm("/ip/hotspot/print");
+
+    // ==================== HANDLE FORM SUBMISSION ==================== 
+    $showPopup = false;
+    $generateSuccess = false;
+    $generatedQty = 0;
+    $generatedProfile = "";
+    
+    if (isset($_POST['qty'])) {
+        
+        $qty = ($_POST['qty']);
+        $server = ($_POST['server']);
+        $user = ($_POST['user']);
+        $userl = ($_POST['userl']);
+        $prefix = ($_POST['prefix']);
+        $char = ($_POST['char']);
+        $profile = ($_POST['profile']);
+        $timelimit = ($_POST['timelimit']);
+        $datalimit = ($_POST['datalimit']);
+        $adcomment = ($_POST['adcomment']);
+        $mbgb = ($_POST['mbgb']);
+        if ($timelimit == "") {
+            $timelimit = "0";
+        } else {
+            $timelimit = $timelimit;
+        }
+        if ($datalimit == "") {
+            $datalimit = "0";
+        } else {
+            $datalimit = $datalimit * $mbgb;
+        }
+        if ($adcomment == "") {
+            $adcomment = "";
+        } else {
+            $adcomment = $adcomment;
+        }
+        $getprofile = $API->comm("/ip/hotspot/user/profile/print", array("?name" => "$profile"));
+        $ponlogin = $getprofile[0]['on-login'];
+        $getvalid = explode(",", $ponlogin)[3];
+        $getprice = explode(",", $ponlogin)[2];
+        $getsprice = explode(",", $ponlogin)[4];
+        $getlock = explode(",", $ponlogin)[6];
+        $_SESSION['ubp'] = $profile;
+        $commt = $user . "-" . rand(100, 999) . "-" . date("m.d.y") . "-" . $adcomment;
+        $gentemp = $commt . "|~" . $profile . "~" . $getvalid . "~" . $getprice . "!".$getsprice."~" . $timelimit . "~" . $datalimit . "~" . $getlock;
+        $gen = '<?php $genu="'.encrypt($gentemp).'";?>';
+        $temp = './voucher/temp.php';
+        $handle = fopen($temp, 'w') or die('Cannot open file:  ' . $temp);
+        $data = $gen;
+        fwrite($handle, $data);
+
+        $a = array("1" => "", "", 1, 2, 2, 3, 3, 4);
+
+        if ($user == "up") {
+            for ($i = 1; $i <= $qty; $i++) {
+                if ($char == "lower") {
+                    $u[$i] = randLC($userl);
+                } elseif ($char == "upper") {
+                    $u[$i] = randUC($userl);
+                } elseif ($char == "upplow") {
+                    $u[$i] = randULC($userl);
+                } elseif ($char == "mix") {
+                    $u[$i] = randNLC($userl);
+                } elseif ($char == "mix1") {
+                    $u[$i] = randNUC($userl);
+                } elseif ($char == "mix2") {
+                    $u[$i] = randNULC($userl);
+                }
+                if ($userl == 3) {
+                    $p[$i] = randN(3);
+                } elseif ($userl == 4) {
+                    $p[$i] = randN(4);
+                } elseif ($userl == 5) {
+                    $p[$i] = randN(5);
+                } elseif ($userl == 6) {
+                    $p[$i] = randN(6);
+                } elseif ($userl == 7) {
+                    $p[$i] = randN(7);
+                } elseif ($userl == 8) {
+                    $p[$i] = randN(8);
+                }
+
+                $u[$i] = "$prefix$u[$i]";
+            }
+
+            for ($i = 1; $i <= $qty; $i++) {
+                $API->comm("/ip/hotspot/user/add", array(
+                    "server" => "$server",
+                    "name" => "$u[$i]",
+                    "password" => "$p[$i]",
+                    "profile" => "$profile",
+                    "limit-uptime" => "$timelimit",
+                    "limit-bytes-total" => "$datalimit",
+                    "comment" => "$commt",
+                ));
+            }
+        }
+
+        if ($user == "vc") {
+            $shuf = ($userl - $a[$userl]);
+            for ($i = 1; $i <= $qty; $i++) {
+                
+                // Character type: lowercase only (TANPA angka)
+                if ($char == "lower") {
+                    $u[$i] = randLC($userl);  // Generate full length lowercase
+                    $u[$i] = "$prefix$u[$i]"; // Tanpa tambahan angka
+                }
+                
+                // Character type: uppercase only (TANPA angka)  
+                elseif ($char == "upper") {
+                    $u[$i] = randUC($userl);  // Generate full length uppercase
+                    $u[$i] = "$prefix$u[$i]"; // Tanpa tambahan angka
+                }
+                
+                // Character type: mixed case only (TANPA angka)
+                elseif ($char == "upplow") {
+                    $u[$i] = randULC($userl); // Generate full length mixed case
+                    $u[$i] = "$prefix$u[$i]"; // Tanpa tambahan angka
+                }
+                
+                // Character type: numbers only
+                elseif ($char == "num") {
+                    if ($userl == 3) {
+                        $p[$i] = randN(3);
+                    } elseif ($userl == 4) {
+                        $p[$i] = randN(4);
+                    } elseif ($userl == 5) {
+                        $p[$i] = randN(5);
+                    } elseif ($userl == 6) {
+                        $p[$i] = randN(6);
+                    } elseif ($userl == 7) {
+                        $p[$i] = randN(7);
+                    } elseif ($userl == 8) {
+                        $p[$i] = randN(8);
+                    }
+                    $u[$i] = "$prefix$p[$i]";
+                }
+                
+                // Character type: mix (lowercase + numbers)
+                elseif ($char == "mix") {
+                    $p[$i] = randNLC($userl);
+                    $u[$i] = "$prefix$p[$i]";
+                }
+                
+                // Character type: mix1 (uppercase + numbers)
+                elseif ($char == "mix1") {
+                    $p[$i] = randNUC($userl);
+                    $u[$i] = "$prefix$p[$i]";
+                }
+                
+                // Character type: mix2 (mixed case + numbers)
+                elseif ($char == "mix2") {
+                    $p[$i] = randNULC($userl);
+                    $u[$i] = "$prefix$p[$i]";
+                }
+            }
+            
+            // Add users to MikroTik
+            for ($i = 1; $i <= $qty; $i++) {
+                $API->comm("/ip/hotspot/user/add", array(
+                    "server" => "$server",
+                    "name" => "$u[$i]",
+                    "password" => "$u[$i]",
+                    "profile" => "$profile",
+                    "limit-uptime" => "$timelimit",
+                    "limit-bytes-total" => "$datalimit",
+                    "comment" => "$commt",
+                ));
+            }
+        }
+
+        // ==================== SET SUCCESS POPUP ==================== 
+        $generateSuccess = true;
+        $generatedQty = $qty;
+        $generatedProfile = $profile;
+        $showPopup = true;
+    }
+
+    $getprofile = $API->comm("/ip/hotspot/user/profile/print");
+    include_once('./voucher/temp.php');
+    $genuser = explode("-", decrypt($genu));
+    $genuser1 = explode("~", decrypt($genu));
+    $umode = $genuser[0];
+    $ucode = $genuser[1];
+    $udate = $genuser[2];
+    $uprofile = $genuser1[1];
+    $uvalid = $genuser1[2];
+    $ucommt = $genuser[3];
+    if ($uvalid == "") {
+        $uvalid = "-";
+    } else {
+        $uvalid = $uvalid;
+    }
+    $uprice = explode("!",$genuser1[3])[0];
+    if ($uprice == "0") {
+        $uprice = "-";
+    } else {
+        $uprice = $uprice;
+    }
+    $suprice = explode("!",$genuser1[3])[1];
+    if ($suprice == "0") {
+        $suprice = "-";
+    } else {
+        $suprice = $suprice;
+    }
+    $utlimit = $genuser1[4];
+    if ($utlimit == "0") {
+        $utlimit = "-";
+    } else {
+        $utlimit = $utlimit;
+    }
+    $udlimit = $genuser1[5];
+    if ($udlimit == "0") {
+        $udlimit = "-";
+    } else {
+        $udlimit = formatBytes($udlimit, 2);
+    }
+    $ulock = $genuser1[6];
+    $urlprint = explode("|", decrypt($genu))[0];
+    if ($currency == in_array($currency, $cekindo['indo'])) {
+        $uprice = $currency . " " . number_format((float)$uprice, 0, ",", ".");
+        $suprice = $currency . " " . number_format((float)$suprice, 0, ",", ".");
+    } else {
+        $uprice = $currency . " " . number_format((float)$uprice);
+        $suprice = $currency . " " . number_format((float)$suprice);
+
+    }
+
+}
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikHMon - Generate Hotspot User</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #0d1117;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* ==================== LOADING OVERLAY ==================== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .loading-content {
+            background: rgba(40, 44, 52, 0.95);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(52, 152, 219, 0.2);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 3px;
+            width: 0%;
+            animation: progressBarAnimation 10s ease-out forwards;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #3498db;
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes progressBarAnimation {
+            0% { width: 0%; }
+            20% { width: 30%; }
+            50% { width: 60%; }
+            80% { width: 85%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ==================== POPUP MODAL ==================== */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .popup-modal {
+            background: rgba(40, 44, 52, 0.95);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0.9);
+            animation: popupScale 0.3s ease forwards;
+        }
+
+        @keyframes popupScale {
+            to { transform: scale(1); }
+        }
+
+        .popup-icon {
+            font-size: 60px;
+            color: #27ae60;
+            margin-bottom: 20px;
+            animation: iconBounce 0.6s ease;
+        }
+
+        @keyframes iconBounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+
+        .popup-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .popup-message {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .popup-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .popup-btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: #ffffff;
+        }
+
+        .popup-btn-success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #ffffff;
+        }
+
+        .popup-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        /* ==================== HEADER STYLING ==================== */
+        .card-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%) !important;
+            border: none !important;
+            border-radius: 18px 18px 0 0 !important;
+            padding: 18px 20px !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            margin-bottom: 0 !important;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #e74c3c, #f39c12, #27ae60, #9b59b6);
+            background-size: 400% 400%;
+            animation: headerGradient 8s ease infinite;
+        }
+
+        @keyframes headerGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card-header h3 {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            font-size: 1.4rem !important;
+        }
+
+        .card-header h3 i {
+            font-size: 20px !important;
+            color: #3498db !important;
+            text-shadow: 0 0 15px rgba(52, 152, 219, 0.5) !important;
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* ==================== COMPACT LAYOUT ==================== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: rgba(40, 44, 52, 0.95) !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+            overflow: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .card:hover {
+            border-color: rgba(52, 152, 219, 0.3) !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .card-body {
+            padding: 20px !important;
+            background: rgba(45, 52, 64, 0.9) !important;
+        }
+
+        /* ==================== ACTION BUTTONS ==================== */
+        .action-buttons {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            margin-bottom: 18px !important;
+            padding: 15px !important;
+            background: rgba(52, 58, 70, 0.6) !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* Mobile Bottom Buttons - hidden on desktop */
+        .action-buttons-bottom {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(52, 58, 70, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ==================== BUTTON STYLING ==================== */
+        .btn {
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 8px 14px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            backdrop-filter: blur(10px) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+            cursor: pointer !important;
+            color: #ffffff !important;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.03) !important;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3) !important;
+        }
+
+        .btn:disabled {
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #1abc9c, #16a085) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* ==================== FORM STYLING ==================== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(52, 58, 70, 0.9) !important;
+            border: 2px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 10px !important;
+            color: #ffffff !important;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px) !important;
+        }
+
+        .form-control:focus {
+            outline: none !important;
+            border-color: #3498db !important;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        .input-group select {
+            flex: 0 0 auto;
+            min-width: 70px;
+        }
+
+        /* ==================== INFO GRID ==================== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(52, 58, 70, 0.6) !important;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 0.85rem;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* ==================== STATUS INDICATOR ==================== */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(52, 152, 219, 0.1) !important;
+            color: #3498db !important;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid rgba(52, 152, 219, 0.3) !important;
+            margin-bottom: 15px;
+        }
+
+        /* ==================== HELP TEXT ==================== */
+        .help-text {
+            background: rgba(52, 58, 70, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            margin-top: 12px !important;
+        }
+
+        .help-text h4 {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.8rem !important;
+            margin-bottom: 6px !important;
+        }
+
+        .help-text p {
+            font-size: 0.75rem !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+            line-height: 1.4 !important;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .action-buttons {
+                display: none !important; /* Hide top buttons on mobile */
+            }
+
+            .action-buttons-bottom {
+                display: flex !important; /* Show bottom buttons on mobile */
+            }
+
+            .btn {
+                justify-content: center;
+                padding: 10px 16px !important;
+                font-size: 13px !important;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .card-body {
+                padding: 15px !important;
+            }
+
+            .popup-modal {
+                margin: 20px;
+                padding: 25px;
+            }
+
+            .popup-actions {
+                flex-direction: column;
+            }
+
+            .popup-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(45, 52, 64, 0.9);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== LOADING OVERLAY ==================== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Generating Hotspot Users</div>
+            <div class="loading-subtext">Mohon tunggu, sedang membuat user baru<span class="loading-dots">
+                <span class="loading-dot"></span>
+                <span class="loading-dot"></span>
+                <span class="loading-dot"></span>
+            </span></div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+            <p style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6);">
+                <i class="fas fa-info-circle"></i>
+                Proses ini mungkin memerlukan beberapa detik
+            </p>
+        </div>
+    </div>
+
+    <!-- ==================== SUCCESS POPUP ==================== -->
+    <div class="popup-overlay" id="successPopup">
+        <div class="popup-modal">
+            <div class="popup-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="popup-title">Generate User Berhasil!</h3>
+            <p class="popup-message">
+                Berhasil membuat <strong><?= $generatedQty ?></strong> user dengan profile <strong><?= $generatedProfile ?></strong>
+            </p>
+            <div class="popup-actions">
+                <a href="./voucher/print.php?id=<?= $urlprint; ?>&qr=no&session=<?= $session; ?>" target="_blank" class="popup-btn popup-btn-primary">
+                    <i class="fas fa-print"></i>
+                    Print Voucher
+                </a>
+                <a href="./?hotspot=users&profile=<?php if ($_SESSION['ubp'] == "") { echo "all"; } else { echo $uprofile; } ?>&session=<?= $session; ?>" class="popup-btn popup-btn-success">
+                    <i class="fas fa-users"></i>
+                    User List
+                </a>
+                <button type="button" class="popup-btn popup-btn-secondary" onclick="closePopup()">
+                    <i class="fas fa-times"></i>
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-grid">
+            <!-- Main Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-wifi"></i>
+                        Generate Hotspot User
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Action Buttons - Desktop Only -->
+                    <div class="action-buttons">
+                        <?php if ($_SESSION['ubp'] != "") {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        } elseif ($_SESSION['vcr'] = "active") {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users-by-profile&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        } else {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        }
+                        ?>
+                        <a class="btn btn-info" title="Open User List" href="./?hotspot=users&profile=<?php if ($_SESSION['ubp'] == "") { echo "all"; } else { echo $uprofile; } ?>&session=<?= $session; ?>">
+                            <i class="fas fa-users"></i>
+                            User List
+                        </a>
+                        <button type="submit" form="generateForm" class="btn btn-primary" id="generateBtn">
+                            <i class="fas fa-cog"></i>
+                            Generate
+                        </button>
+                        <a class="btn btn-secondary" title="Print Default" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=no&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </a>
+                        <a class="btn btn-danger" title="Print QR" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=yes&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-qrcode"></i>
+                            QR Code
+                        </a>
+                        <a class="btn btn-success" title="Print Small" href="./voucher/print.php?id=<?= $urlprint; ?>&small=yes&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-print"></i>
+                            Small
+                        </a>
+                    </div>
+
+                    <!-- Form -->
+                    <form id="generateForm" autocomplete="off" method="post" action="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" name="qty" min="1" max="500" value="1" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Server</label>
+                                <select class="form-control" name="server" required>
+                                    <option value="all">All Servers</option>
+                                    <?php 
+                                    $TotalReg = count($srvlist);
+                                    for ($i = 0; $i < $TotalReg; $i++) {
+                                        echo "<option>" . $srvlist[$i]['name'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">User Mode</label>
+                                <select class="form-control" id="user" name="user" onchange="defUserl();" required>
+                                    <option value="up">Username + Password</option>
+                                    <option value="vc">Username = Password</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">User Length</label>
+                                <select class="form-control" id="userl" name="userl" required>
+                                    <option value="4" selected>4 Characters</option>
+                                    <option value="3">3 Characters</option>
+                                    <option value="5">5 Characters</option>
+                                    <option value="6">6 Characters</option>
+                                    <option value="7">7 Characters</option>
+                                    <option value="8">8 Characters</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Prefix</label>
+                                <input type="text" class="form-control" name="prefix" maxlength="6" placeholder="Optional prefix">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Character Type</label>
+                                <select class="form-control" name="char" required>
+                                    <option id="lower" value="lower">Random lowercase (abcd)</option>
+                                    <option id="upper" value="upper">Random uppercase (ABCD)</option>
+                                    <option id="upplow" value="upplow">Random mixed case (aBcD)</option>
+                                    <option id="mix" value="mix">Random alphanumeric (5ab2c34d)</option>
+                                    <option id="mix1" value="mix1">Random uppercase alphanumeric (5AB2C34D)</option>
+                                    <option id="mix2" value="mix2">Random mixed alphanumeric (5aB2c34D)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Profile</label>
+                                <select class="form-control" id="uprof" name="profile" onchange="GetVP();" required>
+                                    <?php 
+                                    if ($genprof != "") {
+                                        echo "<option>" . $genprof . "</option>";
+                                    }
+                                    $TotalReg = count($getprofile);
+                                    for ($i = 0; $i < $TotalReg; $i++) {
+                                        echo "<option>" . $getprofile[$i]['name'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Time Limit</label>
+                                <input type="text" class="form-control" name="timelimit" placeholder="e.g., 1h, 3d, 1w">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Data Limit</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="datalimit" min="0" max="9999" placeholder="0 = unlimited" value="<?= $udatalimit; ?>">
+                                    <select class="form-control" name="mbgb" required>
+                                        <option value="1048576">MB</option>
+                                        <option value="1073741824">GB</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Comment</label>
+                                <input type="text" class="form-control" id="comment" name="adcomment" placeholder="Optional comment">
+                            </div>
+                        </div>
+
+                        <div class="status-indicator" id="GetValidPrice">
+                            <i class="fas fa-info-circle"></i>
+                            <span><?php if ($genprof != "") { echo strip_tags($ValidPrice); } else { echo "Pilih profile untuk melihat detail"; } ?></span>
+                        </div>
+                    </form>
+
+                    <!-- Action Buttons - Mobile Only (Bottom) -->
+                    <div class="action-buttons-bottom">
+                        <?php if ($_SESSION['ubp'] != "") {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        } elseif ($_SESSION['vcr'] = "active") {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users-by-profile&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        } else {
+                            echo "<a class='btn btn-warning' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-times'></i> Close</a>";
+                        }
+                        ?>
+                        <a class="btn btn-info" title="Open User List" href="./?hotspot=users&profile=<?php if ($_SESSION['ubp'] == "") { echo "all"; } else { echo $uprofile; } ?>&session=<?= $session; ?>">
+                            <i class="fas fa-users"></i>
+                            User List
+                        </a>
+                        <button type="submit" form="generateForm" class="btn btn-primary" id="generateBtnMobile">
+                            <i class="fas fa-cog"></i>
+                            Generate
+                        </button>
+                        <a class="btn btn-secondary" title="Print Default" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=no&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </a>
+                        <a class="btn btn-danger" title="Print QR" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=yes&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-qrcode"></i>
+                            QR Code
+                        </a>
+                        <a class="btn btn-success" title="Print Small" href="./voucher/print.php?id=<?= $urlprint; ?>&small=yes&session=<?= $session; ?>" target="_blank">
+                            <i class="fas fa-print"></i>
+                            Small
+                        </a>
+                    </div>
+
+                    <!-- Help Text -->
+                    <div class="help-text">
+                        <h4>Format Time Limit:</h4>
+                        <p>30m (menit), 2h (jam), 1d (hari), 1w (minggu), 1M (bulan)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Generated Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-ticket-alt"></i>
+                        Last Generated
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Code</span>
+                            <span class="info-value"><?= $ucode ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date</span>
+                            <span class="info-value"><?= $udate ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Profile</span>
+                            <span class="info-value"><?= $uprofile ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Validity</span>
+                            <span class="info-value"><?= $uvalid ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Time Limit</span>
+                            <span class="info-value"><?= $utlimit ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data Limit</span>
+                            <span class="info-value"><?= $udlimit ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Price</span>
+                            <span class="info-value"><?= $uprice ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Selling Price</span>
+                            <span class="info-value"><?= $suprice ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Lock User</span>
+                            <span class="info-value"><?= $ulock ?></span>
+                        </div>
+                    </div>
+
+                    <div class="help-text">
+                        <h4>Last Generation:</h4>
+                        <p>Informasi terakhir user yang berhasil dibuat. Voucher dapat dicetak menggunakan tombol print.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== GLOBAL VARIABLES ====================
+        let isGenerating = false;
+        let generateTimeout;
+
+        // ==================== LOADING FUNCTIONS ====================
+        function showLoader() {
+    if (isGenerating) return;
+    
+    isGenerating = true;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    const generateBtn = document.getElementById('generateBtn');
+    const generateBtnMobile = document.getElementById('generateBtnMobile');
+    
+    if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    }
+    
+    if (generateBtnMobile) {
+        generateBtnMobile.disabled = true;
+        generateBtnMobile.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    }
+
+    // HAPUS TIMEOUT - BIARKAN PROSES SAMPAI SELESAI
+    }
+
+
+
+        function hideLoader() {
+            isGenerating = false;
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            
+            // Re-enable generate buttons
+            const generateBtn = document.getElementById('generateBtn');
+            const generateBtnMobile = document.getElementById('generateBtnMobile');
+            
+            if (generateBtn) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-cog"></i> Generate';
+            }
+            
+            if (generateBtnMobile) {
+                generateBtnMobile.disabled = false;
+                generateBtnMobile.innerHTML = '<i class="fas fa-cog"></i> Generate';
+            }
+
+
+        }
+
+        // ==================== FORM HANDLING ====================
+        document.getElementById('generateForm').addEventListener('submit', function(e) {
+    if (isGenerating) {
+        e.preventDefault();
+        return false;
+    }
+    
+    const qty = parseInt(document.querySelector('input[name="qty"]').value);
+    
+    // Warning untuk batch besar
+    if (qty > 100) {
+        if (!confirm(`Anda akan membuat ${qty} user. Proses ini mungkin memerlukan ${Math.ceil(qty/200)} menit. Lanjutkan?`)) {
+            e.preventDefault();
+            return false;
+        }
+    }
+    
+    showLoader();
+});
+
+        // ==================== PAGE LOAD DETECTION ====================
+        window.addEventListener('load', function() {
+            // Hide loading when page loads (after form submission completion)
+            hideLoader();
+        });
+
+        // ==================== PREVENT MULTIPLE SUBMISSIONS ====================
+        window.addEventListener('beforeunload', function() {
+            if (isGenerating) {
+                return 'Generate user sedang berlangsung. Apakah Anda yakin ingin meninggalkan halaman?';
+            }
+        });
+
+        // ==================== SUCCESS POPUP FUNCTIONS ====================
+        function showPopup() {
+            document.getElementById('successPopup').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePopup() {
+            document.getElementById('successPopup').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Auto show popup if generation was successful
+        <?php if ($showPopup): ?>
+        window.addEventListener('load', function() {
+            setTimeout(showPopup, 500); // Small delay for better UX
+        });
+        <?php endif; ?>
+
+        // Close popup when clicking outside
+        document.getElementById('successPopup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // ESC key to close popup (but not loading)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('successPopup').style.display === 'flex') {
+                    closePopup();
+                }
+            }
+        });
+
+        // ==================== EXISTING FUNCTIONS ====================
+        function defUserl() {
+            // Logic for handling user length defaults
+            const userMode = document.getElementById('user').value;
+        }
+
+        // Get valid & price - integrated with original PHP function
+        function GetVP(){
+            var prof = document.getElementById('uprof').value;
+            fetch('./process/getvalidprice.php?name=' + prof + '&session=<?= $session; ?>')
+                .then(response => response.text())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    const getdata = doc.getElementById('getdata');
+                    if (getdata) {
+                        document.getElementById('GetValidPrice').innerHTML = 
+                            '<i class="fas fa-info-circle"></i><span>' + getdata.innerHTML + '</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('GetValidPrice').innerHTML = 
+                        '<i class="fas fa-exclamation-triangle"></i><span>Error loading profile details</span>';
+                });
+        }
+
+        // Add hover effects to buttons
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                if (!this.disabled) {
+                    this.style.transform = 'translateY(-2px) scale(1.03)';
+                }
+            });
+            btn.addEventListener('mouseleave', function() {
+                if (!this.disabled) {
+                    this.style.transform = 'translateY(0) scale(1)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
