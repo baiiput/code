@@ -52,6 +52,10 @@ if (!isset($_SESSION["mikhmon"])) {
     transition: all 0.3s ease !important;
     font-weight: 600 !important;
     font-size: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 4px !important;
 }
 
 .card-header a:hover {
@@ -61,102 +65,178 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 
 /* ==================== FILTER BOX ==================== */
-.filter-box {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 25px;
-    border-radius: 15px;
-    margin: 20px 0;
-    border: 1px solid #dee2e6;
+.filter-container {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%) !important;
+    border-radius: 18px !important;
+    padding: 20px !important;
+    margin: 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.filter-box label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 8px;
+.filter-container label {
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+    display: block;
 }
 
-.filter-box .form-control {
-    font-size: 14px;
-    padding: 10px 15px;
-    height: 45px;
+.filter-container .form-control, .filter-container select {
+    background: rgba(52, 58, 70, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    padding: 12px 18px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: border-color 0.3s ease !important;
+    width: 100% !important;
+}
+
+.filter-container .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.filter-container .form-control:focus, .filter-container select:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+}
+
+.filter-container select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 16 16'%3e%3cpath d='m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px !important;
+    cursor: pointer !important;
 }
 
 /* ==================== TABLE STYLING ==================== */
-.table-responsive {
-    border-radius: 15px;
+.table-container {
+    background: rgba(40, 44, 52, 0.95) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin: 20px !important;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.table {
-    margin-bottom: 0;
+#dataTable {
+    margin: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: rgba(40, 44, 52, 0.95) !important;
+    width: 100%;
 }
 
-.table thead th {
-    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-    color: #ffffff;
-    font-weight: 600;
-    border: none;
-    padding: 18px 15px;
-    text-align: center;
+#dataTable thead th {
+    background: linear-gradient(135deg, #0f4c75, #3282b8) !important;
+    color: white !important;
+    border: none !important;
+    padding: 15px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-size: 12px !important;
     position: sticky;
     top: 0;
     z-index: 10;
-    font-size: 15px;
+    text-align: center;
 }
 
-.table tbody td {
-    padding: 15px 12px;
-    vertical-align: middle;
-    border-bottom: 1px solid #dee2e6;
-    font-size: 14px;
+#dataTable tbody tr {
+    background: rgba(52, 58, 70, 0.8) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transition: background-color 0.2s ease !important;
 }
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
+#dataTable tbody tr:nth-child(even) {
+    background: rgba(45, 52, 64, 0.9) !important;
+}
+
+#dataTable tbody tr:hover {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2)) !important;
+}
+
+#dataTable tbody td {
+    padding: 12px 15px !important;
+    border: none !important;
+    vertical-align: middle !important;
+    color: #ffffff !important;
 }
 
 .btn-action {
-    padding: 8px 14px;
-    margin: 2px;
-    border-radius: 6px;
-    font-size: 13px;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.3s;
-    font-weight: 500;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    margin: 2px !important;
 }
 
-.btn-info { background: #3498db; color: white; border: 1px solid #2980b9; }
-.btn-danger { background: #e74c3c; color: white; border: 1px solid #c0392b; }
-.btn-warning { background: #f39c12; color: white; border: 1px solid #e67e22; }
-.btn-success { background: #27ae60; color: white; border: 1px solid #229954; }
+.btn-info {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    color: #ffffff !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: #ffffff !important;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+    color: #ffffff !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #27ae60, #229954) !important;
+    color: #ffffff !important;
+}
 
 .btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Loading spinner */
-.loading-spinner {
+/* ==================== LOADING OVERLAY ==================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(13, 17, 23, 0.95), rgba(22, 27, 34, 0.98));
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-container {
+    background: linear-gradient(145deg, #1a1d23, #2d3339);
+    border: 1px solid rgba(79, 172, 254, 0.2);
+    border-radius: 24px;
+    padding: 50px;
     text-align: center;
-    padding: 60px;
-    font-size: 18px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    min-width: 380px;
 }
 
-.spinner {
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
-    border-radius: 50%;
+.loading-icon {
     width: 60px;
     height: 60px;
-    animation: spin 1s linear infinite;
+    border: 3px solid rgba(79, 172, 254, 0.2);
+    border-top: 3px solid #4facfe;
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
     margin: 0 auto 20px;
-}
-
-.card-body {
-    padding: 30px;
 }
 
 @keyframes spin {
@@ -164,30 +244,58 @@ if (!isset($_SESSION["mikhmon"])) {
     100% { transform: rotate(360deg); }
 }
 
-.badge {
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 12px;
+.loading-status {
+    color: #ffffff;
+    font-size: 18px;
     font-weight: 600;
 }
 
-.badge-success { background: #27ae60; color: white; }
-.badge-danger { background: #e74c3c; color: white; }
-.badge-warning { background: #f39c12; color: white; }
+.loading-message {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    margin-top: 10px;
+}
 
-.total-info {
-    padding: 20px;
-    text-align: center;
-    font-size: 16px;
+.badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 600;
-    color: #2c3e50;
-    background: #f8f9fa;
-    border-top: 2px solid #dee2e6;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(45, 52, 64, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 20px 20px;
+}
+
+.pagination-info {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 0 !important;
 }
 </style>
 
 <div class="row">
-    <div class="col-lg-12">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h3>
@@ -206,7 +314,7 @@ if (!isset($_SESSION["mikhmon"])) {
 
             <div class="card-body">
                 <!-- Filter Box -->
-                <div class="filter-box">
+                <div class="filter-container">
                     <div class="row">
                         <div class="col-md-4">
                             <label>Filter by Profile:</label>
@@ -234,15 +342,18 @@ if (!isset($_SESSION["mikhmon"])) {
                 </div>
 
                 <!-- Loading Indicator -->
-                <div id="loadingIndicator" class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p>Loading PPP Secrets...</p>
+                <div id="loadingIndicator" class="loading-overlay">
+                    <div class="loading-container">
+                        <div class="loading-icon"></div>
+                        <div class="loading-status">Loading PPP Secrets</div>
+                        <div class="loading-message">Please wait...</div>
+                    </div>
                 </div>
 
                 <!-- Secrets Table -->
                 <div id="secretsTableContainer" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="secretsTable">
+                    <div class="table-container">
+                        <table id="dataTable">
                             <thead>
                                 <tr>
                                     <th style="width: 5%;">No</th>
@@ -261,15 +372,17 @@ if (!isset($_SESSION["mikhmon"])) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="total-info">
-                        Total Secrets: <span id="totalSecrets">0</span>
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            Total Secrets: <span id="totalSecrets">0</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Error Container -->
-                <div id="errorContainer" style="display: none; padding: 20px; text-align: center;">
+                <div id="errorContainer" style="display: none; padding: 60px; text-align: center;">
                     <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #e74c3c;"></i>
-                    <p id="errorMessage" style="margin-top: 15px; font-size: 16px;"></p>
+                    <p id="errorMessage" style="margin-top: 15px; font-size: 16px; color: #ffffff;"></p>
                 </div>
             </div>
         </div>
@@ -290,14 +403,14 @@ function loadSecrets() {
     var filterService = document.getElementById('filterService').value;
 
     // Show loading
-    document.getElementById('loadingIndicator').style.display = 'block';
+    document.getElementById('loadingIndicator').style.display = 'flex';
     document.getElementById('secretsTableContainer').style.display = 'none';
     document.getElementById('errorContainer').style.display = 'none';
 
     // AJAX request
     var xhr = new XMLHttpRequest();
     xhr.open('GET', './dashboard/aload.php?load=pppsecrets&session=' + session + '&profile=' + filterProfile + '&service=' + filterService, true);
-    xhr.timeout = 60000; // 60 second timeout
+    xhr.timeout = 60000;
 
     xhr.onload = function() {
         if (xhr.status === 200) {
@@ -335,7 +448,7 @@ function displaySecrets(data) {
     tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;">No PPP secrets found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #ffffff;">No PPP secrets found</td></tr>';
     } else {
         data.forEach(function(secret, index) {
             var row = document.createElement('tr');
