@@ -1,0 +1,68 @@
+/* Mikhmon 4K Resolution Layout Fix */
+/* This file fixes the layout issues at 4K and higher resolutions */
+/* by centering the sidenav and main content together */
+
+/* For screens larger than 1920px (typical max comfortable reading width) */
+/* Center everything together as a unified layout */
+@media screen and (min-width: 1920px) {
+    /* Create centered container effect for body */
+    body {
+        position: relative;
+    }
+
+    /* Center the navbar */
+    .navbar {
+        max-width: 1920px;
+        left: 50% !important;
+        transform: translateX(-50%);
+    }
+
+    /* Center the sidenav within the layout */
+    .sidenav {
+        position: fixed;
+        left: calc(50% - 960px) !important; /* Center point minus half of max-width */
+        transform: none;
+    }
+
+    /* Center the main content area */
+    #main {
+        max-width: 1710px; /* 1920px - 210px sidenav width */
+        margin-left: 210px;
+        position: relative;
+        left: calc(50% - 960px) !important; /* Same as sidenav to keep them aligned */
+    }
+
+    /* Main container should respect the max width */
+    .main-container {
+        max-width: 100%;
+    }
+}
+
+/* Fine-tune for very large 4K+ displays (2560px and above) */
+@media screen and (min-width: 2560px) {
+    /* Keep the same centered approach */
+    .navbar {
+        max-width: 1920px;
+    }
+
+    .sidenav {
+        left: calc(50% - 960px) !important;
+    }
+
+    #main {
+        max-width: 1710px;
+        left: calc(50% - 960px) !important;
+    }
+}
+
+/* For standard desktop screens (between 751px and 1920px) */
+/* No changes needed - existing layout works well */
+@media screen and (min-width: 751px) and (max-width: 1919px) {
+    /* Keep default behavior */
+}
+
+/* Mobile and small screens (750px and below) */
+/* No changes needed - existing mobile layout works well */
+@media screen and (max-width: 750px) {
+    /* Keep existing mobile behavior */
+}
