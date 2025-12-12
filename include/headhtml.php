@@ -367,10 +367,13 @@
     min-height: calc(100vh - var(--navbar-height));
     transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
     background: #0f1117;
+    width: calc(100% - var(--sidebar-width));
+    box-sizing: border-box;
   }
 
   .sidebar-collapsed .main-content {
     margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
   }
 
   /* ==================== RESPONSIVE ==================== */
@@ -384,7 +387,8 @@
     }
 
     .main-content {
-      margin-left: 0;
+      margin-left: 0 !important;
+      width: 100% !important;
     }
 
     .navbar-router-info span {
@@ -448,9 +452,9 @@
 
     <div class="navbar-user">
       <div class="navbar-user-avatar">
-        <?= strtoupper(substr($_SESSION['user'], 0, 1)); ?>
+        <?= isset($useradm) && $useradm ? strtoupper(substr($useradm, 0, 1)) : 'A'; ?>
       </div>
-      <span><?= isset($_SESSION['user']) ? $_SESSION['user'] : 'Admin'; ?></span>
+      <span><?= isset($useradm) && $useradm ? $useradm : 'Admin'; ?></span>
     </div>
 
     <a href="./?hotspot=logout&session=<?= $session; ?>" class="navbar-logout">
