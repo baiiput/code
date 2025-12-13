@@ -3043,7 +3043,19 @@ function cleanupDashboard() {
   // Set navigation flag IMMEDIATELY
   isNavigatingAway = true;
 
-  // 1. Abort all pending AJAX requests
+  // 1. Call cancelPage() to clear OLD intervals from index.php (dashboard & livereport intervals)
+  if (typeof cancelPage === 'function') {
+    try {
+      cancelPage();
+      console.log('  ├─ ✅ Called cancelPage() to stop OLD intervals from index.php');
+    } catch (e) {
+      console.warn('  ├─ ⚠️  Error calling cancelPage:', e);
+    }
+  } else {
+    console.log('  ├─ ⚠️  cancelPage() function not found');
+  }
+
+  // 2. Abort all pending AJAX requests
   var abortedCount = 0;
   activeAjaxRequests.forEach(function(xhr) {
     if (xhr && xhr.abort) {
@@ -3058,7 +3070,7 @@ function cleanupDashboard() {
   activeAjaxRequests = [];
   console.log('  ├─ Aborted ' + abortedCount + ' AJAX requests');
 
-  // 2. Clear all intervals
+  // 3. Clear all intervals from home.php
   var clearedCount = 0;
   dashboardIntervals.forEach(function(intervalId) {
     if (intervalId) {
@@ -3067,9 +3079,9 @@ function cleanupDashboard() {
     }
   });
   dashboardIntervals = [];
-  console.log('  ├─ Cleared ' + clearedCount + ' intervals');
+  console.log('  ├─ Cleared ' + clearedCount + ' intervals from home.php');
 
-  // 3. Destroy Highcharts chart
+  // 4. Destroy Highcharts chart
   if (typeof chart !== 'undefined' && chart && typeof chart.destroy === 'function') {
     try {
       chart.destroy();
@@ -3080,13 +3092,13 @@ function cleanupDashboard() {
     }
   }
 
-  // 4. Reset component status
+  // 5. Reset component status
   componentStatus.dashboardStatsLoaded = false;
   componentStatus.logsLoaded = false;
   componentStatus.incomeLoaded = false;
   console.log('  └─ Reset component status');
 
-  console.log('✅ Dashboard cleanup complete');
+  console.log('✅ Dashboard cleanup complete (OLD + NEW intervals cleared)');
 }
 
 // Clean up intervals and abort AJAX when navigating away
@@ -3095,7 +3107,21 @@ $(document).on('click', 'a[href]', function(e) {
 
   // Check if navigating away from dashboard
   if (href && !href.includes('home') && !href.includes('dashboard') && !href.includes('#')) {
-    cleanupDashboard();
+    console.log('🚪 Navigation detected to:', href);
+
+    // Prevent default navigation ONLY if not already navigating
+    if (!isNavigatingAway) {
+      e.preventDefault();
+
+      // Run cleanup
+      cleanupDashboard();
+
+      // Navigate after a small delay to ensure cleanup completes
+      setTimeout(function() {
+        console.log('➡️  Navigating to:', href);
+        window.location.href = href;
+      }, 100);
+    }
   }
 });
 
