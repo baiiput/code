@@ -2512,8 +2512,8 @@ body > table[width="100%"] {
   </div> <!-- End second-row-grid -->
 </div>
 
-<!-- Load Highcharts Library for Traffic Monitor Chart -->
-<script src="https://code.highcharts.com/highcharts.js"></script>
+<!-- NOTE: Highcharts library is loaded in index.php (local version with theme) -->
+<!-- Removed CDN version to avoid duplicate loading and conflicts -->
 
 <!-- Enhanced JavaScript for Better AJAX Handling -->
 <script type="text/javascript">
@@ -3046,11 +3046,16 @@ $(document).ajaxComplete(function() {
   var interface = "<?= $interface ?>";
   var n = 3000;
 
+  // Traffic monitoring state
+  var trafficErrorCount = 0;
+  var maxTrafficErrors = 3;
+  var trafficAvailable = true;
+
   // Debug: Log variables
-  console.log("Traffic Monitor Debug:");
-  console.log("Session:", sessiondata);
-  console.log("Interface:", interface);
-  console.log("Highcharts available:", typeof Highcharts !== 'undefined');
+  console.log("📡 Traffic Monitor Configuration:");
+  console.log("  ├─ Session:", sessiondata);
+  console.log("  ├─ Interface:", interface);
+  console.log("  └─ Highcharts available:", typeof Highcharts !== 'undefined');
 
   // Format bytes function
   function formatTrafficBytes(bytes) {
@@ -3070,23 +3075,22 @@ $(document).ajaxComplete(function() {
 
   function requestDatta(session,iface) {
     if (isNavigatingAway) return; // Don't make requests if navigating away
+    if (!trafficAvailable) return; // Stop if traffic endpoint is not available
 
     var url = './traffic/traffic.php?session='+session+'&iface='+iface;
-    console.log("Fetching traffic data from:", url);
 
     $.ajax({
       url: url,
       datatype: "json",
-      timeout: 30000, // 30 second timeout
+      timeout: 10000, // Reduced to 10 seconds (was 30)
       success: function(data) {
         if (isNavigatingAway) return; // Don't process if navigating away
-        console.log("Traffic data received:", data);
+
         try {
           var midata = JSON.parse(data);
           if( midata.length > 0 ) {
             var TX=parseInt(midata[0].data) || 0;
             var RX=parseInt(midata[1].data) || 0;
-            console.log("TX:", TX, "RX:", RX);
             var x = (new Date()).getTime();
 
             // Check if chart exists before adding points
@@ -3098,14 +3102,31 @@ $(document).ajaxComplete(function() {
               // Update real-time stats display
               updateTrafficStats(TX, RX);
             }
+
+            // Reset error count on success
+            trafficErrorCount = 0;
           }
         } catch(e) {
-          console.error("Traffic data parse error:", e, "Data:", data);
+          console.warn("⚠️ Traffic data parse error:", e.message);
+          trafficErrorCount++;
         }
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
         if (textStatus === 'abort') return; // Ignore aborted requests
-        console.error("Traffic data AJAX error:", textStatus, errorThrown);
+
+        trafficErrorCount++;
+
+        // Only log first few errors to avoid console spam
+        if (trafficErrorCount <= maxTrafficErrors) {
+          console.warn("⚠️ Traffic monitor error #" + trafficErrorCount + ":", textStatus);
+        }
+
+        // Disable traffic monitoring after too many errors
+        if (trafficErrorCount >= maxTrafficErrors) {
+          trafficAvailable = false;
+          console.warn("🛑 Traffic monitoring disabled after " + maxTrafficErrors + " errors");
+          console.warn("   This is normal if traffic.php is not available or Mikrotik is unreachable");
+        }
       }
     });
   }	
