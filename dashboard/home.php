@@ -3043,19 +3043,34 @@ function cleanupDashboard() {
   // Set navigation flag IMMEDIATELY
   isNavigatingAway = true;
 
-  // 1. Call cancelPage() to clear OLD intervals from index.php (dashboard & livereport intervals)
+  // 1. Stop ALL ongoing page loads and requests
+  try {
+    window.stop();
+    console.log('  ├─ ✅ Stopped all page loads with window.stop()');
+  } catch (e) {
+    console.warn('  ├─ ⚠️  Error calling window.stop():', e);
+  }
+
+  // 2. Call cancelPage() to clear KNOWN intervals from index.php
   if (typeof cancelPage === 'function') {
     try {
       cancelPage();
-      console.log('  ├─ ✅ Called cancelPage() to stop OLD intervals from index.php');
+      console.log('  ├─ ✅ Called cancelPage() to clear known intervals');
     } catch (e) {
       console.warn('  ├─ ⚠️  Error calling cancelPage:', e);
     }
-  } else {
-    console.log('  ├─ ⚠️  cancelPage() function not found');
   }
 
-  // 2. Abort all pending AJAX requests
+  // 3. BRUTE FORCE: Clear ALL possible intervals (including anonymous ones)
+  // Get the highest interval ID by creating a new one, then clear all from 0 to that ID
+  var highestIntervalId = window.setInterval(function(){}, 0);
+  for (var i = 0; i < highestIntervalId; i++) {
+    clearInterval(i);
+  }
+  clearInterval(highestIntervalId);
+  console.log('  ├─ ✅ BRUTE FORCE cleared ALL intervals (0-' + highestIntervalId + ')');
+
+  // 4. Abort all tracked AJAX requests
   var abortedCount = 0;
   activeAjaxRequests.forEach(function(xhr) {
     if (xhr && xhr.abort) {
@@ -3068,37 +3083,29 @@ function cleanupDashboard() {
     }
   });
   activeAjaxRequests = [];
-  console.log('  ├─ Aborted ' + abortedCount + ' AJAX requests');
+  console.log('  ├─ Aborted ' + abortedCount + ' tracked AJAX requests');
 
-  // 3. Clear all intervals from home.php
-  var clearedCount = 0;
-  dashboardIntervals.forEach(function(intervalId) {
-    if (intervalId) {
-      clearInterval(intervalId);
-      clearedCount++;
-    }
-  });
+  // 5. Clear tracked intervals from home.php (already cleared by brute force, but reset array)
   dashboardIntervals = [];
-  console.log('  ├─ Cleared ' + clearedCount + ' intervals from home.php');
 
-  // 4. Destroy Highcharts chart
+  // 6. Destroy Highcharts chart
   if (typeof chart !== 'undefined' && chart && typeof chart.destroy === 'function') {
     try {
       chart.destroy();
       chart = null;
       console.log('  ├─ Destroyed Highcharts chart');
     } catch (e) {
-      console.warn('  └─ Error destroying chart:', e);
+      console.warn('Error destroying chart:', e);
     }
   }
 
-  // 5. Reset component status
+  // 7. Reset component status
   componentStatus.dashboardStatsLoaded = false;
   componentStatus.logsLoaded = false;
   componentStatus.incomeLoaded = false;
   console.log('  └─ Reset component status');
 
-  console.log('✅ Dashboard cleanup complete (OLD + NEW intervals cleared)');
+  console.log('✅ COMPLETE CLEANUP: All intervals, AJAX, and resources cleared');
 }
 
 // Clean up intervals and abort AJAX when navigating away
