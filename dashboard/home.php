@@ -2527,7 +2527,10 @@ function ensureCompactStyling() {
 // DISABLED: Income report reload - livereport.php file missing
 // OPTIMIZED: Load Income Report with caching (loads LAST for better UX)
 function reloadIncomeReport() {
-  if (isNavigatingAway) return;
+  if (isNavigatingAway) {
+    console.log('🛑 Income report loading cancelled - navigating away');
+    return;
+  }
 
   performanceMetrics.incomeStart = Date.now();
   console.log('💰 Loading Income Report...');
@@ -2618,6 +2621,10 @@ var connectionStable = true;
 
 function loadLogsContent() {
   if (logsLoading) return;
+  if (isNavigatingAway) {
+    console.log('🛑 Logs loading cancelled - navigating away');
+    return;
+  }
 
   performanceMetrics.logsStart = Date.now();
   console.log('📋 Loading Hotspot Logs...');
@@ -2788,6 +2795,7 @@ function handleLogsError(errorType) {
 var dashboardIntervals = [];
 var activeAjaxRequests = [];
 var isNavigatingAway = false;
+var trafficInterval = null; // Track traffic monitor interval
 
 // Component loading status - track when components finish loading
 var componentStatus = {
@@ -2822,7 +2830,10 @@ function checkAndLoadIncome() {
 
 // Dashboard stats loader with caching (OPTIMIZED)
 function loadDashboardStats() {
-  if (isNavigatingAway) return; // Don't start new requests if navigating away
+  if (isNavigatingAway) {
+    console.log('🛑 Dashboard stats loading cancelled - navigating away');
+    return; // Don't start new requests if navigating away
+  }
 
   performanceMetrics.dashboardStatsStart = Date.now();
   console.log('📊 Loading System Status...');
@@ -3025,44 +3036,72 @@ $(document).ready(function() {
   console.log('');
 });
 
+// COMPREHENSIVE cleanup function
+function cleanupDashboard() {
+  console.log('🧹 Cleaning up dashboard resources...');
+
+  // Set navigation flag IMMEDIATELY
+  isNavigatingAway = true;
+
+  // 1. Abort all pending AJAX requests
+  var abortedCount = 0;
+  activeAjaxRequests.forEach(function(xhr) {
+    if (xhr && xhr.abort) {
+      try {
+        xhr.abort();
+        abortedCount++;
+      } catch (e) {
+        console.warn('Error aborting AJAX:', e);
+      }
+    }
+  });
+  activeAjaxRequests = [];
+  console.log('  ├─ Aborted ' + abortedCount + ' AJAX requests');
+
+  // 2. Clear all intervals
+  var clearedCount = 0;
+  dashboardIntervals.forEach(function(intervalId) {
+    if (intervalId) {
+      clearInterval(intervalId);
+      clearedCount++;
+    }
+  });
+  dashboardIntervals = [];
+  console.log('  ├─ Cleared ' + clearedCount + ' intervals');
+
+  // 3. Destroy Highcharts chart
+  if (typeof chart !== 'undefined' && chart && typeof chart.destroy === 'function') {
+    try {
+      chart.destroy();
+      chart = null;
+      console.log('  ├─ Destroyed Highcharts chart');
+    } catch (e) {
+      console.warn('  └─ Error destroying chart:', e);
+    }
+  }
+
+  // 4. Reset component status
+  componentStatus.dashboardStatsLoaded = false;
+  componentStatus.logsLoaded = false;
+  componentStatus.incomeLoaded = false;
+  console.log('  └─ Reset component status');
+
+  console.log('✅ Dashboard cleanup complete');
+}
+
 // Clean up intervals and abort AJAX when navigating away
 $(document).on('click', 'a[href]', function(e) {
   var href = $(this).attr('href');
+
   // Check if navigating away from dashboard
-  if (href && !href.includes('home') && !href.includes('#')) {
-    isNavigatingAway = true;
-
-    // Abort all pending AJAX requests
-    activeAjaxRequests.forEach(function(xhr) {
-      if (xhr && xhr.abort) {
-        xhr.abort();
-      }
-    });
-    activeAjaxRequests = [];
-
-    // Clear all intervals
-    dashboardIntervals.forEach(function(intervalId) {
-      clearInterval(intervalId);
-    });
-    dashboardIntervals = [];
-
-    console.log('🧹 Aborted AJAX requests and cleared intervals before navigation');
+  if (href && !href.includes('home') && !href.includes('dashboard') && !href.includes('#')) {
+    cleanupDashboard();
   }
 });
 
 // Cleanup on page unload
 $(window).on('beforeunload', function() {
-  isNavigatingAway = true;
-
-  // Abort all pending AJAX
-  activeAjaxRequests.forEach(function(xhr) {
-    if (xhr && xhr.abort) xhr.abort();
-  });
-
-  // Clear intervals
-  dashboardIntervals.forEach(function(intervalId) {
-    clearInterval(intervalId);
-  });
+  cleanupDashboard();
 });
 
 // Force styles on any AJAX completion, but heavily debounced and only for dashboard
@@ -3111,7 +3150,10 @@ $(document).ajaxComplete(function() {
   }
 
   function requestDatta(session,iface) {
-    if (isNavigatingAway) return; // Don't make requests if navigating away
+    if (isNavigatingAway) {
+      console.log('🛑 Traffic request cancelled - navigating away');
+      return; // Don't make requests if navigating away
+    }
     if (!trafficAvailable) return; // Stop if traffic endpoint is not available
 
     var url = './traffic/traffic.php?session='+session+'&iface='+iface;
@@ -3258,10 +3300,16 @@ $(document).ajaxComplete(function() {
         spacing: [10, 10, 10, 10],
         events: {
           load: function () {
-            setInterval(function () {
-              requestDatta(sessiondata,interface);
+            // Track traffic interval for cleanup
+            trafficInterval = setInterval(function () {
+              if (!isNavigatingAway) {
+                requestDatta(sessiondata,interface);
+              }
             }, 8000);
-          }				
+
+            // Add to cleanup array
+            dashboardIntervals.push(trafficInterval);
+          }
         }
       },
       title: {
