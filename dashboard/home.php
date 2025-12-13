@@ -2908,28 +2908,55 @@ function formatDTM(seconds) {
 
 // OPTIMIZED PARALLEL LOADING - All components load simultaneously for instant dashboard
 $(document).ready(function() {
-  console.log('🚀 Starting optimized parallel dashboard loading...');
+  var startTime = new Date().getTime();
+  console.log('');
+  console.log('='.repeat(60));
+  console.log('🚀 MIKHMON DASHBOARD - OPTIMIZED PARALLEL LOADING');
+  console.log('='.repeat(60));
+  console.log('⏱️  Start Time:', new Date().toLocaleTimeString());
+  console.log('');
 
-  // PHASE 1: Load critical data IMMEDIATELY and in PARALLEL
-  // These all fire at the same time for maximum speed
-  loadDashboardStats();        // System Status (CPU, Memory, Uptime)
-  loadLogsContent();            // Hotspot Logs (no delay!)
+  console.log('📋 PHASE 1: Loading Critical Components (Parallel)...');
+  console.log('  ├─ System Status (CPU, Memory, Uptime)');
+  console.log('  ├─ Hotspot Logs (instant - no delay)');
+  console.log('  └─ Network Traffic Monitor');
+  console.log('');
 
-  // Start traffic monitor immediately (if chart exists)
-  if (typeof loadTrafficMonitor === 'function') {
-    loadTrafficMonitor();
+  try {
+    // PHASE 1: Load critical data IMMEDIATELY and in PARALLEL
+    loadDashboardStats();        // System Status (CPU, Memory, Uptime)
+    loadLogsContent();            // Hotspot Logs (no delay!)
+
+    // Start traffic monitor immediately (if chart exists)
+    if (typeof loadTrafficMonitor === 'function') {
+      loadTrafficMonitor();
+    }
+
+    console.log('✅ Phase 1: All components loading in parallel!');
+  } catch (e) {
+    console.error('❌ Error in Phase 1:', e);
   }
 
-  console.log('✅ Phase 1: Critical components loading in parallel');
+  console.log('');
+  console.log('📊 PHASE 2: Scheduling Income Report (2s delay)...');
 
   // PHASE 2: Load Income Report AFTER a short delay (2 seconds)
-  // This ensures the UI feels instant while heavy report loads in background
   setTimeout(function() {
     if (!isNavigatingAway) {
-      console.log('📊 Phase 2: Loading Income Report (background)...');
-      reloadIncomeReport();
+      console.log('  └─ Loading Income Report (background)...');
+      try {
+        reloadIncomeReport();
+      } catch (e) {
+        console.error('❌ Error loading income report:', e);
+      }
     }
-  }, 2000); // 2 second delay - users see dashboard instantly, income loads after
+  }, 2000);
+
+  console.log('');
+  console.log('🔄 PHASE 3: Setting up auto-refresh intervals...');
+  console.log('  ├─ System Status: every 30s');
+  console.log('  ├─ Logs: every 35s');
+  console.log('  └─ Income Report: every 60s');
 
   // PHASE 3: Setup auto-refresh intervals (optimized with caching)
   dashboardIntervals.push(setInterval(function() {
@@ -2948,9 +2975,17 @@ $(document).ready(function() {
     if (!isNavigatingAway && $('#r_4').length > 0) {
       reloadIncomeReport();
     }
-  }, 60000)); // Every 60 seconds (income report refreshes slower - it's heavy)
+  }, 60000)); // Every 60 seconds
 
-  console.log('✅ Dashboard optimization complete - all intervals set');
+  var endTime = new Date().getTime();
+  var setupTime = endTime - startTime;
+
+  console.log('');
+  console.log('✅ DASHBOARD INITIALIZATION COMPLETE');
+  console.log('⏱️  Setup Time:', setupTime + 'ms');
+  console.log('📈 Waiting for data to load...');
+  console.log('='.repeat(60));
+  console.log('');
 });
 
 // Clean up intervals and abort AJAX when navigating away
@@ -3075,31 +3110,75 @@ $(document).ajaxComplete(function() {
     });
   }	
 
+  // Flag to prevent multiple chart initialization
+  var chartInitialized = false;
+
   $(document).ready(function() {
-    console.log("Initializing Highcharts...");
+    console.log("=== 📊 Highcharts Initialization Start ===");
     console.log("Container #trafficMonitor exists:", $('#trafficMonitor').length > 0);
+    console.log("Highcharts available:", typeof Highcharts !== 'undefined');
 
     if (typeof Highcharts === 'undefined') {
-      console.error("Highcharts library not loaded!");
+      console.error("❌ Highcharts library not loaded!");
       return;
     }
 
-    // Destroy any existing chart on this container
-    var container = document.getElementById('trafficMonitor');
-    if (container) {
-      // Check if Highcharts chart exists on this container
-      var existingChart = Highcharts.charts[Highcharts.attr(container, 'data-highcharts-chart')];
-      if (existingChart) {
-        console.log("Destroying existing chart instance");
-        existingChart.destroy();
-      }
+    // Prevent multiple initialization
+    if (chartInitialized) {
+      console.log("⚠️ Chart already initialized, skipping");
+      return;
     }
 
-    // Also destroy global chart variable if it exists
-    if (typeof chart !== 'undefined' && chart && chart.destroy) {
-      console.log("Destroying global chart variable");
-      chart.destroy();
-      chart = null;
+    var container = document.getElementById('trafficMonitor');
+    if (!container) {
+      console.error("❌ Container #trafficMonitor not found!");
+      return;
+    }
+
+    // IMPROVED: Destroy any existing chart more reliably
+    try {
+      console.log("🧹 Cleaning up any existing charts...");
+
+      // Method 1: Check all Highcharts.charts
+      if (Highcharts.charts && Highcharts.charts.length > 0) {
+        for (var i = 0; i < Highcharts.charts.length; i++) {
+          var existingChart = Highcharts.charts[i];
+          if (existingChart && existingChart.renderTo === container) {
+            console.log("🧹 Destroying chart at index:", i);
+            existingChart.destroy();
+            Highcharts.charts[i] = undefined;
+          }
+        }
+      }
+
+      // Method 2: Check container's data attribute
+      var chartIndex = container.getAttribute('data-highcharts-chart');
+      if (chartIndex !== null) {
+        var idx = parseInt(chartIndex);
+        if (!isNaN(idx) && Highcharts.charts[idx]) {
+          console.log("🧹 Destroying chart with index:", idx);
+          Highcharts.charts[idx].destroy();
+          Highcharts.charts[idx] = undefined;
+        }
+        container.removeAttribute('data-highcharts-chart');
+      }
+
+      // Method 3: Destroy global chart variable
+      if (typeof chart !== 'undefined' && chart && typeof chart.destroy === 'function') {
+        console.log("🧹 Destroying global chart variable");
+        try {
+          chart.destroy();
+        } catch (e) {
+          console.warn("Warning destroying global chart:", e);
+        }
+        chart = null;
+      }
+
+      // Clear any inline styles that might interfere
+      $(container).empty();
+
+    } catch (destroyError) {
+      console.warn("⚠️ Error during chart cleanup (continuing anyway):", destroyError);
     }
 
     try {
@@ -3108,6 +3187,8 @@ $(document).ajaxComplete(function() {
           useUTC: false
         }
       });
+
+      console.log("✅ Creating new Highcharts instance...");
 
       chart = new Highcharts.Chart({
       chart: {
@@ -3250,11 +3331,14 @@ $(document).ajaxComplete(function() {
       }
     });
 
-    console.log("Highcharts chart initialized successfully!");
+    chartInitialized = true;
+    console.log("✅ Highcharts chart initialized successfully!");
     console.log("Chart object:", chart);
 
     } catch(e) {
-      console.error("Error initializing Highcharts:", e);
+      console.error("❌ Error initializing Highcharts:", e);
+      console.error("Error details:", e.message, e.stack);
+      chartInitialized = false; // Reset flag on error
     }
   });
 </script>
