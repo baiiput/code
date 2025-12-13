@@ -2683,6 +2683,10 @@ function loadLogsContent() {
             performanceMetrics.logsEnd = Date.now();
             var duration = performanceMetrics.logsEnd - performanceMetrics.logsStart;
             logPerformance('Hotspot Logs', duration);
+
+            // Mark as loaded and check if we should load income
+            componentStatus.logsLoaded = true;
+            checkAndLoadIncome();
           } else {
             throw new Error('Empty response');
           }
@@ -2702,6 +2706,10 @@ function loadLogsContent() {
 
       handleLogsError(status);
       logsLoading = false;
+
+      // Mark as loaded (even on error) so income can still trigger
+      componentStatus.logsLoaded = true;
+      checkAndLoadIncome();
     }
   });
 }
@@ -2781,6 +2789,13 @@ var dashboardIntervals = [];
 var activeAjaxRequests = [];
 var isNavigatingAway = false;
 
+// Component loading status - track when components finish loading
+var componentStatus = {
+  dashboardStatsLoaded: false,
+  logsLoaded: false,
+  incomeLoaded: false
+};
+
 // Performance monitoring
 var performanceMetrics = {
   dashboardStatsStart: 0,
@@ -2793,6 +2808,16 @@ var performanceMetrics = {
 
 function logPerformance(component, duration) {
   console.log('⚡ ' + component + ' loaded in ' + duration + 'ms');
+}
+
+// Check if critical components are loaded, then trigger income
+function checkAndLoadIncome() {
+  if (componentStatus.dashboardStatsLoaded && componentStatus.logsLoaded && !componentStatus.incomeLoaded) {
+    console.log('');
+    console.log('✅ Critical components loaded! Starting Income Report...');
+    componentStatus.incomeLoaded = true; // Mark as started
+    reloadIncomeReport();
+  }
 }
 
 // Dashboard stats loader with caching (OPTIMIZED)
@@ -2820,6 +2845,10 @@ function loadDashboardStats() {
       performanceMetrics.dashboardStatsEnd = Date.now();
       var duration = performanceMetrics.dashboardStatsEnd - performanceMetrics.dashboardStatsStart;
       logPerformance('System Status', duration);
+
+      // Mark as loaded and check if we should load income
+      componentStatus.dashboardStatsLoaded = true;
+      checkAndLoadIncome();
     },
     success: function(response) {
       if (isNavigatingAway) return; // Don't update DOM if navigating away
@@ -2886,6 +2915,10 @@ function loadDashboardStats() {
 
       // Remove skeleton on error, show current values
       $('.skeleton-loading').removeClass('skeleton-loading');
+
+      // Mark as loaded (even on error) so income can still trigger
+      componentStatus.dashboardStatsLoaded = true;
+      checkAndLoadIncome();
     }
   });
 }
@@ -2952,23 +2985,11 @@ $(document).ready(function() {
   }
 
   console.log('');
-  console.log('📊 PHASE 2: Scheduling Income Report (5s delay)...');
-  console.log('   (Income loads LAST to ensure other components appear first)');
-
-  // PHASE 2: Load Income Report AFTER a delay (5 seconds)
-  // This ensures all other components load and display BEFORE income
-  setTimeout(function() {
-    if (!isNavigatingAway) {
-      console.log('  └─ Loading Income Report (background)...');
-      try {
-        reloadIncomeReport();
-      } catch (e) {
-        console.error('❌ Error loading income report:', e);
-      }
-    }
-  }, 5000); // 5 second delay - ensures dashboard stats/logs load first
-
+  console.log('📊 PHASE 2: Income Report Loading Strategy');
+  console.log('   Income will load AUTOMATICALLY after Dashboard + Logs finish');
+  console.log('   (Smart loading - income waits for critical components)');
   console.log('');
+
   console.log('🔄 PHASE 3: Setting up auto-refresh intervals...');
   console.log('  ├─ System Status: every 30s');
   console.log('  ├─ Logs: every 35s');
@@ -3098,7 +3119,7 @@ $(document).ajaxComplete(function() {
     $.ajax({
       url: url,
       datatype: "json",
-      timeout: 10000, // Reduced to 10 seconds (was 30)
+      timeout: 20000, // 20 seconds for slow connections
       success: function(data) {
         if (isNavigatingAway) return; // Don't process if navigating away
 
