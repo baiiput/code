@@ -2525,10 +2525,84 @@ function ensureCompactStyling() {
 }
 
 // DISABLED: Income report reload - livereport.php file missing
+// OPTIMIZED: Load Income Report with caching (loads LAST for better UX)
 function reloadIncomeReport() {
-  // Disabled because livereport.php is not available
-  // Income report will show initial state without live updates
-  return;
+  if (isNavigatingAway) return;
+
+  performanceMetrics.incomeStart = Date.now();
+
+  var incomeContainer = $('#r_4');
+  if (!incomeContainer.length) return;
+
+  // Show loading state only if container is empty
+  var currentContent = incomeContainer.find('.income-stat-card').length;
+  if (currentContent === 0) {
+    incomeContainer.html(`
+      <div class="compact-card income-card-enhanced">
+        <div class="compact-header income-header">
+          <span><i class="fa fa-money income-icon"></i> Income Report</span>
+          <div class="income-status">
+            <div class="income-indicator">
+              <div class="money-pulse"></div>
+              <span style="font-size: 11px; color: var(--accent-green);">Loading...</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-body income-display-enhanced" style="padding: 20px; text-align: center;">
+          <div class="skeleton-loading" style="height: 100px; border-radius: 8px;"></div>
+        </div>
+      </div>
+    `);
+  }
+
+  var xhr = $.ajax({
+    url: './report/livereport.php?session=<?= $session ?>',
+    type: 'GET',
+    cache: false,
+    timeout: 20000,
+    beforeSend: function(jqXHR) {
+      activeAjaxRequests.push(jqXHR);
+    },
+    complete: function(jqXHR) {
+      var index = activeAjaxRequests.indexOf(jqXHR);
+      if (index > -1) activeAjaxRequests.splice(index, 1);
+    },
+    success: function(data) {
+      if (isNavigatingAway) return;
+
+      try {
+        if (data && data.trim().length > 0) {
+          incomeContainer.html(data);
+
+          // Log performance
+          performanceMetrics.incomeEnd = Date.now();
+          var duration = performanceMetrics.incomeEnd - performanceMetrics.incomeStart;
+          logPerformance('Income Report', duration);
+
+          console.log('✅ Income Report loaded successfully');
+        }
+      } catch (e) {
+        console.log('Error loading income report:', e);
+      }
+    },
+    error: function(xhr, status, error) {
+      if (status === 'abort') return;
+      console.log('Income report load error:', status);
+
+      // Show error state
+      incomeContainer.html(`
+        <div class="compact-card income-card-enhanced">
+          <div class="compact-header income-header">
+            <span><i class="fa fa-money income-icon"></i> Income Report</span>
+          </div>
+          <div class="compact-body" style="padding: 20px; text-align: center; color: var(--text-muted);">
+            <i class="fa fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+            <p>Unable to load income report</p>
+          </div>
+        </div>
+      `);
+    }
+  });
 }
 
 // Enhanced logs loading with much better error handling
@@ -2540,13 +2614,15 @@ var connectionStable = true;
 
 function loadLogsContent() {
   if (logsLoading) return;
-  
+
+  performanceMetrics.logsStart = Date.now();
+
   var logsContainer = document.querySelector('#r_3 .logs-container');
   if (!logsContainer || typeof $ === 'undefined') return;
-  
+
   var timeSinceLastSuccess = Date.now() - lastSuccessTime;
   var shouldShowLoading = timeSinceLastSuccess > 30000;
-  
+
   if (shouldShowLoading && logsRetryCount === 0) {
     var currentTable = logsContainer.querySelector('.logs-table-enhanced tbody');
     if (currentTable && currentTable.children.length === 0) {
@@ -2597,6 +2673,11 @@ function loadLogsContent() {
             logsRetryCount = 0;
             lastSuccessTime = Date.now();
             connectionStable = true;
+
+            // Log performance
+            performanceMetrics.logsEnd = Date.now();
+            var duration = performanceMetrics.logsEnd - performanceMetrics.logsStart;
+            logPerformance('Hotspot Logs', duration);
           } else {
             throw new Error('Empty response');
           }
@@ -2692,16 +2773,32 @@ var dashboardIntervals = [];
 var activeAjaxRequests = [];
 var isNavigatingAway = false;
 
+// Performance monitoring
+var performanceMetrics = {
+  dashboardStatsStart: 0,
+  dashboardStatsEnd: 0,
+  logsStart: 0,
+  logsEnd: 0,
+  incomeStart: 0,
+  incomeEnd: 0
+};
+
+function logPerformance(component, duration) {
+  console.log('⚡ ' + component + ' loaded in ' + duration + 'ms');
+}
+
 // Dashboard stats loader with caching (OPTIMIZED)
 function loadDashboardStats() {
   if (isNavigatingAway) return; // Don't start new requests if navigating away
+
+  performanceMetrics.dashboardStatsStart = Date.now();
 
   var xhr = $.ajax({
     url: './dashboard/aload.php?load=dashstats&session=<?= $session ?>',
     type: 'GET',
     dataType: 'json',
     cache: false,
-    timeout: 30000, // Increased to 30 seconds
+    timeout: 15000, // Optimized to 15 seconds (was 30)
     beforeSend: function(jqXHR) {
       activeAjaxRequests.push(jqXHR);
     },
@@ -2709,6 +2806,11 @@ function loadDashboardStats() {
       // Remove from active requests
       var index = activeAjaxRequests.indexOf(jqXHR);
       if (index > -1) activeAjaxRequests.splice(index, 1);
+
+      // Log performance
+      performanceMetrics.dashboardStatsEnd = Date.now();
+      var duration = performanceMetrics.dashboardStatsEnd - performanceMetrics.dashboardStatsStart;
+      logPerformance('System Status', duration);
     },
     success: function(response) {
       if (isNavigatingAway) return; // Don't update DOM if navigating away
@@ -2804,28 +2906,51 @@ function formatDTM(seconds) {
   return parts.join(' ') || '0s';
 }
 
-// SIMPLIFIED initialization
+// OPTIMIZED PARALLEL LOADING - All components load simultaneously for instant dashboard
 $(document).ready(function() {
-  // Load dashboard stats immediately (OPTIMIZED - no blocking)
-  loadDashboardStats();
+  console.log('🚀 Starting optimized parallel dashboard loading...');
 
-  // Load logs with delay
+  // PHASE 1: Load critical data IMMEDIATELY and in PARALLEL
+  // These all fire at the same time for maximum speed
+  loadDashboardStats();        // System Status (CPU, Memory, Uptime)
+  loadLogsContent();            // Hotspot Logs (no delay!)
+
+  // Start traffic monitor immediately (if chart exists)
+  if (typeof loadTrafficMonitor === 'function') {
+    loadTrafficMonitor();
+  }
+
+  console.log('✅ Phase 1: Critical components loading in parallel');
+
+  // PHASE 2: Load Income Report AFTER a short delay (2 seconds)
+  // This ensures the UI feels instant while heavy report loads in background
   setTimeout(function() {
-    if (!isNavigatingAway) loadLogsContent();
-  }, 3000);
+    if (!isNavigatingAway) {
+      console.log('📊 Phase 2: Loading Income Report (background)...');
+      reloadIncomeReport();
+    }
+  }, 2000); // 2 second delay - users see dashboard instantly, income loads after
 
-  // OPTIMIZED intervals with caching - Store IDs for cleanup
+  // PHASE 3: Setup auto-refresh intervals (optimized with caching)
   dashboardIntervals.push(setInterval(function() {
-    if (!isNavigatingAway && $('#r_1').length > 0) loadDashboardStats();
-  }, 30000)); // Every 30 seconds (cached)
+    if (!isNavigatingAway && $('#r_1').length > 0) {
+      loadDashboardStats();
+    }
+  }, 30000)); // Every 30 seconds (server-side cached)
 
   dashboardIntervals.push(setInterval(function() {
-    if (!isNavigatingAway && $('#r_1').length > 0) reloadIncomeReport();
-  }, 25000)); // Every 25 seconds
-
-  dashboardIntervals.push(setInterval(function() {
-    if (!isNavigatingAway && $('#r_3').length > 0) loadLogsContent();
+    if (!isNavigatingAway && $('#r_3').length > 0) {
+      loadLogsContent();
+    }
   }, 35000)); // Every 35 seconds
+
+  dashboardIntervals.push(setInterval(function() {
+    if (!isNavigatingAway && $('#r_4').length > 0) {
+      reloadIncomeReport();
+    }
+  }, 60000)); // Every 60 seconds (income report refreshes slower - it's heavy)
+
+  console.log('✅ Dashboard optimization complete - all intervals set');
 });
 
 // Clean up intervals and abort AJAX when navigating away
