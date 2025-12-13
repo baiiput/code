@@ -2530,6 +2530,7 @@ function reloadIncomeReport() {
   if (isNavigatingAway) return;
 
   performanceMetrics.incomeStart = Date.now();
+  console.log('💰 Loading Income Report...');
 
   var incomeContainer = $('#r_4');
   if (!incomeContainer.length) return;
@@ -2587,7 +2588,10 @@ function reloadIncomeReport() {
     },
     error: function(xhr, status, error) {
       if (status === 'abort') return;
-      console.log('Income report load error:', status);
+
+      performanceMetrics.incomeEnd = Date.now();
+      var duration = performanceMetrics.incomeEnd - performanceMetrics.incomeStart;
+      console.error('❌ Income Report failed after ' + duration + 'ms - Reason:', status);
 
       // Show error state
       incomeContainer.html(`
@@ -2616,6 +2620,7 @@ function loadLogsContent() {
   if (logsLoading) return;
 
   performanceMetrics.logsStart = Date.now();
+  console.log('📋 Loading Hotspot Logs...');
 
   var logsContainer = document.querySelector('#r_3 .logs-container');
   if (!logsContainer || typeof $ === 'undefined') return;
@@ -2648,7 +2653,7 @@ function loadLogsContent() {
   $.ajax({
     url: './dashboard/aload.php?load=logs&session=<?= $session ?>',
     type: 'GET',
-    timeout: 15000,
+    timeout: 25000, // 25 seconds for slow Mikrotik connections
     cache: false,
     dataType: 'html',
     success: function(data) {
@@ -2691,7 +2696,10 @@ function loadLogsContent() {
       logsLoading = false;
     },
     error: function(xhr, status, error) {
-      console.log('Logs AJAX error:', status, error);
+      performanceMetrics.logsEnd = Date.now();
+      var duration = performanceMetrics.logsEnd - performanceMetrics.logsStart;
+      console.error('❌ Hotspot Logs failed after ' + duration + 'ms - Reason:', status);
+
       handleLogsError(status);
       logsLoading = false;
     }
@@ -2792,13 +2800,14 @@ function loadDashboardStats() {
   if (isNavigatingAway) return; // Don't start new requests if navigating away
 
   performanceMetrics.dashboardStatsStart = Date.now();
+  console.log('📊 Loading System Status...');
 
   var xhr = $.ajax({
     url: './dashboard/aload.php?load=dashstats&session=<?= $session ?>',
     type: 'GET',
     dataType: 'json',
     cache: false,
-    timeout: 15000, // Optimized to 15 seconds (was 30)
+    timeout: 30000, // 30 seconds for slow Mikrotik connections
     beforeSend: function(jqXHR) {
       activeAjaxRequests.push(jqXHR);
     },
@@ -2869,7 +2878,12 @@ function loadDashboardStats() {
     },
     error: function(xhr, status, error) {
       if (status === 'abort') return; // Ignore aborted requests
-      console.log('Dashboard stats load error:', status);
+
+      // Log error with duration
+      performanceMetrics.dashboardStatsEnd = Date.now();
+      var duration = performanceMetrics.dashboardStatsEnd - performanceMetrics.dashboardStatsStart;
+      console.error('❌ System Status failed after ' + duration + 'ms - Reason:', status);
+
       // Remove skeleton on error, show current values
       $('.skeleton-loading').removeClass('skeleton-loading');
     }
@@ -2938,9 +2952,11 @@ $(document).ready(function() {
   }
 
   console.log('');
-  console.log('📊 PHASE 2: Scheduling Income Report (2s delay)...');
+  console.log('📊 PHASE 2: Scheduling Income Report (5s delay)...');
+  console.log('   (Income loads LAST to ensure other components appear first)');
 
-  // PHASE 2: Load Income Report AFTER a short delay (2 seconds)
+  // PHASE 2: Load Income Report AFTER a delay (5 seconds)
+  // This ensures all other components load and display BEFORE income
   setTimeout(function() {
     if (!isNavigatingAway) {
       console.log('  └─ Loading Income Report (background)...');
@@ -2950,7 +2966,7 @@ $(document).ready(function() {
         console.error('❌ Error loading income report:', e);
       }
     }
-  }, 2000);
+  }, 5000); // 5 second delay - ensures dashboard stats/logs load first
 
   console.log('');
   console.log('🔄 PHASE 3: Setting up auto-refresh intervals...');
