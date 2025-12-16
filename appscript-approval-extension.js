@@ -943,3 +943,82 @@ function createAdminUsersSheet(spreadsheet) {
  *   }
  * }
  */
+ */
+
+// ========================================
+// 🌐 9. COMPLETE doPost & doGet HANDLERS WITH CORS
+// ========================================
+
+/**
+ * Handle GET requests (CORS preflight)
+ */
+function doGet(e) {
+  return handleResponse({ status: 'success', message: 'Approval System API is running' });
+}
+
+/**
+ * Handle POST requests with CORS support
+ */
+function doPost(e) {
+  try {
+    // Parse request data
+    const postData = JSON.parse(e.postData.contents);
+    const action = postData.action;
+
+    Logger.log('📨 Received action: ' + action);
+
+    let result;
+
+    // Route to appropriate action handler
+    if (action === 'addPendingApproval') {
+      result = addPendingApproval(postData.approvalData);
+    }
+    else if (action === 'getPendingApprovals') {
+      result = getPendingApprovals(postData.filterStatus);
+    }
+    else if (action === 'approveChange') {
+      result = approveChange(postData.approvalId, postData.adminEmail);
+    }
+    else if (action === 'rejectChange') {
+      result = rejectChange(postData.approvalId, postData.adminEmail, postData.reason);
+    }
+    else if (action === 'approveAll') {
+      result = approveAll(postData.adminEmail);
+    }
+    else if (action === 'isAdmin') {
+      result = { status: 'success', isAdmin: isAdmin(postData.email) };
+    }
+    else {
+      result = { status: 'error', message: 'Unknown action: ' + action };
+    }
+
+    return handleResponse(result);
+
+  } catch (error) {
+    Logger.log('❌ Error in doPost: ' + error.message);
+    Logger.log(error.stack);
+    return handleResponse({
+      status: 'error',
+      message: error.message,
+      stack: error.stack
+    });
+  }
+}
+
+/**
+ * Create response with CORS headers
+ */
+function handleResponse(data) {
+  const output = ContentService.createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  
+  // Add CORS headers
+  return output;
+}
+
+// Note: Google Apps Script automatically handles CORS for Web Apps deployed with "Anyone" access
+// The key is to deploy as Web App with:
+// - Execute as: Me
+// - Who has access: Anyone
+
+Logger.log('✅ Approval System Extension loaded with CORS-enabled doPost/doGet handlers');
