@@ -1,0 +1,3353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Client Starlink - Enhanced</title>
+    <style>
+        /* CSS Variables for Theme Support */
+        :root[data-theme="light"] {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-container: #ffffff;
+            --bg-header: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --bg-controls: #f8fafc;
+            --bg-stats: #f1f5f9;
+            --bg-table-header: #1e293b;
+            --bg-row-even: #f1f5f9;
+            --bg-row-odd: #ffffff;
+            --bg-row-hover: #dbeafe;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-white: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --shadow-hover: 0 2px 8px rgba(0,0,0,0.1);
+            --accent-blue: #2563eb;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+        }
+
+        :root[data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-container: #1e293b;
+            --bg-header: linear-gradient(135deg, #1e40af, #1e3a8a);
+            --bg-controls: #334155;
+            --bg-stats: #475569;
+            --bg-table-header: #0f172a;
+            --bg-row-even: #334155;
+            --bg-row-odd: #475569;
+            --bg-row-hover: #1e40af;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-white: #ffffff;
+            --border-color: #475569;
+            --shadow: 0 10px 30px rgba(0,0,0,0.3);
+            --shadow-hover: 0 2px 8px rgba(0,0,0,0.3);
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-red: #f87171;
+            --accent-orange: #fbbf24;
+            --accent-purple: #a78bfa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: var(--bg-container);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .header {
+            background: var(--bg-header);
+            color: var(--text-white);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .status-info {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Sheet Selector */
+        .sheet-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sheet-tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            opacity: 0.7;
+        }
+
+        .sheet-tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .sheet-tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Category Indicators */
+        .category-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+
+        .category-aktif {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #22c55e;
+        }
+
+        .category-non-aktif {
+            background: #fecaca;
+            color: #dc2626;
+            border: 1px solid #ef4444;
+        }
+
+        .category-lepas {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        :root[data-theme="dark"] .category-aktif {
+            background: #166534;
+            color: #dcfce7;
+        }
+
+        :root[data-theme="dark"] .category-non-aktif {
+            background: #dc2626;
+            color: #fecaca;
+        }
+
+        :root[data-theme="dark"] .category-lepas {
+            background: #92400e;
+            color: #fef3c7;
+        }
+
+        /* Controls Toggle */
+        .controls-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--accent-blue);
+            color: var(--text-white);
+            border: none;
+            border-radius: 0 0 20px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+            width: fit-content;
+        }
+
+        .controls-toggle-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .controls-toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+        .controls-toggle-btn.collapsed .controls-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .controls {
+            background: var(--bg-controls);
+            border-bottom: 1px solid var(--border-color);
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            overflow: hidden;
+            max-height: 1000px;
+        }
+
+        .controls.collapsed {
+            max-height: 0;
+            padding: 0;
+            border-bottom: none;
+        }
+
+        .controls-content {
+            padding: 15px 20px;
+        }
+
+        .search-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 60px 10px 14px; /* Increased right padding for both icons */
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: var(--bg-container);
+            color: var(--text-primary);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 36px; /* Moved left to make room for clear button */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Clear button for search inputs */
+        .search-clear-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-muted);
+            color: var(--text-white);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .search-clear-btn:hover {
+            background: var(--accent-red);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .search-clear-btn.show {
+            display: flex;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary { background: var(--accent-blue); color: var(--text-white); }
+        .btn-success { background: var(--accent-green); color: var(--text-white); }
+        .btn-purple { background: var(--accent-purple); color: var(--text-white); }
+
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success:hover { background: #059669; }
+        .btn-purple:hover { background: #7c3aed; }
+
+        /* Column Dropdown - FIXED Z-INDEX */
+        .column-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 99999; /* Increased from 9999 */
+            min-width: 280px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .column-dropdown.show { 
+            display: block; 
+            position: fixed; /* Changed from absolute to fixed for better layering */
+            z-index: 99999;
+        }
+
+        .column-dropdown-header {
+            padding: 12px 16px;
+            background: var(--bg-header);
+            color: var(--text-white);
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-dropdown-content {
+            padding: 8px;
+        }
+
+        .column-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+
+        .column-item:hover {
+            background: var(--bg-stats);
+        }
+
+        .column-actions {
+            padding: 8px 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+
+        .column-action-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .select-all { background: var(--accent-green); color: var(--text-white); }
+        .hide-all { background: var(--accent-red); color: var(--text-white); }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-container);
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue);
+            color: var(--text-white);
+        }
+
+        .clear-filters {
+            padding: 6px 14px;
+            background: var(--accent-red);
+            color: var(--text-white);
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .clear-filters:hover {
+            background: #dc2626;
+        }
+
+        /* Column Filters */
+        .column-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 7px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s ease;
+            background: var(--bg-container);
+            color: var(--text-primary);
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* Checkbox Filters */
+        .checkbox-filter-container {
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .checkbox-filter-header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-stats);
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .checkbox-filter-toggle {
+            font-size: 10px;
+            color: var(--accent-blue);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid var(--accent-blue);
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-filter-toggle:hover {
+            background: var(--accent-blue);
+            color: var(--text-white);
+        }
+
+        .checkbox-filter-content {
+            padding: 6px;
+        }
+
+        .checkbox-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-filter-item:hover {
+            background: var(--bg-stats);
+        }
+
+        .checkbox-filter-count {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-stats);
+            padding: 1px 6px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .date-range-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .date-range-group input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .date-range-separator {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* Stats */
+        .stats {
+            padding: 12px 20px;
+            background: var(--bg-stats);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .stat-number {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .current-sheet-indicator {
+            background: var(--accent-blue);
+            color: var(--text-white);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 75vh;
+            scroll-behavior: smooth;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .table-container::-webkit-scrollbar {
+            height: 12px;
+            width: 12px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: var(--bg-controls);
+            border-radius: 6px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 6px;
+            border: 2px solid var(--bg-controls);
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #1d4ed8;
+        }
+
+        table {
+            width: 100%;
+            min-width: 3000px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--bg-table-header);
+            color: var(--text-white);
+            padding: 12px 8px;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            font-size: 11px;
+            border-bottom: 2px solid var(--border-color);
+            min-width: 80px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th:hover {
+            background: #0f172a;
+        }
+
+        th.sortable {
+            padding-right: 25px;
+        }
+
+        th .sort-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        th.sort-asc .sort-icon::after {
+            content: "▲";
+            opacity: 1;
+        }
+
+        th.sort-desc .sort-icon::after {
+            content: "▼";
+            opacity: 1;
+        }
+
+        th:not(.sort-asc):not(.sort-desc) .sort-icon::after {
+            content: "⇅";
+        }
+
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 12px;
+            line-height: 1.4;
+            transition: all 0.2s ease;
+            min-width: 80px;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td.text-left {
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        tr:nth-child(even) { background: var(--bg-row-even); }
+        tr:nth-child(odd) { background: var(--bg-row-odd); }
+
+        tr:hover {
+            background: var(--bg-row-hover) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+            cursor: pointer;
+        }
+
+        /* Data containers in cells */
+        .line-with-copy, .single-data-box {
+            position: relative;
+            padding: 4px 25px 4px 6px;
+            margin: 2px auto;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 6px;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: visible;
+            width: auto;
+            max-width: calc(100% - 8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 24px;
+        }
+
+        .line-with-copy:hover, .single-data-box:hover {
+            background: rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        :root[data-theme="dark"] .line-with-copy,
+        :root[data-theme="dark"] .single-data-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        :root[data-theme="dark"] .line-with-copy:hover,
+        :root[data-theme="dark"] .single-data-box:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 50%;
+            right: 2px;
+            transform: translateY(-50%);
+            background: var(--accent-blue);
+            color: var(--text-white);
+            border: none;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-size: 9px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 5;
+            min-width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .copy-btn.copied {
+            animation: copySuccess 0.6s ease;
+            background: var(--accent-green) !important;
+        }
+
+        @keyframes copySuccess {
+            0% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.3); }
+            100% { transform: translateY(-50%) scale(1); }
+        }
+
+        .copy-btn.wa-btn {
+            background: #25d366;
+        }
+
+        .copy-btn.wa-btn:hover {
+            background: #128c7e;
+        }
+
+        td:hover .copy-btn,
+        .line-with-copy:hover .copy-btn,
+        .single-data-box:hover .copy-btn {
+            opacity: 1;
+        }
+
+        /* Status indicators */
+        .status-lunas { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-belum { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-active { background: #dbeafe; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-pending { background: #fce7f3; color: #be185d; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-inactive { background: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-tertagih { background: #fef2f2; color: #991b1b; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .status-lepas { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+
+        /* Dark theme status adjustments */
+        :root[data-theme="dark"] .status-lunas { background: #166534; color: #dcfce7; }
+        :root[data-theme="dark"] .status-belum { background: #92400e; color: #fef3c7; }
+        :root[data-theme="dark"] .status-active { background: #1d4ed8; color: #dbeafe; }
+        :root[data-theme="dark"] .status-pending { background: #be185d; color: #fce7f3; }
+        :root[data-theme="dark"] .status-inactive { background: #374151; color: #f3f4f6; }
+        :root[data-theme="dark"] .status-tertagih { background: #991b1b; color: #fef2f2; }
+        :root[data-theme="dark"] .status-lepas { background: #92400e; color: #fef3c7; }
+
+        .loading, .error, .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .error {
+            color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+            margin: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .refresh-indicator {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--accent-green);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-table-header);
+            color: var(--text-white);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: var(--shadow);
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Density modes */
+        .density-compact td {
+            padding: 6px 4px;
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        .density-compact th {
+            padding: 8px 4px;
+            font-size: 9px;
+        }
+
+        .density-comfortable td {
+            padding: 16px 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .density-comfortable th {
+            padding: 18px 12px;
+            font-size: 12px;
+        }
+
+        /* Mobile Safari Performance Optimizations */
+        @supports (-webkit-touch-callout: none) {
+            /* Safari-specific optimizations */
+            * {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+            
+            .table-container {
+                -webkit-overflow-scrolling: touch;
+                transform: translate3d(0, 0, 0);
+                will-change: scroll-position;
+            }
+            
+            tr {
+                will-change: transform;
+                transform: translate3d(0, 0, 0);
+            }
+            
+            .copy-btn {
+                will-change: opacity, transform;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            /* Reduce animations on mobile */
+            @media (max-width: 768px) {
+                *, *::before, *::after {
+                    animation-duration: 0.1s !important;
+                    transition-duration: 0.1s !important;
+                }
+                
+                .line-with-copy, .single-data-box {
+                    transition: none !important;
+                }
+                
+                tr:hover {
+                    transform: none !important;
+                    box-shadow: none !important;
+                }
+                
+                /* Disable expensive effects on mobile */
+                .container {
+                    box-shadow: none !important;
+                }
+                
+                .modal-content {
+                    animation: none !important;
+                }
+                
+                /* Force hardware acceleration for scrolling */
+                body {
+                    -webkit-transform: translate3d(0, 0, 0);
+                    transform: translate3d(0, 0, 0);
+                }
+            }
+        }
+
+        /* Add touch device class styles */
+        .touch-device tr:hover {
+            background: var(--bg-row-odd) !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .stats {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr 1fr !important;
+                gap: 8px 4px !important;
+                padding: 8px 10px !important;
+            }
+
+            .stat-item {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                font-size: 9px !important;
+                gap: 2px !important;
+                min-width: 0 !important;
+            }
+            
+            .column-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .copy-btn {
+                min-width: 28px;
+                min-height: 28px;
+                font-size: 10px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: var(--bg-container);
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: var(--bg-header);
+            color: var(--text-white);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .modal-nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-nav-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .modal-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .close {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-section {
+            background: var(--bg-stats);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-section h3 {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 100px;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-size: 13px;
+            text-align: right;
+            flex: 1;
+            margin-left: 10px;
+            position: relative;
+            word-break: break-word;
+        }
+
+        .detail-copy-btn {
+            background: var(--accent-blue);
+            color: var(--text-white);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .detail-copy-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .detail-copy-btn.copied {
+            background: var(--accent-green) !important;
+            animation: copySuccessDetail 0.6s ease;
+        }
+
+        @keyframes copySuccessDetail {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            background: var(--bg-stats);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-footer-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-action-btn {
+            background: var(--accent-blue);
+            color: var(--text-white);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-action-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .modal-action-btn.secondary {
+            background: var(--bg-controls);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Data Client Starlink</h1>
+            <div class="status-info">
+                <span id="lastUpdate">Memuat data...</span> | 
+                <span>Manual Refresh Mode</span>
+            </div>
+            
+            <!-- Sheet Selector -->
+            <div class="sheet-selector">
+                <div class="sheet-tab active" data-sheet="client-aktif">
+                    <span>🟢</span> Client Aktif
+                </div>
+                <div class="sheet-tab" data-sheet="client-non-aktif">
+                    <span>🔴</span> Client Non Aktif
+                </div>
+                <div class="sheet-tab" data-sheet="client-lepas">
+                    <span>🟡</span> Client Lepas
+                </div>
+                <div class="sheet-tab" data-sheet="semua-client">
+                    <span>📊</span> Semua Client
+                </div>
+            </div>
+            
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                🌙 Dark Mode
+            </button>
+        </div>
+
+        <!-- Controls Toggle Button -->
+        <button class="controls-toggle-btn" id="controlsToggleBtn" onclick="toggleControls()">
+            <span class="controls-toggle-icon">▲</span>
+            <span id="controlsToggleText">Hide Filters</span>
+        </button>
+
+        <!-- Collapsible Controls -->
+        <div class="controls" id="controlsPanel">
+            <div class="controls-content">
+                <!-- Global Search -->
+                <div class="search-section">
+                    <div class="search-box">
+                        <input type="text" id="globalSearch" placeholder="🔍 Cari di semua kolom (nama, nomor, dll)...">
+                        <span class="search-icon">🔍</span>
+                        <button class="search-clear-btn" id="globalSearchClear" type="button">×</button>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" id="columnToggleBtn">
+                            <span>📊</span> Columns
+                        </button>
+                        
+                        <!-- Column Dropdown -->
+                        <div class="column-dropdown" id="columnDropdown">
+                            <div class="column-dropdown-header">
+                                <span>📊 Column Visibility</span>
+                                <button onclick="toggleColumnDropdown()" style="background: none; border: none; color: var(--text-white); cursor: pointer; font-size: 16px;">×</button>
+                            </div>
+                            <div class="column-dropdown-content" id="columnDropdownContent">
+                                <!-- Column checkboxes will be populated here -->
+                            </div>
+                            <div class="column-actions">
+                                <button class="column-action-btn select-all" onclick="selectAllColumns()">Select All</button>
+                                <button class="column-action-btn hide-all" onclick="hideAllColumns()">Hide All</button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-success" id="refreshBtn">
+                            <span id="refreshIcon">🔄</span> Refresh
+                        </button>
+                        
+                        <button class="btn btn-purple" id="densityToggleBtn">
+                            <span id="densityIcon">📏</span>
+                            <span id="densityText">Compact</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Status Filters - CLEANED UP -->
+                <div class="quick-filters">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="jatuh-tempo">Jatuh Tempo</button>
+                    <button class="filter-btn" data-filter="proses">Proses</button>
+                    <button class="filter-btn" data-filter="segera">Segera</button>
+                    <button class="filter-btn" data-filter="observasi">Observasi</button>
+                    <button class="clear-filters" id="clearFilters">Clear All</button>
+                </div>
+
+                <!-- Column Filters -->
+                <div class="column-filters">
+                    <div class="filter-group">
+                        <label>Nama Client</label>
+                        <div class="search-box">
+                            <input type="text" id="filterNama" placeholder="Filter nama...">
+                            <button class="search-clear-btn" id="filterNamaClear" type="button">×</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Nomor CS</label>
+                        <div class="search-box">
+                            <input type="text" id="filterNomorCS" placeholder="Filter nomor...">
+                            <button class="search-clear-btn" id="filterNomorCSClear" type="button">×</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <div class="checkbox-filter-container" id="statusFilterContainer">
+                            <div class="checkbox-filter-header">
+                                <span id="statusFilterCount">0 dipilih</span>
+                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('status')">Clear All</button>
+                            </div>
+                            <div class="checkbox-filter-content" id="statusFilterContent">
+                                <!-- Status checkboxes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Paket</label>
+                        <div class="checkbox-filter-container" id="paketFilterContainer">
+                            <div class="checkbox-filter-header">
+                                <span id="paketFilterCount">0 dipilih</span>
+                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('paket')">Clear All</button>
+                            </div>
+                            <div class="checkbox-filter-content" id="paketFilterContent">
+                                <!-- Paket checkboxes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Payment</label>
+                        <div class="checkbox-filter-container" id="paymentFilterContainer">
+                            <div class="checkbox-filter-header">
+                                <span id="paymentFilterCount">0 dipilih</span>
+                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('payment')">Clear All</button>
+                            </div>
+                            <div class="checkbox-filter-content" id="paymentFilterContent">
+                                <!-- Payment checkboxes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tanggal Jatuh Tempo</label>
+                        <div class="date-range-group">
+                            <input type="date" id="filterTanggalStart" title="Tanggal mulai jatuh tempo">
+                            <span class="date-range-separator">—</span>
+                            <input type="date" id="filterTanggalEnd" title="Tanggal akhir jatuh tempo">
+                        </div>
+                        <small style="font-size: 10px; color: var(--text-muted); margin-top: 2px; display: block;">Range: DD/MM/YYYY - DD/MM/YYYY</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <span>📋</span>
+                <span>Total: <span class="stat-number" id="totalCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>👁️</span>
+                <span>Ditampilkan: <span class="stat-number" id="visibleCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>🔥</span>
+                <span>Jatuh Tempo: <span class="stat-number" id="jatuhTempoCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>⚡</span>
+                <span>Proses: <span class="stat-number" id="prosesCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>⏰</span>
+                <span>Segera: <span class="stat-number" id="segeraCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>👀</span>
+                <span>Observasi: <span class="stat-number" id="observasiCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>✅</span>
+                <span>Lunas: <span class="stat-number" id="lunasCount">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span>📅</span>
+                <span>Ada Tanggal: <span class="stat-number" id="dateCount">0</span></span>
+            </div>
+            <!-- Category breakdown stats for "Semua Client" -->
+            <div class="stat-item" id="categoryStats" style="display: none;">
+                <span>🟢</span>
+                <span>Aktif: <span class="stat-number" id="aktifCount">0</span></span>
+            </div>
+            <div class="stat-item" id="categoryStatsNonAktif" style="display: none;">
+                <span>🔴</span>
+                <span>Non Aktif: <span class="stat-number" id="nonAktifCount">0</span></span>
+            </div>
+            <div class="stat-item" id="categoryStatsLepas" style="display: none;">
+                <span>🟡</span>
+                <span>Lepas: <span class="stat-number" id="lepasCount">0</span></span>
+            </div>
+            <div class="stat-item" id="activeFilterIndicator" style="display: none;">
+                <span>🔍</span>
+                <span>Quick Filter: <span class="stat-number" id="activeFilterText">-</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="current-sheet-indicator" id="currentSheetIndicator">Client Aktif</span>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <div id="loadingIndicator" class="loading">
+                <div class="refresh-indicator"></div>
+                <p>Memuat data dari Google Sheets...</p>
+            </div>
+            
+            <div id="errorIndicator" class="error" style="display: none;">
+                <p>❌ Gagal memuat data</p>
+                <p id="errorMessage"></p>
+                <button onclick="loadData()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent-red); color: var(--text-white); border: none; border-radius: 4px; cursor: pointer;">Coba Lagi</button>
+            </div>
+
+            <div id="scrollHint" style="display: none; text-align: center; padding: 8px; background: var(--bg-stats); color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border-color);">
+                ↔️ Scroll horizontal untuk melihat semua kolom
+            </div>
+
+            <table id="dataTable" style="display: none;">
+                <thead>
+                    <tr id="tableHeader">
+                        <!-- Headers will be populated dynamically -->
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be populated dynamically -->
+                </tbody>
+            </table>
+
+            <div id="noDataIndicator" class="no-data" style="display: none;">
+                <p>📭 Tidak ada data yang sesuai dengan filter</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row Details Modal -->
+    <div id="rowModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detail Client</h2>
+                <div class="modal-nav">
+                    <button class="modal-nav-btn" id="prevRowBtn" onclick="navigateModal(-1)">← Prev</button>
+                    <span id="modalPosition" style="color: var(--text-white); font-size: 12px;">1 / 1</span>
+                    <button class="modal-nav-btn" id="nextRowBtn" onclick="navigateModal(1)">Next →</button>
+                    <span class="close" onclick="closeModal()">&times;</span>
+                </div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    💡 Klik tombol copy untuk menyalin data
+                </div>
+                <div class="modal-footer-actions">
+                    <button class="modal-action-btn secondary" onclick="closeModal()">Tutup</button>
+                    <button class="modal-action-btn" onclick="copyAllData()">📋 Copy All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load config.js eksternal -->
+    <script src="config.js"></script>
+    
+    <script>
+        // ===== PERFORMANCE OPTIMIZATION CLASSES =====
+        
+        // Smart Debouncer with immediate execution for better UX
+        class SmartDebouncer {
+            constructor() {
+                this.timers = new Map();
+                this.lastExecutions = new Map();
+            }
+            
+            // Immediate execution for first call, then debounce
+            debounceImmediate(key, func, delay = 300) {
+                const now = Date.now();
+                const lastExecution = this.lastExecutions.get(key) || 0;
+                
+                // Clear existing timer
+                if (this.timers.has(key)) {
+                    clearTimeout(this.timers.get(key));
+                }
+                
+                // Execute immediately if enough time has passed
+                if (now - lastExecution > delay) {
+                    func();
+                    this.lastExecutions.set(key, now);
+                } else {
+                    // Debounce the call
+                    const timer = setTimeout(() => {
+                        func();
+                        this.lastExecutions.set(key, Date.now());
+                        this.timers.delete(key);
+                    }, delay);
+                    
+                    this.timers.set(key, timer);
+                }
+            }
+            
+            // Throttle for scroll events
+            throttle(key, func, limit = 16) { // 60fps = 16ms
+                const now = Date.now();
+                const lastExecution = this.lastExecutions.get(key) || 0;
+                
+                if (now - lastExecution >= limit) {
+                    func();
+                    this.lastExecutions.set(key, now);
+                }
+            }
+        }
+
+        // Data Cache with LRU eviction
+        class DataCache {
+            constructor(maxSize = 1000) {
+                this.cache = new Map();
+                this.maxSize = maxSize;
+                this.accessOrder = [];
+            }
+            
+            get(key) {
+                if (this.cache.has(key)) {
+                    // Move to end (most recently used)
+                    this.updateAccessOrder(key);
+                    return this.cache.get(key);
+                }
+                return null;
+            }
+            
+            set(key, value) {
+                if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
+                    // Remove least recently used
+                    const lru = this.accessOrder.shift();
+                    this.cache.delete(lru);
+                }
+                
+                this.cache.set(key, value);
+                this.updateAccessOrder(key);
+            }
+            
+            updateAccessOrder(key) {
+                const index = this.accessOrder.indexOf(key);
+                if (index > -1) {
+                    this.accessOrder.splice(index, 1);
+                }
+                this.accessOrder.push(key);
+            }
+            
+            clear() {
+                this.cache.clear();
+                this.accessOrder = [];
+            }
+            
+            getStats() {
+                return {
+                    size: this.cache.size,
+                    maxSize: this.maxSize,
+                    hitRate: this.hitCount / (this.hitCount + this.missCount) || 0
+                };
+            }
+        }
+
+        // ===== GLOBAL VARIABLES =====
+        
+        // Performance optimization instances
+        const smartDebouncer = new SmartDebouncer();
+        const filterCache = new DataCache(500);
+        const statsCache = new DataCache(100);
+        const formatCache = new DataCache(1000);
+
+        // Application state
+        let allData = [];
+        let filteredData = [];
+        let isLoading = false;
+        let currentSheet = 'client-aktif';
+        let currentModalRowIndex = 0;
+        let controlsCollapsed = false;
+        let currentQuickFilter = 'all';
+
+        // Column visibility configuration
+        let columnVisibility = {
+            'A': true,  // Nama
+            'B': false, // Login Gmail - DEFAULT HIDDEN
+            'C': true,  // Login Starlink
+            'D': true,  // Login Alt
+            'E': true,  // ACC No
+            'F': true,  // Email Client
+            'G': true,  // Nomor CS
+            'H': false, // Alamat - DEFAULT HIDDEN
+            'I': true,  // KIT Number
+            'J': true,  // Serial Number
+            'K': true,  // Jatuh Tempo
+            'L': true,  // Kode
+            'M': true,  // Payment
+            'N': true,  // ID Transaksi
+            'O': true,  // Status
+            'P': true,  // Paket
+            'Q': true,  // Last 4 Digit
+            'R': true,  // No Register
+            'S': true   // Tipe Pelanggan
+        };
+
+        // Checkbox filter state
+        let checkboxFilters = {
+            status: new Set(),
+            paket: new Set(),
+            payment: new Set()
+        };
+
+        // Sorting state
+        let currentSort = {
+            column: null,
+            direction: null
+        };
+
+        // Column labels
+        const columnLabels = {
+            'A': 'Nama',
+            'B': 'Login Gmail',
+            'C': 'Login Starlink',
+            'D': 'Login Alt',
+            'E': 'ACC No',
+            'F': 'Email Client',
+            'G': 'Nomor CS',
+            'H': 'Alamat',
+            'I': 'KIT Number',
+            'J': 'Serial Number',
+            'K': 'Jatuh Tempo',
+            'L': 'Kode',
+            'M': 'Payment',
+            'N': 'ID Transaksi',
+            'O': 'Status',
+            'P': 'Paket',
+            'Q': 'Last 4 Digit',
+            'R': 'No Register',
+            'S': 'Tipe Pelanggan'
+        };
+
+        // Sheet configurations
+        const sheetConfig = {
+            'client-aktif': {
+                name: 'Client Aktif',
+                icon: '🟢',
+                action: 'getAllClientDataComplete'
+            },
+            'client-non-aktif': {
+                name: 'Client Non Aktif',
+                icon: '🔴',
+                action: 'getClientNonAktifData'
+            },
+            'client-lepas': {
+                name: 'Client Lepas',
+                icon: '🟡',
+                action: 'getClientLepasData'
+            },
+            'semua-client': {
+                name: 'Semua Client',
+                icon: '📊',
+                action: 'getAllCombinedData'
+            }
+        };
+
+        // Density management
+        let currentDensity = 'normal';
+
+        // ===== MEMOIZED FUNCTIONS =====
+        
+        // Memoized filter function
+        function memoizedFilter(data, filters) {
+            const filterKey = JSON.stringify(filters) + '_' + data.length + '_' + currentQuickFilter;
+            
+            let cached = filterCache.get(filterKey);
+            if (cached) {
+                console.log('📚 Using cached filter result');
+                return cached;
+            }
+            
+            // Perform actual filtering
+            const result = performActualFiltering(data, filters);
+            
+            filterCache.set(filterKey, result);
+            return result;
+        }
+
+        // Memoized date formatting
+        function memoizedDateFormat(dateValue) {
+            if (!dateValue) return '';
+            
+            const cached = formatCache.get(dateValue);
+            if (cached) return cached;
+            
+            const formatted = formatDate(dateValue);
+            formatCache.set(dateValue, formatted);
+            return formatted;
+        }
+
+        // Memoized stats calculation
+        function memoizedUpdateStats(data) {
+            const dataKey = data.length + '_' + JSON.stringify(data.slice(0, 5)); // Sample for key
+            
+            const cached = statsCache.get(dataKey);
+            if (cached) {
+                updateStatsDisplay(cached);
+                return;
+            }
+            
+            const stats = calculateStats(data);
+            statsCache.set(dataKey, stats);
+            updateStatsDisplay(stats);
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        
+        function calculateStats(data) {
+            return {
+                total: allData.length,
+                visible: data.length,
+                jatuhTempo: allData.filter(row => row.U && row.U.toString().toUpperCase() === 'JATUH TEMPO').length,
+                proses: allData.filter(row => row.V && row.V.toString().toUpperCase() === 'PROSES').length,
+                segera: allData.filter(row => row.W && row.W.toString().toUpperCase() === 'SEGERA').length,
+                observasi: allData.filter(row => row.X && row.X.toString().toUpperCase() === 'OBSERVASI').length,
+                lunas: allData.filter(row => row.O && row.O.toString().toLowerCase() === 'lunas').length,
+                dateCount: allData.filter(row => row.K && row.K.toString().trim()).length,
+                aktif: currentSheet === 'semua-client' ? allData.filter(row => row._category === 'aktif').length : 0,
+                nonAktif: currentSheet === 'semua-client' ? allData.filter(row => row._category === 'non-aktif').length : 0,
+                lepas: currentSheet === 'semua-client' ? allData.filter(row => row._category === 'lepas').length : 0
+            };
+        }
+
+        function updateStatsDisplay(stats) {
+            document.getElementById('totalCount').textContent = stats.total;
+            document.getElementById('visibleCount').textContent = stats.visible;
+            document.getElementById('jatuhTempoCount').textContent = stats.jatuhTempo;
+            document.getElementById('prosesCount').textContent = stats.proses;
+            document.getElementById('segeraCount').textContent = stats.segera;
+            document.getElementById('observasiCount').textContent = stats.observasi;
+            document.getElementById('lunasCount').textContent = stats.lunas;
+            document.getElementById('dateCount').textContent = stats.dateCount;
+            
+            // Category stats for "Semua Client"
+            const categoryElements = ['categoryStats', 'categoryStatsNonAktif', 'categoryStatsLepas'];
+            if (currentSheet === 'semua-client') {
+                document.getElementById('aktifCount').textContent = stats.aktif;
+                document.getElementById('nonAktifCount').textContent = stats.nonAktif;
+                document.getElementById('lepasCount').textContent = stats.lepas;
+                categoryElements.forEach(el => document.getElementById(el).style.display = 'flex');
+            } else {
+                categoryElements.forEach(el => document.getElementById(el).style.display = 'none');
+            }
+        }
+
+        function performActualFiltering(data, filters) {
+            return data.filter(row => {
+                // Apply global search filter
+                if (filters.globalSearch) {
+                    const searchText = Object.values(row).join(' ').toLowerCase();
+                    if (!searchText.includes(filters.globalSearch)) return false;
+                }
+
+                // Apply text filters
+                if (filters.namaFilter && !row.A.toLowerCase().includes(filters.namaFilter)) return false;
+                if (filters.nomorCSFilter && !row.G.toLowerCase().includes(filters.nomorCSFilter)) return false;
+                
+                // Apply checkbox filters
+                if (checkboxFilters.status.size > 0) {
+                    const rowStatus = row.O || '';
+                    if (rowStatus.trim() && !checkboxFilters.status.has(rowStatus)) return false;
+                }
+                
+                if (checkboxFilters.paket.size > 0) {
+                    const rowPaket = row.P || '';
+                    if (rowPaket.trim() && !checkboxFilters.paket.has(rowPaket)) return false;
+                }
+                
+                if (checkboxFilters.payment.size > 0) {
+                    const rowPayment = row.M || '';
+                    if (rowPayment.trim() && !checkboxFilters.payment.has(rowPayment)) return false;
+                }
+                
+                // Date range filter
+                if ((filters.tanggalStartFilter || filters.tanggalEndFilter) && row.K) {
+                    const rowDate = formatDateForComparison(row.K);
+                    if (rowDate) {
+                        if (filters.tanggalStartFilter && rowDate < filters.tanggalStartFilter) return false;
+                        if (filters.tanggalEndFilter && rowDate > filters.tanggalEndFilter) return false;
+                    }
+                }
+
+                // Apply quick filter - CLEANED UP (status filters moved to checkbox)
+                if (currentQuickFilter !== 'all') {
+                    switch (currentQuickFilter) {
+                        case 'jatuh-tempo':
+                            if (!(row.U && row.U.toString().toUpperCase() === 'JATUH TEMPO')) return false;
+                            break;
+                        case 'proses':
+                            if (!(row.V && row.V.toString().toUpperCase() === 'PROSES')) return false;
+                            break;
+                        case 'segera':
+                            if (!(row.W && row.W.toString().toUpperCase() === 'SEGERA')) return false;
+                            break;
+                        case 'observasi':
+                            if (!(row.X && row.X.toString().toUpperCase() === 'OBSERVASI')) return false;
+                            break;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        function formatDate(dateValue) {
+            if (!dateValue) return '';
+            
+            try {
+                let date;
+                if (dateValue instanceof Date) {
+                    date = dateValue;
+                } else if (typeof dateValue === 'string') {
+                    if (dateValue.includes('/')) {
+                        const parts = dateValue.split('/');
+                        if (parts.length === 3) {
+                            date = new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                    } else {
+                        date = new Date(dateValue);
+                    }
+                } else {
+                    date = new Date(dateValue);
+                }
+                
+                if (isNaN(date.getTime())) return dateValue;
+                
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}/${month}/${year}`;
+            } catch (error) {
+                return dateValue;
+            }
+        }
+
+        function formatDateForComparison(dateValue) {
+            if (!dateValue) return '';
+            
+            try {
+                let date;
+                
+                if (dateValue instanceof Date) {
+                    date = dateValue;
+                } else if (typeof dateValue === 'string') {
+                    if (dateValue.includes('/')) {
+                        const parts = dateValue.split('/');
+                        if (parts.length === 3) {
+                            const day = parts[0].padStart(2, '0');
+                            const month = parts[1].padStart(2, '0');
+                            const year = parts[2];
+                            date = new Date(year + '-' + month + '-' + day);
+                        } else {
+                            date = new Date(dateValue);
+                        }
+                    } else {
+                        date = new Date(dateValue);
+                    }
+                } else {
+                    date = new Date(dateValue);
+                }
+                
+                if (isNaN(date.getTime())) {
+                    return '';
+                }
+                
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                
+                return `${year}-${month}-${day}`;
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function getStatusClass(status) {
+            if (!status) return '';
+            
+            const statusLower = status.toLowerCase();
+            if (statusLower === 'lunas') return 'status-lunas';
+            if (statusLower === 'belum') return 'status-belum';
+            if (statusLower === 'active') return 'status-active';
+            if (statusLower === 'pending') return 'status-pending';
+            if (statusLower === 'inactive') return 'status-inactive';
+            if (statusLower === 'tertagih') return 'status-tertagih';
+            if (statusLower === 'lepas') return 'status-lepas';
+            
+            return '';
+        }
+
+        // ===== THEME MANAGEMENT =====
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('preferred-theme', newTheme);
+            
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+            
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+        }
+
+        // ===== CONTROLS MANAGEMENT =====
+        
+        function toggleControls() {
+            const controlsPanel = document.getElementById('controlsPanel');
+            const toggleBtn = document.getElementById('controlsToggleBtn');
+            const toggleText = document.getElementById('controlsToggleText');
+            
+            controlsCollapsed = !controlsCollapsed;
+            
+            if (controlsCollapsed) {
+                controlsPanel.classList.add('collapsed');
+                toggleBtn.classList.add('collapsed');
+                toggleText.textContent = 'Show Filters';
+                showToast('🔼 Controls hidden');
+            } else {
+                controlsPanel.classList.remove('collapsed');
+                toggleBtn.classList.remove('collapsed');
+                toggleText.textContent = 'Hide Filters';
+                showToast('🔽 Controls visible');
+            }
+            
+            localStorage.setItem('starlink-controls-collapsed', controlsCollapsed);
+        }
+
+        function initializeControlsState() {
+            const saved = localStorage.getItem('starlink-controls-collapsed');
+            if (saved === 'true') {
+                controlsCollapsed = false;
+                toggleControls();
+            }
+        }
+
+        // ===== DENSITY MANAGEMENT =====
+        
+        function initializeDensity() {
+            const saved = localStorage.getItem('starlink-density-mode');
+            if (saved && ['compact', 'normal', 'comfortable'].includes(saved)) {
+                currentDensity = saved;
+            }
+            applyDensity();
+            updateDensityButton();
+        }
+
+        function toggleDensity() {
+            const densityOrder = ['normal', 'compact', 'comfortable'];
+            const currentIndex = densityOrder.indexOf(currentDensity);
+            const nextIndex = (currentIndex + 1) % densityOrder.length;
+            currentDensity = densityOrder[nextIndex];
+            
+            applyDensity();
+            updateDensityButton();
+            saveDensity();
+        }
+
+        function applyDensity() {
+            const table = document.getElementById('dataTable');
+            if (!table) return;
+            
+            table.classList.remove('density-compact', 'density-comfortable');
+            
+            if (currentDensity === 'compact') {
+                table.classList.add('density-compact');
+            } else if (currentDensity === 'comfortable') {
+                table.classList.add('density-comfortable');
+            }
+        }
+
+        function updateDensityButton() {
+            const densityIcon = document.getElementById('densityIcon');
+            const densityText = document.getElementById('densityText');
+            
+            if (!densityIcon || !densityText) return;
+            
+            const densityConfig = {
+                'compact': { icon: '📏', text: 'Compact' },
+                'normal': { icon: '📐', text: 'Normal' },
+                'comfortable': { icon: '📊', text: 'Comfortable' }
+            };
+            
+            const config = densityConfig[currentDensity];
+            densityIcon.textContent = config.icon;
+            densityText.textContent = config.text;
+        }
+
+        function saveDensity() {
+            localStorage.setItem('starlink-density-mode', currentDensity);
+        }
+
+        // ===== SEARCH CLEAR FUNCTIONALITY =====
+        
+        function initializeSearchClearButtons() {
+            const searchInputs = [
+                { inputId: 'globalSearch', clearId: 'globalSearchClear' },
+                { inputId: 'filterNama', clearId: 'filterNamaClear' },
+                { inputId: 'filterNomorCS', clearId: 'filterNomorCSClear' }
+            ];
+            
+            searchInputs.forEach(({ inputId, clearId }) => {
+                const input = document.getElementById(inputId);
+                const clearBtn = document.getElementById(clearId);
+                
+                if (!input || !clearBtn) {
+                    console.warn(`Search clear setup failed for ${inputId}`);
+                    return;
+                }
+                
+                // Show/hide clear button based on input content
+                function toggleClearButton() {
+                    if (input.value.trim().length > 0) {
+                        clearBtn.classList.add('show');
+                    } else {
+                        clearBtn.classList.remove('show');
+                    }
+                }
+                
+                // Clear input and hide button
+                function clearInput() {
+                    input.value = '';
+                    clearBtn.classList.remove('show');
+                    input.focus(); // Keep focus on input for better UX
+                    
+                    // Trigger filter update
+                    smartDebouncer.debounceImmediate(`clear-${inputId}`, applyFilters, 50);
+                    
+                    showToast(`🗑️ ${inputId === 'globalSearch' ? 'Global search' : 'Filter'} cleared`);
+                }
+                
+                // Event listeners
+                input.addEventListener('input', toggleClearButton);
+                input.addEventListener('keyup', toggleClearButton);
+                input.addEventListener('paste', () => {
+                    setTimeout(toggleClearButton, 50); // Delay for paste content
+                });
+                
+                clearBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    clearInput();
+                });
+                
+                // Initialize button state
+                toggleClearButton();
+            });
+            
+            console.log('🗑️ Search clear buttons initialized');
+        }
+        
+        // ===== EVENT LISTENERS =====
+        
+        function initializeEventListeners() {
+            // Optimized filter inputs with smart debouncing
+            document.getElementById('globalSearch').addEventListener('input', function() {
+                smartDebouncer.debounceImmediate('global-search', applyFilters, 200);
+            });
+            
+            document.getElementById('filterNama').addEventListener('input', function() {
+                smartDebouncer.debounceImmediate('nama-filter', applyFilters, 300);
+            });
+            
+            document.getElementById('filterNomorCS').addEventListener('input', function() {
+                smartDebouncer.debounceImmediate('nomor-filter', applyFilters, 300);
+            });
+            
+            // Date filters
+            document.getElementById('filterTanggalStart').addEventListener('change', applyFilters);
+            document.getElementById('filterTanggalEnd').addEventListener('change', applyFilters);
+            
+            // Quick filters
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    applyQuickFilter(this.dataset.filter);
+                });
+            });
+            
+            // Sheet selector
+            document.querySelectorAll('.sheet-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const sheetKey = this.dataset.sheet;
+                    if (sheetKey !== currentSheet) {
+                        switchSheet(sheetKey);
+                    }
+                });
+            });
+            
+            // Clear filters
+            document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
+            
+            // Control buttons
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                if (!isLoading) loadData();
+            });
+            
+            document.getElementById('columnToggleBtn').addEventListener('click', toggleColumnDropdown);
+            document.getElementById('densityToggleBtn').addEventListener('click', toggleDensity);
+
+            // Click outside to close column dropdown
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('columnDropdown');
+                const toggleBtn = document.getElementById('columnToggleBtn');
+                
+                if (!dropdown.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Modal events
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('rowModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(event) {
+                const modal = document.getElementById('rowModal');
+                if (modal.style.display === 'block') {
+                    if (event.key === 'Escape') {
+                        closeModal();
+                    } else if (event.key === 'ArrowLeft') {
+                        navigateModal(-1);
+                    } else if (event.key === 'ArrowRight') {
+                        navigateModal(1);
+                    }
+                }
+            });
+
+            // Window resize with throttling
+            window.addEventListener('resize', function() {
+                smartDebouncer.throttle('window-resize', handleWindowResize, 100);
+            });
+        }
+
+        function handleWindowResize() {
+            const scrollHint = document.getElementById('scrollHint');
+            const table = document.getElementById('dataTable');
+            if (table && table.style.display === 'table') {
+                if (window.innerWidth <= 1400) {
+                    scrollHint.style.display = 'block';
+                } else {
+                    scrollHint.style.display = 'none';
+                }
+            }
+        }
+
+        // ===== SHEET MANAGEMENT =====
+        
+        function switchSheet(sheetKey) {
+            if (!sheetConfig[sheetKey] || isLoading) return;
+            
+            // Reset sorting when switching sheets
+            currentSort.column = null;
+            currentSort.direction = null;
+            
+            // Clear caches when switching sheets
+            filterCache.clear();
+            statsCache.clear();
+            
+            // Update UI
+            document.querySelectorAll('.sheet-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.sheet-tab[data-sheet="${sheetKey}"]`).classList.add('active');
+            
+            // Update current sheet
+            currentSheet = sheetKey;
+            
+            // Update indicator
+            const indicator = document.getElementById('currentSheetIndicator');
+            const config = sheetConfig[sheetKey];
+            indicator.textContent = config.name;
+            
+            // Clear filters
+            clearAllFilters();
+            
+            // Load new data
+            loadData();
+            
+            showToast(`📊 Menampilkan data: ${config.name}`);
+        }
+
+        // ===== DATA LOADING =====
+        
+        async function loadData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            showLoading();
+            updateRefreshButton(true);
+
+            try {
+                const config = sheetConfig[currentSheet];
+                
+                if (currentSheet === 'semua-client') {
+                    await loadAllCombinedData();
+                } else {
+                    await loadSingleSheetData(config);
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+                showError(error.message);
+                isLoading = false;
+                updateRefreshButton(false);
+            }
+        }
+
+        async function loadSingleSheetData(config) {
+            const apiUrl = CONFIG.getApiUrl('data-client');
+            const url = `${apiUrl}?action=${config.action}&callback=handleDataResponse&_=${Date.now()}`;
+            
+            const script = document.createElement('script');
+            script.src = url;
+            script.id = 'jsonpScript_' + Date.now();
+            
+            const timeout = setTimeout(() => {
+                try {
+                    if (script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                } catch (e) {
+                    console.warn('Script already removed');
+                }
+                showError('Request timeout - server tidak merespons dalam 30 detik');
+                isLoading = false;
+                updateRefreshButton(false);
+            }, 30000);
+
+            window.handleDataResponse = function(response) {
+                try {
+                    clearTimeout(timeout);
+                    
+                    if (script && script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                    
+                    if (response.status === 'success') {
+                        allData = response.data || [];
+                        
+                        populateCheckboxFilters();
+                        applyFilters();
+                        updateLastUpdateTime();
+                        hideLoading();
+                        
+                        setTimeout(() => {
+                            memoizedUpdateStats(filteredData);
+                        }, 100);
+                    } else {
+                        throw new Error(response.message || 'Gagal memuat data');
+                    }
+                } catch (callbackError) {
+                    console.error('❌ Error in callback:', callbackError);
+                    showError('Error processing data: ' + callbackError.message);
+                } finally {
+                    isLoading = false;
+                    updateRefreshButton(false);
+                }
+            };
+
+            document.head.appendChild(script);
+        }
+
+        async function loadAllCombinedData() {
+            const sheets = [
+                { key: 'client-aktif', action: 'getAllClientDataComplete', category: 'aktif' },
+                { key: 'client-non-aktif', action: 'getClientNonAktifData', category: 'non-aktif' },
+                { key: 'client-lepas', action: 'getClientLepasData', category: 'lepas' }
+            ];
+            
+            const processSheetData = (sheetInfo) => {
+                return new Promise((resolve, reject) => {
+                    const apiUrl = CONFIG.getApiUrl('data-client');
+                    const url = `${apiUrl}?action=${sheetInfo.action}&callback=handleSheet${sheetInfo.category.replace('-', '')}Response&_=${Date.now()}`;
+                    
+                    const script = document.createElement('script');
+                    script.src = url;
+                    script.id = `jsonpScript_${sheetInfo.category}_${Date.now()}`;
+                    
+                    const timeout = setTimeout(() => {
+                        try {
+                            if (script.parentNode) {
+                                script.parentNode.removeChild(script);
+                            }
+                        } catch (e) {
+                            console.warn('Script already removed');
+                        }
+                        reject(new Error(`Timeout loading ${sheetInfo.key}`));
+                    }, 30000);
+
+                    window[`handleSheet${sheetInfo.category.replace('-', '')}Response`] = function(response) {
+                        try {
+                            clearTimeout(timeout);
+                            
+                            if (script && script.parentNode) {
+                                script.parentNode.removeChild(script);
+                            }
+                            
+                            if (response.status === 'success') {
+                                const sheetData = response.data || [];
+                                sheetData.forEach(row => {
+                                    row._category = sheetInfo.category;
+                                });
+                                
+                                resolve(sheetData);
+                            } else {
+                                reject(new Error(response.message || `Gagal memuat data ${sheetInfo.key}`));
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+
+                    document.head.appendChild(script);
+                });
+            };
+            
+            try {
+                const results = await Promise.all(sheets.map(processSheetData));
+                
+                allData = results.flat();
+                
+                populateCheckboxFilters();
+                applyFilters();
+                updateLastUpdateTime();
+                hideLoading();
+                
+                setTimeout(() => {
+                    memoizedUpdateStats(filteredData);
+                }, 100);
+                
+                showToast(`📊 Data gabungan dimuat: ${allData.length} total client`);
+                
+            } catch (error) {
+                console.error('❌ Error loading combined data:', error);
+                showError('Gagal memuat data gabungan: ' + error.message);
+            } finally {
+                isLoading = false;
+                updateRefreshButton(false);
+            }
+        }
+
+        // ===== FILTER MANAGEMENT =====
+        
+        function populateCheckboxFilters() {
+            try {
+                const statuses = [...new Set(allData.map(row => row.O).filter(val => val && val.toString().trim()))].sort();
+                const pakets = [...new Set(allData.map(row => row.P).filter(val => val && val.toString().trim()))].sort();
+                const payments = [...new Set(allData.map(row => row.M).filter(val => val && val.toString().trim()))].sort();
+
+                populateCheckboxFilter('status', statuses);
+                populateCheckboxFilter('paket', pakets);
+                populateCheckboxFilter('payment', payments);
+                
+                setTimeout(() => {
+                    resetCheckboxFiltersToDefault();
+                }, 50);
+                
+            } catch (error) {
+                console.error('❌ Error populating checkbox filters:', error);
+            }
+        }
+
+        function populateCheckboxFilter(filterType, options) {
+            const contentId = `${filterType}FilterContent`;
+            const countId = `${filterType}FilterCount`;
+            
+            const content = document.getElementById(contentId);
+            const countElement = document.getElementById(countId);
+            
+            if (!content || !countElement) return;
+            
+            content.innerHTML = '';
+            checkboxFilters[filterType] = new Set(options);
+            
+            options.forEach(option => {
+                const item = document.createElement('div');
+                item.className = 'checkbox-filter-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `${filterType}-${option}`;
+                checkbox.value = option;
+                checkbox.checked = true;
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        checkboxFilters[filterType].add(option);
+                    } else {
+                        checkboxFilters[filterType].delete(option);
+                    }
+                    updateCheckboxFilterCount(filterType);
+                    
+                    const checkboxes = document.querySelectorAll(`#${filterType}FilterContent input[type="checkbox"]`);
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    const toggleBtn = document.querySelector(`#${filterType}FilterContainer .checkbox-filter-toggle`);
+                    if (toggleBtn) {
+                        toggleBtn.textContent = allChecked ? 'Clear All' : 'Select All';
+                    }
+                    
+                    // Use smart debouncing for filter application
+                    smartDebouncer.debounceImmediate('checkbox-filter', applyFilters, 150);
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = option;
+                
+                let count;
+                if (filterType === 'status') {
+                    count = allData.filter(row => row.O === option).length;
+                } else if (filterType === 'paket') {
+                    count = allData.filter(row => row.P === option).length;
+                } else if (filterType === 'payment') {
+                    count = allData.filter(row => row.M === option).length;
+                }
+                
+                const countSpan = document.createElement('span');
+                countSpan.className = 'checkbox-filter-count';
+                countSpan.textContent = count;
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                item.appendChild(countSpan);
+                content.appendChild(item);
+            });
+            
+            updateCheckboxFilterCount(filterType);
+        }
+
+        function updateCheckboxFilterCount(filterType) {
+            const countElement = document.getElementById(`${filterType}FilterCount`);
+            if (countElement) {
+                const total = document.querySelectorAll(`#${filterType}FilterContent input[type="checkbox"]`).length;
+                const selected = checkboxFilters[filterType].size;
+                countElement.textContent = `${selected} / ${total} dipilih`;
+            }
+        }
+
+        function resetCheckboxFiltersToDefault() {
+            ['status', 'paket', 'payment'].forEach(filterType => {
+                const checkboxes = document.querySelectorAll(`#${filterType}FilterContent input[type="checkbox"]`);
+                
+                checkboxFilters[filterType].clear();
+                
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    checkboxFilters[filterType].add(cb.value);
+                });
+                
+                updateCheckboxFilterCount(filterType);
+                
+                const toggleBtn = document.querySelector(`#${filterType}FilterContainer .checkbox-filter-toggle`);
+                if (toggleBtn) toggleBtn.textContent = 'Clear All';
+            });
+        }
+
+        function toggleAllCheckboxes(filterType) {
+            const checkboxes = document.querySelectorAll(`#${filterType}FilterContent input[type="checkbox"]`);
+            const toggleBtn = document.querySelector(`#${filterType}FilterContainer .checkbox-filter-toggle`);
+            
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            if (allChecked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    checkboxFilters[filterType].delete(cb.value);
+                });
+                toggleBtn.textContent = 'Select All';
+                showToast(`❌ All ${filterType} filters cleared`);
+            } else {
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    checkboxFilters[filterType].add(cb.value);
+                });
+                toggleBtn.textContent = 'Clear All';
+                showToast(`✅ All ${filterType} filters selected`);
+            }
+            
+            updateCheckboxFilterCount(filterType);
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // Clear filter cache to force recalculation
+            filterCache.clear();
+            
+            currentSort.column = null;
+            currentSort.direction = null;
+            
+            const filters = {
+                globalSearch: document.getElementById('globalSearch').value.toLowerCase(),
+                namaFilter: document.getElementById('filterNama').value.toLowerCase(),
+                nomorCSFilter: document.getElementById('filterNomorCS').value.toLowerCase(),
+                tanggalStartFilter: document.getElementById('filterTanggalStart').value,
+                tanggalEndFilter: document.getElementById('filterTanggalEnd').value
+            };
+
+            updateQuickFilterIndicator(currentQuickFilter);
+
+            // Use memoized filter function
+            filteredData = memoizedFilter(allData, filters);
+
+            renderTable();
+            memoizedUpdateStats(filteredData);
+        }
+
+        function applyQuickFilter(filterType) {
+            currentQuickFilter = filterType;
+            applyFilters();
+        }
+
+        function updateQuickFilterIndicator(quickFilter) {
+            const indicator = document.getElementById('activeFilterIndicator');
+            const filterText = document.getElementById('activeFilterText');
+            
+            if (quickFilter && quickFilter !== 'all') {
+                const filterNames = {
+                    'jatuh-tempo': 'Jatuh Tempo',
+                    'proses': 'Proses',
+                    'segera': 'Segera',
+                    'observasi': 'Observasi'
+                };
+                
+                filterText.textContent = filterNames[quickFilter] || quickFilter;
+                indicator.style.display = 'flex';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        function clearAllFilters() {
+            // Clear caches
+            filterCache.clear();
+            statsCache.clear();
+            
+            // Reset sorting
+            currentSort.column = null;
+            currentSort.direction = null;
+            
+            // Clear text inputs
+            document.getElementById('globalSearch').value = '';
+            document.getElementById('filterNama').value = '';
+            document.getElementById('filterNomorCS').value = '';
+            document.getElementById('filterTanggalStart').value = '';
+            document.getElementById('filterTanggalEnd').value = '';
+
+            // Reset checkbox filters
+            ['status', 'paket', 'payment'].forEach(filterType => {
+                const checkboxes = document.querySelectorAll(`#${filterType}FilterContent input[type="checkbox"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    checkboxFilters[filterType].add(cb.value);
+                });
+                updateCheckboxFilterCount(filterType);
+                
+                const toggleBtn = document.querySelector(`#${filterType}FilterContainer .checkbox-filter-toggle`);
+                if (toggleBtn) toggleBtn.textContent = 'Clear All';
+            });
+
+            // Reset quick filter
+            currentQuickFilter = 'all';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+
+            document.getElementById('activeFilterIndicator').style.display = 'none';
+
+            filteredData = [...allData];
+            renderTable();
+            memoizedUpdateStats(filteredData);
+            
+            showToast('🔄 All filters and sorting cleared');
+        }
+
+        // ===== TABLE RENDERING =====
+        
+        function renderTable() {
+            const table = document.getElementById('dataTable');
+            const headerRow = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+            const scrollHint = document.getElementById('scrollHint');
+
+            if (filteredData.length === 0) {
+                table.style.display = 'none';
+                scrollHint.style.display = 'none';
+                document.getElementById('noDataIndicator').style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            document.getElementById('noDataIndicator').style.display = 'none';
+            
+            if (window.innerWidth <= 1400) {
+                scrollHint.style.display = 'block';
+            } else {
+                scrollHint.style.display = 'none';
+            }
+
+            // Clear existing headers
+            headerRow.innerHTML = '';
+
+            // Get visible columns
+            const allColumns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
+            const visibleColumns = allColumns.filter(col => columnVisibility[col]);
+            
+            // Create headers for visible columns only
+            visibleColumns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = columnLabels[col];
+                th.className = 'sortable';
+                th.dataset.column = col;
+                
+                // Add sort icon
+                const sortIcon = document.createElement('span');
+                sortIcon.className = 'sort-icon';
+                th.appendChild(sortIcon);
+                
+                // Add sort functionality
+                th.addEventListener('click', function() {
+                    sortTable(col);
+                });
+                
+                // Apply current sort styling
+                if (currentSort.column === col) {
+                    th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+                
+                headerRow.appendChild(th);
+            });
+
+            tbody.innerHTML = '';
+            
+            filteredData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.addEventListener('click', function() {
+                    openModal(index);
+                });
+                
+                // Only render visible columns
+                visibleColumns.forEach(col => {
+                    const td = document.createElement('td');
+                    let value = row[col] || '';
+                    
+                    // Format tanggal untuk kolom K
+                    if (col === 'K' && value) {
+                        value = memoizedDateFormat(value);
+                    }
+                    
+                    // Status styling untuk kolom O
+                    if (col === 'O') {
+                        td.className = getStatusClass(value);
+                    }
+                    
+                    // Apply special alignment
+                    if (['B', 'C', 'D', 'F', 'H'].includes(col)) {
+                        td.classList.add('text-left');
+                    }
+                    
+                    // Multi-line handling
+                    if (['B', 'C', 'D', 'H', 'I', 'J'].includes(col) && value) {
+                        const lines = value.split('\n').filter(line => line.trim());
+                        if (lines.length > 1) {
+                            td.innerHTML = '';
+                            lines.forEach(line => {
+                                const lineDiv = document.createElement('div');
+                                lineDiv.className = 'line-with-copy';
+                                
+                                const span = document.createElement('span');
+                                span.textContent = line.trim();
+                                lineDiv.appendChild(span);
+                                
+                                const copyBtn = document.createElement('button');
+                                copyBtn.className = 'copy-btn';
+                                copyBtn.textContent = '📋';
+                                copyBtn.title = 'Copy: ' + line.trim();
+                                copyBtn.onclick = function(e) {
+                                    e.stopPropagation();
+                                    copyToClipboard(line.trim(), this);
+                                };
+                                lineDiv.appendChild(copyBtn);
+                                
+                                td.appendChild(lineDiv);
+                            });
+                        } else {
+                            if (value.trim()) {
+                                const dataBox = document.createElement('div');
+                                dataBox.className = 'single-data-box';
+                                
+                                const span = document.createElement('span');
+                                span.textContent = value.trim();
+                                dataBox.appendChild(span);
+                                
+                                const copyBtn = document.createElement('button');
+                                copyBtn.className = 'copy-btn';
+                                copyBtn.textContent = '📋';
+                                copyBtn.title = 'Copy: ' + value;
+                                copyBtn.onclick = function(e) {
+                                    e.stopPropagation();
+                                    copyToClipboard(value, this);
+                                };
+                                dataBox.appendChild(copyBtn);
+                                
+                                td.appendChild(dataBox);
+                            } else {
+                                td.textContent = value;
+                            }
+                        }
+                    } 
+                    // Single data box styling
+                    else if (['A', 'E', 'F', 'G', 'R'].includes(col) && value) {
+                        const dataBox = document.createElement('div');
+                        dataBox.className = 'single-data-box';
+                        
+                        const span = document.createElement('span');
+                        span.textContent = value;
+                        
+                        // Add category indicator for column A when viewing "Semua Client"
+                        if (col === 'A' && currentSheet === 'semua-client' && row._category) {
+                            const categorySpan = document.createElement('span');
+                            categorySpan.className = `category-indicator category-${row._category}`;
+                            
+                            const categoryLabels = {
+                                'aktif': 'Aktif',
+                                'non-aktif': 'Non-Aktif',
+                                'lepas': 'Lepas'
+                            };
+                            
+                            categorySpan.textContent = categoryLabels[row._category] || row._category;
+                            span.appendChild(categorySpan);
+                        }
+                        
+                        dataBox.appendChild(span);
+                        
+                        const copyBtn = document.createElement('button');
+                        copyBtn.className = 'copy-btn';
+                        copyBtn.textContent = col === 'G' ? '📱' : '📋';
+                        copyBtn.title = col === 'G' ? 'Copy WA Link' : 'Copy: ' + value;
+                        
+                        if (col === 'G') {
+                            copyBtn.classList.add('wa-btn');
+                            copyBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                const cleanNumber = value.toString().replace(/\D/g, '');
+                                const waLink = `wa.me/${cleanNumber}`;
+                                copyToClipboard(waLink, this);
+                            };
+                        } else {
+                            copyBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                copyToClipboard(value, this);
+                            };
+                        }
+                        
+                        dataBox.appendChild(copyBtn);
+                        td.appendChild(dataBox);
+                    } else {
+                        td.textContent = value;
+                    }
+                    
+                    td.title = value;
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ===== SORTING FUNCTIONS =====
+        
+        function sortTable(column) {
+            // Determine sort direction
+            if (currentSort.column === column) {
+                if (currentSort.direction === 'asc') {
+                    currentSort.direction = 'desc';
+                } else if (currentSort.direction === 'desc') {
+                    currentSort.column = null;
+                    currentSort.direction = null;
+                    filteredData = [...filteredData];
+                    renderTable();
+                    showToast(`🔄 Sorting reset`);
+                    return;
+                } else {
+                    currentSort.direction = 'asc';
+                }
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            
+            // Sort the data
+            filteredData.sort((a, b) => {
+                let valueA = a[column] || '';
+                let valueB = b[column] || '';
+                
+                // Handle different data types
+                if (column === 'K') {
+                    // Date column
+                    const dateA = new Date(formatDateForComparison(valueA) || '1900-01-01');
+                    const dateB = new Date(formatDateForComparison(valueB) || '1900-01-01');
+                    return currentSort.direction === 'asc' ? dateA - dateB : dateB - dateA;
+                } else if (['E', 'L', 'N', 'Q'].includes(column)) {
+                    // Numeric columns
+                    const numA = parseFloat(valueA.toString().replace(/[^\d.-]/g, '')) || 0;
+                    const numB = parseFloat(valueB.toString().replace(/[^\d.-]/g, '')) || 0;
+                    return currentSort.direction === 'asc' ? numA - numB : numB - numA;
+                } else {
+                    // String columns
+                    const strA = valueA.toString().toLowerCase();
+                    const strB = valueB.toString().toLowerCase();
+                    if (currentSort.direction === 'asc') {
+                        return strA.localeCompare(strB);
+                    } else {
+                        return strB.localeCompare(strA);
+                    }
+                }
+            });
+            
+            renderTable();
+            
+            const sortLabel = columnLabels[column];
+            const directionLabel = currentSort.direction === 'asc' ? 'A-Z' : 'Z-A';
+            showToast(`📊 Sorted by ${sortLabel} (${directionLabel})`);
+        }
+
+        // ===== COLUMN MANAGEMENT =====
+        
+        function initializeColumnDropdown() {
+            const content = document.getElementById('columnDropdownContent');
+            const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
+            
+            content.innerHTML = '';
+            
+            columns.forEach(col => {
+                const item = document.createElement('div');
+                item.className = 'column-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `col-${col}`;
+                checkbox.checked = columnVisibility[col];
+                checkbox.addEventListener('change', function() {
+                    columnVisibility[col] = this.checked;
+                    saveColumnVisibility();
+                    renderTable();
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = `col-${col}`;
+                label.textContent = columnLabels[col];
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                content.appendChild(item);
+            });
+            
+            loadColumnVisibility();
+        }
+
+        function toggleColumnDropdown() {
+            const dropdown = document.getElementById('columnDropdown');
+            const toggleBtn = document.getElementById('columnToggleBtn');
+            
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            } else {
+                // Calculate position relative to button for fixed positioning
+                const rect = toggleBtn.getBoundingClientRect();
+                
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = (rect.bottom + 5) + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.right = 'auto';
+                
+                // Ensure dropdown doesn't go off-screen
+                const dropdownWidth = 280; // min-width from CSS
+                const windowWidth = window.innerWidth;
+                
+                if (rect.left + dropdownWidth > windowWidth) {
+                    dropdown.style.left = 'auto';
+                    dropdown.style.right = '10px';
+                }
+                
+                // Show dropdown
+                dropdown.classList.add('show');
+                
+                // Scroll dropdown to top
+                dropdown.scrollTop = 0;
+                
+                console.log('📊 Column dropdown opened with fixed positioning');
+            }
+        }
+
+        function selectAllColumns() {
+            Object.keys(columnVisibility).forEach(col => {
+                columnVisibility[col] = true;
+                const checkbox = document.getElementById(`col-${col}`);
+                if (checkbox) checkbox.checked = true;
+            });
+            saveColumnVisibility();
+            renderTable();
+        }
+
+        function hideAllColumns() {
+            Object.keys(columnVisibility).forEach(col => {
+                columnVisibility[col] = false;
+                const checkbox = document.getElementById(`col-${col}`);
+                if (checkbox) checkbox.checked = false;
+            });
+            saveColumnVisibility();
+            renderTable();
+        }
+
+        function saveColumnVisibility() {
+            localStorage.setItem('starlink-column-visibility', JSON.stringify(columnVisibility));
+        }
+
+        function loadColumnVisibility() {
+            try {
+                const saved = localStorage.getItem('starlink-column-visibility');
+                if (saved) {
+                    const savedVisibility = JSON.parse(saved);
+                    Object.keys(columnVisibility).forEach(col => {
+                        if (savedVisibility.hasOwnProperty(col)) {
+                            columnVisibility[col] = savedVisibility[col];
+                            const checkbox = document.getElementById(`col-${col}`);
+                            if (checkbox) checkbox.checked = columnVisibility[col];
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading column visibility:', error);
+            }
+        }
+
+        // ===== MODAL FUNCTIONS =====
+        
+        function openModal(rowIndex) {
+            if (!filteredData[rowIndex]) return;
+            
+            currentModalRowIndex = rowIndex;
+            const modal = document.getElementById('rowModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalPosition = document.getElementById('modalPosition');
+            const prevBtn = document.getElementById('prevRowBtn');
+            const nextBtn = document.getElementById('nextRowBtn');
+            
+            const row = filteredData[rowIndex];
+            
+            modalTitle.textContent = `Detail Client: ${row.A || 'Tanpa Nama'}`;
+            modalPosition.textContent = `${rowIndex + 1} / ${filteredData.length}`;
+            
+            prevBtn.disabled = rowIndex === 0;
+            nextBtn.disabled = rowIndex === filteredData.length - 1;
+            
+            modalBody.innerHTML = generateModalContent(row);
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('rowModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function navigateModal(direction) {
+            const newIndex = currentModalRowIndex + direction;
+            if (newIndex >= 0 && newIndex < filteredData.length) {
+                openModal(newIndex);
+            }
+        }
+
+        function generateModalContent(row) {
+            const sections = {
+                'Informasi Client': ['A', 'F', 'G'],
+                'Login & Access': ['B', 'C', 'D', 'E'],
+                'Alamat & Hardware': ['H', 'I', 'J'],
+                'Payment & Status': ['K', 'L', 'M', 'N', 'O', 'P', 'S'],
+                'Additional': ['Q', 'R']
+            };
+
+            let html = '<div class="detail-grid">';
+            
+            // Add category indicator for "Semua Client" view
+            if (currentSheet === 'semua-client' && row._category) {
+                const categoryLabels = {
+                    'aktif': 'Client Aktif',
+                    'non-aktif': 'Client Non Aktif',
+                    'lepas': 'Client Lepas'
+                };
+                
+                html += `<div class="detail-section" style="grid-column: 1 / -1;">`;
+                html += `<h3>🏷️ Kategori Client</h3>`;
+                html += `<div class="detail-item">`;
+                html += `<div class="detail-label">Kategori</div>`;
+                html += `<div class="detail-value">`;
+                html += `<span class="category-indicator category-${row._category}" style="font-size: 12px; padding: 4px 12px;">${categoryLabels[row._category] || row._category}</span>`;
+                html += `</div>`;
+                html += `</div>`;
+                html += `</div>`;
+            }
+            
+            Object.entries(sections).forEach(([sectionName, columns]) => {
+                html += `<div class="detail-section">`;
+                html += `<h3>${getSectionIcon(sectionName)} ${sectionName}</h3>`;
+                
+                columns.forEach(col => {
+                    const value = row[col] || '';
+                    const label = columnLabels[col];
+                    
+                    if (value) {
+                        html += `<div class="detail-item">`;
+                        html += `<div class="detail-label">${label}</div>`;
+                        
+                        if (['B', 'C', 'D', 'H', 'I', 'J'].includes(col) && value.includes('\n')) {
+                            const lines = value.split('\n').filter(line => line.trim());
+                            html += `<div class="detail-value">`;
+                            lines.forEach(line => {
+                                html += `<div style="margin: 2px 0; padding: 4px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; font-size: 11px;">${line.trim()}`;
+                                html += `<button class="detail-copy-btn" onclick="copyToClipboard('${line.trim().replace(/'/g, "\\'")}', this)">📋</button></div>`;
+                            });
+                            html += `</div>`;
+                        } else if (col === 'G' && value) {
+                            const cleanNumber = value.toString().replace(/\D/g, '');
+                            const waLink = `wa.me/${cleanNumber}`;
+                            html += `<div class="detail-value">${value}`;
+                            html += `<button class="detail-copy-btn" onclick="copyToClipboard('${value}', this)">📋</button>`;
+                            html += `<button class="detail-copy-btn" onclick="copyToClipboard('${waLink}', this)" style="background: #25d366;">📱</button>`;
+                            html += `</div>`;
+                        } else if (col === 'K' && value) {
+                            const formattedDate = memoizedDateFormat(value);
+                            html += `<div class="detail-value">${formattedDate}`;
+                            html += `<button class="detail-copy-btn" onclick="copyToClipboard('${formattedDate}', this)">📋</button>`;
+                            html += `</div>`;
+                        } else if (col === 'O') {
+                            const statusClass = getStatusClass(value);
+                            html += `<div class="detail-value">`;
+                            html += `<span class="${statusClass}">${value}</span>`;
+                            html += `<button class="detail-copy-btn" onclick="copyToClipboard('${value}', this)">📋</button>`;
+                            html += `</div>`;
+                        } else {
+                            html += `<div class="detail-value">${value}`;
+                            html += `<button class="detail-copy-btn" onclick="copyToClipboard('${value}', this)">📋</button>`;
+                            html += `</div>`;
+                        }
+                        
+                        html += `</div>`;
+                    }
+                });
+                
+                html += `</div>`;
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        function getSectionIcon(sectionName) {
+            const icons = {
+                'Informasi Client': '👤',
+                'Login & Access': '🔐',
+                'Alamat & Hardware': '🏠',
+                'Payment & Status': '💳',
+                'Additional': '📝'
+            };
+            return icons[sectionName] || '📋';
+        }
+
+        function copyAllData() {
+            if (!filteredData[currentModalRowIndex]) return;
+            
+            const row = filteredData[currentModalRowIndex];
+            
+            let allData = `=== DETAIL CLIENT ===\n`;
+            
+            if (currentSheet === 'semua-client' && row._category) {
+                const categoryLabels = {
+                    'aktif': 'Client Aktif',
+                    'non-aktif': 'Client Non Aktif',
+                    'lepas': 'Client Lepas'
+                };
+                allData += `Kategori: ${categoryLabels[row._category] || row._category}\n`;
+            }
+            
+            allData += `Nama: ${row.A || '-'}\n`;
+            allData += `Email: ${row.F || '-'}\n`;
+            allData += `Nomor CS: ${row.G || '-'}\n`;
+            allData += `Status: ${row.O || '-'}\n`;
+            allData += `Paket: ${row.P || '-'}\n`;
+            allData += `Jatuh Tempo: ${row.K ? memoizedDateFormat(row.K) : '-'}\n`;
+            allData += `\n=== ALAMAT & HARDWARE ===\n`;
+            allData += `Alamat: ${row.H || '-'}\n`;
+            allData += `KIT Number: ${row.I || '-'}\n`;
+            allData += `Serial Number: ${row.J || '-'}\n`;
+            allData += `\n=== LOGIN INFO ===\n`;
+            allData += `Gmail: ${row.B || '-'}\n`;
+            allData += `Starlink: ${row.C || '-'}\n`;
+            allData += `Alt Login: ${row.D || '-'}\n`;
+            allData += `ACC No: ${row.E || '-'}\n`;
+            allData += `\n=== PAYMENT INFO ===\n`;
+            allData += `Payment: ${row.M || '-'}\n`;
+            allData += `ID Transaksi: ${row.N || '-'}\n`;
+            allData += `Kode: ${row.L || '-'}\n`;
+            allData += `Last 4 Digit: ${row.Q || '-'}\n`;
+            allData += `No Register: ${row.R || '-'}\n`;
+            
+            copyToClipboard(allData);
+        }
+
+        // ===== COPY FUNCTIONS =====
+        
+        function copyToClipboard(text, buttonElement = null) {
+            if (!text) return;
+            
+            if (buttonElement) {
+                buttonElement.classList.add('copied');
+                setTimeout(() => {
+                    buttonElement.classList.remove('copied');
+                }, 600);
+            }
+            
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text.toString()).then(() => {
+                        let message = '📋 Copied: ';
+                        if (text.toString().startsWith('wa.me/')) {
+                            message = '📱 WA Link Copied: ';
+                        }
+                        showToast(message + (text.length > 25 ? text.substring(0, 25) + '...' : text));
+                    }).catch(err => {
+                        console.error('Copy failed:', err);
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            } catch (error) {
+                console.error('Copy error:', error);
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                let message = '📋 Copied: ';
+                if (text.toString().startsWith('wa.me/')) {
+                    message = '📱 WA Link Copied: ';
+                }
+                showToast(message + (text.length > 25 ? text.substring(0, 25) + '...' : text));
+            } catch (error) {
+                console.error('Fallback copy failed:', error);
+                showToast('❌ Copy failed');
+            }
+        }
+
+        // ===== UI UTILITY FUNCTIONS =====
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('errorIndicator').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'none';
+            document.getElementById('noDataIndicator').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('errorIndicator').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'none';
+            document.getElementById('noDataIndicator').style.display = 'none';
+        }
+
+        function updateRefreshButton(loading) {
+            const btn = document.getElementById('refreshBtn');
+            const icon = document.getElementById('refreshIcon');
+            
+            // Fix: Check if elements exist before manipulating
+            if (!btn || !icon) {
+                console.warn('Refresh button elements not found');
+                return;
+            }
+            
+            if (loading) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                icon.innerHTML = '<div class="refresh-indicator"></div>';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                icon.textContent = '🔄';
+            }
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID');
+            document.getElementById('lastUpdate').textContent = `Update terakhir: ${timeString}`;
+        }
+
+        // ===== INITIALIZATION =====
+        
+        function initializeApp() {
+            console.log('🔧 Initializing optimized app...');
+            
+            if (!CONFIG.validate()) {
+                showError('Config.js tidak valid atau belum dikonfigurasi dengan benar');
+                return;
+            }
+
+            initializeEventListeners();
+            initializeColumnDropdown();
+            
+            loadData();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Starting Data Client Starlink - Optimized Version');
+            
+            initializeTheme();
+            initializeDensity();
+            initializeControlsState();
+            
+            if (typeof CONFIG === 'undefined') {
+                console.error('❌ CONFIG not loaded yet, waiting...');
+                setTimeout(() => {
+                    if (typeof CONFIG === 'undefined') {
+                        showError('Config.js tidak ditemukan atau tidak valid');
+                        return;
+                    }
+                    initializeApp();
+                }, 1000);
+            } else {
+                initializeApp();
+            }
+            
+            // Performance monitoring
+            console.log('📊 Cache stats:', {
+                filterCache: filterCache.getStats ? filterCache.getStats() : 'Available',
+                statsCache: statsCache.getStats ? statsCache.getStats() : 'Available', 
+                formatCache: formatCache.getStats ? formatCache.getStats() : 'Available'
+            });
+        });
+    </script>
+</body>
+</html>
