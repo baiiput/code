@@ -120,6 +120,747 @@
             transform: translateY(-1px);
         }
 
+        /* ========================================
+           🔐 USER PROFILE & AUTHENTICATION
+           ======================================== */
+
+        .user-profile-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .sign-in-btn {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e293b;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sign-in-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px 6px 6px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+
+        .user-role-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .user-role-badge.editor {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .sign-out-btn {
+            padding: 4px 12px;
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .sign-out-btn:hover {
+            background: #fee2e2;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+
+        /* ========================================
+           📋 APPROVAL QUEUE UI
+           ======================================== */
+
+        .approval-queue-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            backdrop-filter: blur(4px);
+        }
+
+        .approval-queue-modal.show {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .approval-queue-content {
+            background: var(--bg-container);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .approval-queue-header {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 24px 28px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .approval-queue-title {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .approval-queue-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-approve-all {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-approve-all:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-approve-all:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .close-approval-queue {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-approval-queue:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .approval-queue-body {
+            padding: 24px 28px;
+        }
+
+        .approval-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .approval-empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .approval-empty-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .pending-item {
+            background: var(--bg-stats);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .pending-item:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .pending-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pending-id {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            font-family: 'Courier New', monospace;
+        }
+
+        .pending-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .pending-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .pending-user {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .pending-changes {
+            background: var(--bg-container);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .changes-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .changes-table th {
+            background: var(--bg-table-header);
+            color: var(--text-white);
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .changes-table th:first-child {
+            border-radius: 6px 0 0 6px;
+            width: 25%;
+        }
+
+        .changes-table th:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .changes-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .changes-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .changed-row {
+            background: rgba(37, 99, 235, 0.03);
+        }
+
+        .old-value {
+            color: var(--accent-red);
+            font-weight: 500;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .new-value {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .pending-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-approve {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reject {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-approve:disabled,
+        .btn-reject:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Reject reason modal */
+        .reject-reason-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 11000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reject-reason-modal.show {
+            display: flex;
+        }
+
+        .reject-reason-content {
+            background: var(--bg-container);
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .reject-reason-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .reject-reason-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 16px;
+            background: var(--bg-stats);
+            color: var(--text-primary);
+        }
+
+        .reject-reason-input:focus {
+            outline: none;
+            border-color: var(--accent-red);
+        }
+
+        .reject-reason-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel-reject {
+            padding: 10px 20px;
+            background: var(--bg-stats);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel-reject:hover {
+            background: var(--bg-controls);
+        }
+
+        .btn-confirm-reject {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-confirm-reject:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        }
+
+        /* ========================================
+           ✏️ EDITABLE MODAL STYLES
+           ======================================== */
+
+        .modal-edit-mode .modal-field-value {
+            display: none;
+        }
+
+        .modal-field-edit {
+            display: none;
+            width: 100%;
+        }
+
+        .modal-edit-mode .modal-field-edit {
+            display: block;
+        }
+
+        .modal-edit-input,
+        .modal-edit-select,
+        .modal-edit-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--bg-container);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .modal-edit-input:focus,
+        .modal-edit-select:focus,
+        .modal-edit-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .modal-edit-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-field-changed {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: var(--accent-green) !important;
+        }
+
+        .modal-field-changed::placeholder {
+            color: var(--accent-green);
+        }
+
+        .field-change-indicator {
+            display: none;
+            font-size: 11px;
+            color: var(--accent-green);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .modal-field-changed + .field-change-indicator {
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 16px;
+            border-top: 2px solid var(--border-color);
+            margin-top: 16px;
+        }
+
+        .btn-edit-mode {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-edit-mode:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-submit-approval {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-submit-approval:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-submit-approval:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel-edit {
+            padding: 10px 20px;
+            background: var(--bg-stats);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel-edit:hover {
+            background: var(--bg-controls);
+        }
+
+        /* Badge for approval queue button */
+        .approval-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* ========================================
+           📱 MOBILE RESPONSIVE
+           ======================================== */
+
+        @media (max-width: 768px) {
+            .user-profile-container {
+                position: relative;
+                top: 0;
+                right: 0;
+                justify-content: center;
+                margin-top: 12px;
+            }
+
+            .user-profile {
+                padding: 8px 14px 8px 8px;
+            }
+
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+            }
+
+            .user-name {
+                font-size: 12px;
+            }
+
+            .approval-queue-content {
+                max-width: 100%;
+                border-radius: 0;
+                max-height: 100vh;
+            }
+
+            .approval-queue-header {
+                border-radius: 0;
+                padding: 20px 16px;
+            }
+
+            .approval-queue-title {
+                font-size: 18px;
+            }
+
+            .approval-queue-body {
+                padding: 16px;
+            }
+
+            .pending-item {
+                padding: 16px;
+            }
+
+            .pending-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .pending-meta {
+                align-items: flex-start;
+            }
+
+            .pending-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-approve,
+            .btn-reject {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .changes-table {
+                font-size: 12px;
+            }
+
+            .changes-table th,
+            .changes-table td {
+                padding: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sign-in-btn {
+                font-size: 12px;
+                padding: 6px 16px;
+            }
+
+            .approval-queue-title {
+                font-size: 16px;
+            }
+
+            .btn-approve-all {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .changes-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
         /* Sheet Selector */
         .sheet-selector {
             display: flex;
@@ -1841,16 +2582,37 @@
             border: 1px solid var(--border-color);
         }
     </style>
+
+    <!-- Google Sign-In Library for Authentication -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📊 Data Client Starlink</h1>
             <div class="status-info">
-                <span id="lastUpdate">Memuat data...</span> | 
+                <span id="lastUpdate">Memuat data...</span> |
                 <span>Manual Refresh Mode</span>
             </div>
-            
+
+            <!-- User Profile & Authentication -->
+            <div class="user-profile-container" id="userProfileContainer">
+                <!-- Sign In Button (shown when not authenticated) -->
+                <button class="sign-in-btn" id="signInBtn" style="display: none;">
+                    🔐 Sign in with Google
+                </button>
+
+                <!-- User Profile (shown when authenticated) -->
+                <div class="user-profile" id="userProfile" style="display: none;">
+                    <img src="" alt="User Avatar" class="user-avatar" id="userAvatar">
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Loading...</div>
+                        <span class="user-role-badge" id="userRole">User</span>
+                    </div>
+                    <button class="sign-out-btn" id="signOutBtn">Sign Out</button>
+                </div>
+            </div>
+
             <!-- Sheet Selector -->
             <div class="sheet-selector">
                 <div class="sheet-tab active" data-sheet="client-aktif">
@@ -1919,6 +2681,12 @@
 
                             <button class="btn-modern btn-icon btn-clear-all" id="clearFilters" title="Clear All Filters">
                                 <span>🗑️</span>
+                            </button>
+
+                            <!-- Approval Queue Button (Admin Only) -->
+                            <button class="btn-modern btn-icon" id="approvalQueueBtn" title="Approval Queue" style="display: none; position: relative;">
+                                <span>📋</span>
+                                <span class="approval-badge" id="approvalBadge" style="display: none;">0</span>
                             </button>
                         </div>
                     </div>
@@ -4175,6 +4943,466 @@
             loadData();
         }
 
+        // ========================================
+        // 🔐 APPROVAL SYSTEM CONFIGURATION & STATE
+        // ========================================
+
+        const APPROVAL_CONFIG = {
+            // TODO: Update these values after setting up Google Apps Script and OAuth
+            GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Get from Google Cloud Console
+            APPS_SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec', // Get after deploying Apps Script
+
+            // Admin emails (fallback if Admin_Users sheet not available)
+            ADMIN_EMAILS: [
+                'admin@example.com' // TODO: Replace with actual admin email
+            ],
+
+            // Feature flags
+            ENABLE_APPROVAL_SYSTEM: true,
+            REQUIRE_AUTH_FOR_VIEW: false, // Set true to require sign-in to view data
+            REQUIRE_AUTH_FOR_EDIT: true   // Require sign-in to edit data
+        };
+
+        // User session state
+        let currentUser = {
+            isAuthenticated: false,
+            email: '',
+            name: '',
+            picture: '',
+            isAdmin: false
+        };
+
+        // Approval system state
+        let pendingApprovals = [];
+        let currentEditingRow = null;
+        let originalRowData = {};
+        let pendingRejectApprovalId = null;
+
+        // ========================================
+        // 🔐 GOOGLE SIGN-IN FUNCTIONS
+        // ========================================
+
+        function initializeGoogleSignIn() {
+            if (!APPROVAL_CONFIG.ENABLE_APPROVAL_SYSTEM) {
+                console.log('⚠️ Approval system disabled in config');
+                return;
+            }
+
+            console.log('🔐 Initializing Google Sign-In...');
+
+            // Show sign-in button
+            const signInBtn = document.getElementById('signInBtn');
+            if (signInBtn) {
+                signInBtn.style.display = 'flex';
+                signInBtn.onclick = handleSignIn;
+            }
+
+            // Setup sign-out button
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.onclick = handleSignOut;
+            }
+
+            // Check for existing session
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    if (currentUser.isAuthenticated) {
+                        updateUserProfile();
+                        checkAdminStatus();
+                    }
+                } catch (e) {
+                    console.error('Error loading saved user:', e);
+                }
+            }
+        }
+
+        function handleSignIn() {
+            // For demo purposes without actual Google OAuth setup
+            // In production, this would use Google Sign-In SDK
+            const email = prompt('Enter your email (for demo):');
+            if (!email) return;
+
+            const name = prompt('Enter your name (for demo):') || email.split('@')[0];
+
+            currentUser = {
+                isAuthenticated: true,
+                email: email.toLowerCase(),
+                name: name,
+                picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff`,
+                isAdmin: APPROVAL_CONFIG.ADMIN_EMAILS.includes(email.toLowerCase())
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateUserProfile();
+            checkAdminStatus();
+
+            showToast(`✅ Signed in as ${currentUser.name}`);
+        }
+
+        function handleSignOut() {
+            if (!confirm('Are you sure you want to sign out?')) return;
+
+            currentUser = {
+                isAuthenticated: false,
+                email: '',
+                name: '',
+                picture: '',
+                isAdmin: false
+            };
+
+            localStorage.removeItem('currentUser');
+            updateUserProfile();
+
+            showToast('👋 Signed out successfully');
+        }
+
+        function updateUserProfile() {
+            const signInBtn = document.getElementById('signInBtn');
+            const userProfile = document.getElementById('userProfile');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+
+            if (currentUser.isAuthenticated) {
+                // Hide sign-in, show profile
+                if (signInBtn) signInBtn.style.display = 'none';
+                if (userProfile) userProfile.style.display = 'flex';
+
+                if (userAvatar) userAvatar.src = currentUser.picture;
+                if (userName) userName.textContent = currentUser.name;
+                if (userRole) {
+                    userRole.textContent = currentUser.isAdmin ? 'Admin' : 'Editor';
+                    userRole.className = currentUser.isAdmin ? 'user-role-badge' : 'user-role-badge editor';
+                }
+            } else {
+                // Show sign-in, hide profile
+                if (signInBtn) signInBtn.style.display = 'flex';
+                if (userProfile) userProfile.style.display = 'none';
+            }
+        }
+
+        async function checkAdminStatus() {
+            if (!currentUser.isAuthenticated || !APPROVAL_CONFIG.ENABLE_APPROVAL_SYSTEM) return;
+
+            console.log('Checking admin status for:', currentUser.email);
+
+            // Check if admin based on config
+            currentUser.isAdmin = APPROVAL_CONFIG.ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+
+            // TODO: Uncomment this when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'isAdmin',
+                        email: currentUser.email
+                    })
+                });
+                const result = await response.json();
+                currentUser.isAdmin = result.isAdmin || false;
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+            }
+            */
+
+            updateUserProfile();
+
+            // Show/hide approval queue button based on admin status
+            const approvalQueueBtn = document.getElementById('approvalQueueBtn');
+            if (approvalQueueBtn && currentUser.isAdmin) {
+                approvalQueueBtn.style.display = 'block';
+                approvalQueueBtn.onclick = openApprovalQueue;
+
+                // Load pending approvals
+                loadPendingApprovals();
+            }
+        }
+
+        // ========================================
+        // 📋 APPROVAL QUEUE FUNCTIONS
+        // ========================================
+
+        async function loadPendingApprovals() {
+            if (!currentUser.isAdmin || !APPROVAL_CONFIG.ENABLE_APPROVAL_SYSTEM) return;
+
+            console.log('📋 Loading pending approvals...');
+
+            // TODO: Uncomment when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getPendingApprovals',
+                        filterStatus: 'Pending'
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    pendingApprovals = result.data || [];
+                    updateApprovalBadge();
+                }
+            } catch (error) {
+                console.error('Error loading pending approvals:', error);
+            }
+            */
+
+            // Demo data for testing UI
+            pendingApprovals = [];
+            updateApprovalBadge();
+        }
+
+        function updateApprovalBadge() {
+            const badge = document.getElementById('approvalBadge');
+            const count = pendingApprovals.length;
+
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function openApprovalQueue() {
+            if (!currentUser.isAdmin) {
+                showToast('❌ Only admins can access the approval queue');
+                return;
+            }
+
+            const modal = document.getElementById('approvalQueueModal');
+            if (modal) {
+                modal.classList.add('show');
+                renderApprovalQueue();
+            }
+        }
+
+        function closeApprovalQueue() {
+            const modal = document.getElementById('approvalQueueModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function renderApprovalQueue() {
+            const body = document.getElementById('approvalQueueBody');
+            const countSpan = document.getElementById('approvalQueueCount');
+            const approveAllBtn = document.getElementById('btnApproveAll');
+
+            if (!body) return;
+
+            if (countSpan) {
+                countSpan.textContent = `(${pendingApprovals.length} pending)`;
+            }
+
+            if (approveAllBtn) {
+                approveAllBtn.style.display = pendingApprovals.length > 0 ? 'block' : 'none';
+                approveAllBtn.onclick = handleApproveAll;
+            }
+
+            if (pendingApprovals.length === 0) {
+                body.innerHTML = `
+                    <div class="approval-empty">
+                        <div class="approval-empty-icon">📭</div>
+                        <div class="approval-empty-text">No pending approvals</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            pendingApprovals.forEach(approval => {
+                const changesHtml = approval.changedColumns.map(col => {
+                    const oldVal = approval.originalData[col] || '-';
+                    const newVal = approval.newData[col] || '-';
+                    return `
+                        <tr class="changed-row">
+                            <td><strong>${col}</strong></td>
+                            <td class="old-value">${oldVal}</td>
+                            <td class="new-value">${newVal}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                html += `
+                    <div class="pending-item" data-approval-id="${approval.approvalId}">
+                        <div class="pending-header">
+                            <span class="pending-id">${approval.approvalId}</span>
+                            <div class="pending-meta">
+                                <span class="pending-date">${new Date(approval.timestamp).toLocaleString('id-ID')}</span>
+                                <span class="pending-user">By: ${approval.changedByName || approval.changedBy}</span>
+                            </div>
+                        </div>
+                        <div class="pending-changes">
+                            <table class="changes-table">
+                                <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Original</th>
+                                        <th>New Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${changesHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pending-actions">
+                            <button class="btn-approve" onclick="handleApprove('${approval.approvalId}')">
+                                ✅ Approve
+                            </button>
+                            <button class="btn-reject" onclick="handleReject('${approval.approvalId}')">
+                                ❌ Reject
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            body.innerHTML = html;
+        }
+
+        async function handleApprove(approvalId) {
+            if (!confirm('Are you sure you want to approve this change?')) return;
+
+            console.log('✅ Approving:', approvalId);
+
+            // TODO: Uncomment when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'approveChange',
+                        approvalId: approvalId,
+                        adminEmail: currentUser.email
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('✅ Change approved successfully');
+                    loadPendingApprovals();
+                    renderApprovalQueue();
+                    loadData(); // Refresh table data
+                } else {
+                    showToast('❌ ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error approving change:', error);
+                showToast('❌ Error approving change');
+            }
+            */
+
+            showToast('✅ Change approved (Demo mode - Apps Script not connected)');
+        }
+
+        function handleReject(approvalId) {
+            pendingRejectApprovalId = approvalId;
+            const modal = document.getElementById('rejectReasonModal');
+            const input = document.getElementById('rejectReasonInput');
+
+            if (modal && input) {
+                input.value = '';
+                modal.classList.add('show');
+
+                document.getElementById('btnConfirmReject').onclick = confirmReject;
+            }
+        }
+
+        function closeRejectReasonModal() {
+            const modal = document.getElementById('rejectReasonModal');
+            if (modal) {
+                modal.classList.remove('show');
+                pendingRejectApprovalId = null;
+            }
+        }
+
+        async function confirmReject() {
+            const reason = document.getElementById('rejectReasonInput').value.trim();
+
+            if (!reason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+
+            console.log('❌ Rejecting:', pendingRejectApprovalId, 'Reason:', reason);
+
+            // TODO: Uncomment when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'rejectChange',
+                        approvalId: pendingRejectApprovalId,
+                        adminEmail: currentUser.email,
+                        reason: reason
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('✅ Change rejected');
+                    loadPendingApprovals();
+                    renderApprovalQueue();
+                } else {
+                    showToast('❌ ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error rejecting change:', error);
+                showToast('❌ Error rejecting change');
+            }
+            */
+
+            showToast('✅ Change rejected (Demo mode - Apps Script not connected)');
+            closeRejectReasonModal();
+        }
+
+        async function handleApproveAll() {
+            if (!confirm(`Approve all ${pendingApprovals.length} pending changes?`)) return;
+
+            console.log('✅ Approving all changes...');
+
+            // TODO: Uncomment when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'approveAll',
+                        adminEmail: currentUser.email
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast(`✅ ${result.results.approved} changes approved`);
+                    loadPendingApprovals();
+                    renderApprovalQueue();
+                    loadData();
+                } else {
+                    showToast('❌ ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error approving all:', error);
+                showToast('❌ Error approving all changes');
+            }
+            */
+
+            showToast('✅ All changes approved (Demo mode - Apps Script not connected)');
+        }
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Starting Data Client Starlink - Modern Design Version');
@@ -4182,6 +5410,9 @@
             initializeTheme();
             initializeDensity();
             initializeControlsState();
+
+            // Initialize approval system
+            initializeGoogleSignIn();
 
             // Initialize modern components
             initializeFilterCards();
@@ -4209,5 +5440,52 @@
             });
         });
     </script>
+
+    <!-- ========================================
+         📋 APPROVAL QUEUE MODAL
+         ======================================== -->
+    <div class="approval-queue-modal" id="approvalQueueModal">
+        <div class="approval-queue-content">
+            <div class="approval-queue-header">
+                <div class="approval-queue-title">
+                    <span>📋</span>
+                    <span>Approval Queue</span>
+                    <span id="approvalQueueCount" style="font-size: 14px; opacity: 0.8; margin-left: 8px;">(0 pending)</span>
+                </div>
+                <div class="approval-queue-actions">
+                    <button class="btn-approve-all" id="btnApproveAll" style="display: none;">
+                        ✅ Approve All
+                    </button>
+                    <button class="close-approval-queue" onclick="closeApprovalQueue()">×</button>
+                </div>
+            </div>
+            <div class="approval-queue-body" id="approvalQueueBody">
+                <!-- Pending approvals will be populated here -->
+                <div class="approval-empty">
+                    <div class="approval-empty-icon">📭</div>
+                    <div class="approval-empty-text">No pending approvals</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         ❌ REJECT REASON MODAL
+         ======================================== -->
+    <div class="reject-reason-modal" id="rejectReasonModal">
+        <div class="reject-reason-content">
+            <div class="reject-reason-title">Reject Change Request</div>
+            <textarea
+                class="reject-reason-input"
+                id="rejectReasonInput"
+                placeholder="Please provide a reason for rejecting this change request..."
+            ></textarea>
+            <div class="reject-reason-actions">
+                <button class="btn-cancel-reject" onclick="closeRejectReasonModal()">Cancel</button>
+                <button class="btn-confirm-reject" id="btnConfirmReject">Confirm Reject</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
