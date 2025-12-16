@@ -5255,13 +5255,19 @@
         // ========================================
 
         const APPROVAL_CONFIG = {
-            // TODO: Update these values after setting up Google Apps Script and OAuth
+            // Google OAuth Client ID (optional - currently using demo mode)
             GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Get from Google Cloud Console
-            APPS_SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec', // Get after deploying Apps Script
+
+            // Apps Script URL - automatically loaded from external config.js
+            get APPS_SCRIPT_URL() {
+                return typeof CONFIG !== 'undefined' && CONFIG.API_URL
+                    ? CONFIG.API_URL
+                    : 'https://script.google.com/macros/s/AKfycbxxoP13UrnFopLscVmP-SR-zJp-9wEt40Mddhs14ZkmO0W3jD5P9ZLXjeTcnvhd-_lV/exec';
+            },
 
             // Admin emails (fallback if Admin_Users sheet not available)
             ADMIN_EMAILS: [
-                'admin@example.com' // TODO: Replace with actual admin email
+                'baiiput@gmail.com'
             ],
 
             // Feature flags
