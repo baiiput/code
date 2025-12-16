@@ -234,6 +234,469 @@
             transform: rotate(180deg);
         }
 
+        /* ===== MODERN COLLAPSIBLE CARD DESIGN ===== */
+
+        .controls-modern {
+            background: var(--bg-controls);
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            overflow: hidden;
+            max-height: 2000px;
+        }
+
+        .controls-modern.collapsed {
+            max-height: 0;
+            padding: 0;
+        }
+
+        .controls-modern-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Filter Card Styling */
+        .filter-card {
+            background: var(--bg-container);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .search-card {
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .search-card-content {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 16px;
+        }
+
+        /* Filter Card Header */
+        .filter-card-header {
+            padding: 14px 18px;
+            background: linear-gradient(135deg, var(--bg-container) 0%, var(--bg-stats) 100%);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .filter-card-header:hover {
+            background: var(--bg-stats);
+        }
+
+        .filter-card-header:active {
+            transform: scale(0.99);
+        }
+
+        .filter-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .card-icon {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .collapse-icon {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+        }
+
+        .filter-card.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* Filter Badge */
+        .filter-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        .filter-badge.hidden {
+            display: none;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Filter Card Content */
+        .filter-card-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+            padding: 18px;
+        }
+
+        .filter-card.collapsed .filter-card-content {
+            max-height: 0;
+            padding: 0 18px;
+        }
+
+        /* Modern Search Box */
+        .search-box-modern {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--bg-stats);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 4px 4px 4px 16px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .search-box-modern:focus-within {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            background: var(--bg-container);
+        }
+
+        .search-icon-modern {
+            font-size: 18px;
+            margin-right: 10px;
+            color: var(--text-muted);
+        }
+
+        .search-input-modern {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-primary);
+            padding: 10px 0;
+        }
+
+        .search-input-modern::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-clear-btn-modern {
+            background: var(--text-muted);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .search-clear-btn-modern:hover {
+            background: var(--accent-red);
+            transform: scale(1.1);
+        }
+
+        /* Control Buttons Modern */
+        .control-buttons-modern {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-modern {
+            background: var(--bg-stats);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-modern:hover {
+            background: var(--accent-blue);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-modern:active {
+            transform: translateY(0);
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .btn-icon span {
+            font-size: 18px;
+        }
+
+        .btn-clear-all:hover {
+            background: var(--accent-red);
+        }
+
+        /* Quick Filters Modern */
+        .quick-filters-modern {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            background: var(--bg-stats);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--accent-blue);
+            background: rgba(37, 99, 235, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Filter Grid */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .filter-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 10px 35px 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--bg-stats);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: var(--bg-container);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-clear-btn {
+            position: absolute;
+            right: 8px;
+            background: var(--text-muted);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .input-clear-btn:hover {
+            background: var(--accent-red);
+            transform: scale(1.1);
+        }
+
+        /* Date Range Modern */
+        .date-range-modern {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--bg-stats);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: var(--bg-container);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .date-separator {
+            font-size: 18px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        /* Dark Theme Adjustments */
+        :root[data-theme="dark"] .filter-card {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        :root[data-theme="dark"] .filter-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Responsive Design for Modern Cards */
+        @media (max-width: 768px) {
+            .controls-modern-content {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .search-card-content {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 14px;
+            }
+
+            .filter-card-header {
+                padding: 12px 14px;
+            }
+
+            .filter-card-content {
+                padding: 14px;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .control-buttons-modern {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn-icon {
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls-modern-content {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .search-card-content {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .filter-card {
+                border-radius: 10px;
+            }
+
+            .filter-card-header {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .filter-card-content {
+                padding: 12px;
+            }
+
+            .search-box-modern {
+                padding: 3px 3px 3px 12px;
+            }
+
+            .search-input-modern {
+                font-size: 13px;
+            }
+
+            .btn-icon {
+                width: 34px;
+                height: 34px;
+            }
+
+            .btn-icon span {
+                font-size: 16px;
+            }
+
+            .filter-chip {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* ===== END MODERN DESIGN ===== */
+
         .controls {
             background: var(--bg-controls);
             border-bottom: 1px solid var(--border-color);
@@ -1408,131 +1871,188 @@
             <span id="controlsToggleText">Hide Filters</span>
         </button>
 
-        <!-- Collapsible Controls -->
-        <div class="controls" id="controlsPanel">
-            <div class="controls-content">
-                <!-- Global Search -->
-                <div class="search-section">
-                    <div class="search-box">
-                        <input type="text" id="globalSearch" placeholder="🔍 Cari di semua kolom (nama, nomor, dll)...">
-                        <span class="search-icon">🔍</span>
-                        <button class="search-clear-btn" id="globalSearchClear" type="button">×</button>
-                    </div>
-                    <div class="control-buttons">
-                        <button class="btn btn-primary" id="columnToggleBtn">
-                            <span>📊</span> Columns
-                        </button>
-                        
-                        <!-- Column Dropdown -->
-                        <div class="column-dropdown" id="columnDropdown">
-                            <div class="column-dropdown-header">
-                                <span>📊 Column Visibility</span>
-                                <button onclick="toggleColumnDropdown()" style="background: none; border: none; color: var(--text-white); cursor: pointer; font-size: 16px;">×</button>
-                            </div>
-                            <div class="column-dropdown-content" id="columnDropdownContent">
-                                <!-- Column checkboxes will be populated here -->
-                            </div>
-                            <div class="column-actions">
-                                <button class="column-action-btn select-all" onclick="selectAllColumns()">Select All</button>
-                                <button class="column-action-btn hide-all" onclick="hideAllColumns()">Hide All</button>
-                            </div>
+        <!-- Modern Collapsible Controls -->
+        <div class="controls-modern" id="controlsPanel">
+            <div class="controls-modern-content">
+                <!-- Global Search - Always Visible -->
+                <div class="filter-card search-card">
+                    <div class="search-card-content">
+                        <div class="search-box-modern">
+                            <span class="search-icon-modern">🔍</span>
+                            <input type="text" id="globalSearch" placeholder="Search all columns (name, email, number, etc.)..." class="search-input-modern">
+                            <button class="search-clear-btn-modern" id="globalSearchClear" type="button">×</button>
                         </div>
-                        
-                        <button class="btn btn-success" id="refreshBtn">
-                            <span id="refreshIcon">🔄</span> Refresh
-                        </button>
-                        
-                        <button class="btn btn-purple" id="densityToggleBtn">
-                            <span id="densityIcon">📏</span>
-                            <span id="densityText">Compact</span>
-                        </button>
+                        <div class="control-buttons-modern">
+                            <button class="btn-modern btn-icon" id="columnToggleBtn" title="Column Visibility">
+                                <span>📊</span>
+                            </button>
+
+                            <!-- Column Dropdown -->
+                            <div class="column-dropdown" id="columnDropdown">
+                                <div class="column-dropdown-header">
+                                    <span>📊 Column Visibility</span>
+                                    <button onclick="toggleColumnDropdown()" style="background: none; border: none; color: var(--text-white); cursor: pointer; font-size: 16px;">×</button>
+                                </div>
+                                <div class="column-dropdown-content" id="columnDropdownContent">
+                                    <!-- Column checkboxes will be populated here -->
+                                </div>
+                                <div class="column-actions">
+                                    <button class="column-action-btn select-all" onclick="selectAllColumns()">Select All</button>
+                                    <button class="column-action-btn hide-all" onclick="hideAllColumns()">Hide All</button>
+                                </div>
+                            </div>
+
+                            <button class="btn-modern btn-icon" id="refreshBtn" title="Refresh Data">
+                                <span id="refreshIcon">🔄</span>
+                            </button>
+
+                            <button class="btn-modern btn-icon" id="densityToggleBtn" title="Toggle Density">
+                                <span id="densityIcon">📏</span>
+                            </button>
+
+                            <button class="btn-modern btn-icon btn-clear-all" id="clearFilters" title="Clear All Filters">
+                                <span>🗑️</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Quick Status Filters - CLEANED UP -->
-                <div class="quick-filters">
-                    <button class="filter-btn active" data-filter="all">Semua</button>
-                    <button class="filter-btn" data-filter="jatuh-tempo">Jatuh Tempo</button>
-                    <button class="filter-btn" data-filter="proses">Proses</button>
-                    <button class="filter-btn" data-filter="segera">Segera</button>
-                    <button class="filter-btn" data-filter="observasi">Observasi</button>
-                    <button class="clear-filters" id="clearFilters">Clear All</button>
+                <!-- Quick Status Filters Card -->
+                <div class="filter-card">
+                    <div class="filter-card-header" onclick="toggleFilterCard(this)">
+                        <div class="filter-card-title">
+                            <span class="card-icon">⚡</span>
+                            <span>Quick Filters</span>
+                            <span class="filter-badge" id="quickFilterBadge">1 active</span>
+                        </div>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                    <div class="filter-card-content">
+                        <div class="quick-filters-modern">
+                            <button class="filter-chip active" data-filter="all">Semua</button>
+                            <button class="filter-chip" data-filter="jatuh-tempo">🔴 Jatuh Tempo</button>
+                            <button class="filter-chip" data-filter="proses">🟡 Proses</button>
+                            <button class="filter-chip" data-filter="segera">🟠 Segera</button>
+                            <button class="filter-chip" data-filter="observasi">🔵 Observasi</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Column Filters -->
-                <div class="column-filters">
-                    <div class="filter-group">
-                        <label>Nama Client</label>
-                        <div class="search-box">
-                            <input type="text" id="filterNama" placeholder="Filter nama...">
-                            <button class="search-clear-btn" id="filterNamaClear" type="button">×</button>
+                <!-- Text Filters Card -->
+                <div class="filter-card">
+                    <div class="filter-card-header" onclick="toggleFilterCard(this)">
+                        <div class="filter-card-title">
+                            <span class="card-icon">🔤</span>
+                            <span>Text Filters</span>
+                            <span class="filter-badge hidden" id="textFilterBadge">0 active</span>
                         </div>
+                        <span class="collapse-icon">▼</span>
                     </div>
-                    <div class="filter-group">
-                        <label>Nomor CS</label>
-                        <div class="search-box">
-                            <input type="text" id="filterNomorCS" placeholder="Filter nomor...">
-                            <button class="search-clear-btn" id="filterNomorCSClear" type="button">×</button>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Email Client</label>
-                        <div class="search-box">
-                            <input type="text" id="filterEmail" placeholder="Filter email...">
-                            <button class="search-clear-btn" id="filterEmailClear" type="button">×</button>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Nomor KIT</label>
-                        <div class="search-box">
-                            <input type="text" id="filterKit" placeholder="Filter nomor KIT...">
-                            <button class="search-clear-btn" id="filterKitClear" type="button">×</button>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Status</label>
-                        <div class="checkbox-filter-container" id="statusFilterContainer">
-                            <div class="checkbox-filter-header">
-                                <span id="statusFilterCount">0 dipilih</span>
-                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('status')">Clear All</button>
+                    <div class="filter-card-content">
+                        <div class="filter-grid">
+                            <div class="filter-input-group">
+                                <label class="filter-label">Nama Client</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="filterNama" placeholder="Filter nama..." class="filter-input">
+                                    <button class="input-clear-btn" id="filterNamaClear">×</button>
+                                </div>
                             </div>
-                            <div class="checkbox-filter-content" id="statusFilterContent">
-                                <!-- Status checkboxes will be populated here -->
+                            <div class="filter-input-group">
+                                <label class="filter-label">Nomor CS</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="filterNomorCS" placeholder="Filter nomor..." class="filter-input">
+                                    <button class="input-clear-btn" id="filterNomorCSClear">×</button>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Paket</label>
-                        <div class="checkbox-filter-container" id="paketFilterContainer">
-                            <div class="checkbox-filter-header">
-                                <span id="paketFilterCount">0 dipilih</span>
-                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('paket')">Clear All</button>
+                            <div class="filter-input-group">
+                                <label class="filter-label">Email Client</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="filterEmail" placeholder="Filter email..." class="filter-input">
+                                    <button class="input-clear-btn" id="filterEmailClear">×</button>
+                                </div>
                             </div>
-                            <div class="checkbox-filter-content" id="paketFilterContent">
-                                <!-- Paket checkboxes will be populated here -->
+                            <div class="filter-input-group">
+                                <label class="filter-label">Nomor KIT</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="filterKit" placeholder="Filter nomor KIT..." class="filter-input">
+                                    <button class="input-clear-btn" id="filterKitClear">×</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label>Payment</label>
-                        <div class="checkbox-filter-container" id="paymentFilterContainer">
-                            <div class="checkbox-filter-header">
-                                <span id="paymentFilterCount">0 dipilih</span>
-                                <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('payment')">Clear All</button>
+                </div>
+
+                <!-- Category Filters Card -->
+                <div class="filter-card">
+                    <div class="filter-card-header" onclick="toggleFilterCard(this)">
+                        <div class="filter-card-title">
+                            <span class="card-icon">🏷️</span>
+                            <span>Category Filters</span>
+                            <span class="filter-badge hidden" id="categoryFilterBadge">0 active</span>
+                        </div>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                    <div class="filter-card-content">
+                        <div class="filter-grid">
+                            <div class="filter-input-group">
+                                <label class="filter-label">Status</label>
+                                <div class="checkbox-filter-container" id="statusFilterContainer">
+                                    <div class="checkbox-filter-header">
+                                        <span id="statusFilterCount">0 dipilih</span>
+                                        <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('status')">Clear All</button>
+                                    </div>
+                                    <div class="checkbox-filter-content" id="statusFilterContent">
+                                        <!-- Status checkboxes will be populated here -->
+                                    </div>
+                                </div>
                             </div>
-                            <div class="checkbox-filter-content" id="paymentFilterContent">
-                                <!-- Payment checkboxes will be populated here -->
+                            <div class="filter-input-group">
+                                <label class="filter-label">Paket</label>
+                                <div class="checkbox-filter-container" id="paketFilterContainer">
+                                    <div class="checkbox-filter-header">
+                                        <span id="paketFilterCount">0 dipilih</span>
+                                        <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('paket')">Clear All</button>
+                                    </div>
+                                    <div class="checkbox-filter-content" id="paketFilterContent">
+                                        <!-- Paket checkboxes will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="filter-input-group">
+                                <label class="filter-label">Payment</label>
+                                <div class="checkbox-filter-container" id="paymentFilterContainer">
+                                    <div class="checkbox-filter-header">
+                                        <span id="paymentFilterCount">0 dipilih</span>
+                                        <button class="checkbox-filter-toggle" onclick="toggleAllCheckboxes('payment')">Clear All</button>
+                                    </div>
+                                    <div class="checkbox-filter-content" id="paymentFilterContent">
+                                        <!-- Payment checkboxes will be populated here -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label>Tanggal Jatuh Tempo</label>
-                        <div class="date-range-group">
-                            <input type="date" id="filterTanggalStart" title="Tanggal mulai jatuh tempo">
-                            <span class="date-range-separator">—</span>
-                            <input type="date" id="filterTanggalEnd" title="Tanggal akhir jatuh tempo">
+                </div>
+
+                <!-- Date Range Filter Card -->
+                <div class="filter-card">
+                    <div class="filter-card-header" onclick="toggleFilterCard(this)">
+                        <div class="filter-card-title">
+                            <span class="card-icon">📅</span>
+                            <span>Date Range</span>
+                            <span class="filter-badge hidden" id="dateFilterBadge">0 active</span>
                         </div>
-                        <small style="font-size: 10px; color: var(--text-muted); margin-top: 2px; display: block;">Range: DD/MM/YYYY - DD/MM/YYYY</small>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                    <div class="filter-card-content">
+                        <div class="filter-input-group">
+                            <label class="filter-label">Tanggal Jatuh Tempo</label>
+                            <div class="date-range-modern">
+                                <input type="date" id="filterTanggalStart" title="Tanggal mulai jatuh tempo" class="date-input">
+                                <span class="date-separator">→</span>
+                                <input type="date" id="filterTanggalEnd" title="Tanggal akhir jatuh tempo" class="date-input">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2151,6 +2671,146 @@
             }
         }
 
+        // ===== MODERN COLLAPSIBLE CARD FUNCTIONS =====
+
+        function toggleFilterCard(headerElement) {
+            const card = headerElement.closest('.filter-card');
+            card.classList.toggle('collapsed');
+
+            // Save state to localStorage
+            const cardTitle = headerElement.querySelector('.filter-card-title span:nth-child(2)').textContent;
+            const isCollapsed = card.classList.contains('collapsed');
+            localStorage.setItem(`filter-card-${cardTitle}`, isCollapsed);
+        }
+
+        function initializeFilterCards() {
+            // Restore collapsed states from localStorage
+            document.querySelectorAll('.filter-card').forEach(card => {
+                const header = card.querySelector('.filter-card-header');
+                if (header) {
+                    const cardTitle = header.querySelector('.filter-card-title span:nth-child(2)').textContent;
+                    const savedState = localStorage.getItem(`filter-card-${cardTitle}`);
+                    if (savedState === 'true') {
+                        card.classList.add('collapsed');
+                    }
+                }
+            });
+        }
+
+        function updateFilterBadges() {
+            // Update text filters badge
+            const textFilters = ['filterNama', 'filterNomorCS', 'filterEmail', 'filterKit'];
+            const textActiveCount = textFilters.filter(id => document.getElementById(id).value.trim() !== '').length;
+            const textBadge = document.getElementById('textFilterBadge');
+            if (textBadge) {
+                if (textActiveCount > 0) {
+                    textBadge.textContent = `${textActiveCount} active`;
+                    textBadge.classList.remove('hidden');
+                } else {
+                    textBadge.classList.add('hidden');
+                }
+            }
+
+            // Update category filters badge
+            let categoryActiveCount = 0;
+            if (checkboxFilters.status && checkboxFilters.status.size > 0) categoryActiveCount++;
+            if (checkboxFilters.paket && checkboxFilters.paket.size > 0) categoryActiveCount++;
+            if (checkboxFilters.payment && checkboxFilters.payment.size > 0) categoryActiveCount++;
+
+            const categoryBadge = document.getElementById('categoryFilterBadge');
+            if (categoryBadge) {
+                if (categoryActiveCount > 0) {
+                    categoryBadge.textContent = `${categoryActiveCount} active`;
+                    categoryBadge.classList.remove('hidden');
+                } else {
+                    categoryBadge.classList.add('hidden');
+                }
+            }
+
+            // Update date filter badge
+            const dateStart = document.getElementById('filterTanggalStart').value;
+            const dateEnd = document.getElementById('filterTanggalEnd').value;
+            const dateBadge = document.getElementById('dateFilterBadge');
+            if (dateBadge) {
+                if (dateStart || dateEnd) {
+                    dateBadge.textContent = '1 active';
+                    dateBadge.classList.remove('hidden');
+                } else {
+                    dateBadge.classList.add('hidden');
+                }
+            }
+
+            // Update quick filter badge
+            const quickBadge = document.getElementById('quickFilterBadge');
+            if (quickBadge) {
+                const activeQuickFilter = document.querySelector('.filter-chip.active');
+                if (activeQuickFilter) {
+                    quickBadge.textContent = '1 active';
+                } else {
+                    quickBadge.textContent = '0 active';
+                }
+            }
+        }
+
+        function initializeModernSearchButtons() {
+            const searchInputs = [
+                { inputId: 'globalSearch', clearId: 'globalSearchClear', isModern: true },
+                { inputId: 'filterNama', clearId: 'filterNamaClear', isModern: false },
+                { inputId: 'filterNomorCS', clearId: 'filterNomorCSClear', isModern: false },
+                { inputId: 'filterEmail', clearId: 'filterEmailClear', isModern: false },
+                { inputId: 'filterKit', clearId: 'filterKitClear', isModern: false }
+            ];
+
+            searchInputs.forEach(({ inputId, clearId, isModern }) => {
+                const input = document.getElementById(inputId);
+                const clearBtn = document.getElementById(clearId);
+
+                if (!input || !clearBtn) return;
+
+                const toggleClearButton = () => {
+                    if (input.value.trim()) {
+                        clearBtn.style.display = 'flex';
+                    } else {
+                        clearBtn.style.display = 'none';
+                    }
+                };
+
+                input.addEventListener('input', () => {
+                    toggleClearButton();
+                    updateFilterBadges();
+                });
+
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    input.value = '';
+                    clearBtn.style.display = 'none';
+                    input.focus();
+                    if (inputId === 'globalSearch') {
+                        smartDebouncer.debounceImmediate('global-search', applyFilters, 200);
+                    } else {
+                        applyFilters();
+                    }
+                    updateFilterBadges();
+                    showToast(`✨ ${input.placeholder} cleared`);
+                });
+
+                toggleClearButton();
+            });
+
+            console.log('🎨 Modern search buttons initialized');
+        }
+
+        function initializeModernQuickFilters() {
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    applyQuickFilter(this.dataset.filter);
+                    updateFilterBadges();
+                });
+            });
+        }
+
         // ===== DENSITY MANAGEMENT =====
         
         function initializeDensity() {
@@ -2293,8 +2953,14 @@
             });
 
             // Date filters
-            document.getElementById('filterTanggalStart').addEventListener('change', applyFilters);
-            document.getElementById('filterTanggalEnd').addEventListener('change', applyFilters);
+            document.getElementById('filterTanggalStart').addEventListener('change', () => {
+                applyFilters();
+                updateFilterBadges();
+            });
+            document.getElementById('filterTanggalEnd').addEventListener('change', () => {
+                applyFilters();
+                updateFilterBadges();
+            });
             
             // Quick filters
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -3480,12 +4146,17 @@
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Starting Data Client Starlink - Optimized Version');
-            
+            console.log('🚀 Starting Data Client Starlink - Modern Design Version');
+
             initializeTheme();
             initializeDensity();
             initializeControlsState();
-            
+
+            // Initialize modern components
+            initializeFilterCards();
+            initializeModernSearchButtons();
+            initializeModernQuickFilters();
+
             if (typeof CONFIG === 'undefined') {
                 console.error('❌ CONFIG not loaded yet, waiting...');
                 setTimeout(() => {
