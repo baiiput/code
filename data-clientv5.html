@@ -4771,11 +4771,14 @@
                     editInput = document.createElement('input');
                     editInput.type = 'date';
                     editInput.className = 'modal-edit-input';
-                    // Convert displayed date to yyyy-mm-dd format
+                    // Convert displayed date to yyyy-mm-dd format for input
                     if (originalValue) {
                         const date = new Date(originalValue);
                         if (!isNaN(date)) {
-                            editInput.value = date.toISOString().split('T')[0];
+                            const isoDateValue = date.toISOString().split('T')[0];
+                            editInput.value = isoDateValue;
+                            // Store ISO format for proper comparison later
+                            editInput.dataset.isoOriginal = isoDateValue;
                         }
                     }
                 }
@@ -4850,7 +4853,12 @@
 
                 // Add change listener for highlighting
                 editInput.addEventListener('input', function() {
-                    if (this.value !== this.dataset.originalValue) {
+                    // For date fields, compare with ISO format
+                    const compareValue = this.dataset.isoOriginal !== undefined
+                        ? this.dataset.isoOriginal
+                        : this.dataset.originalValue;
+
+                    if (this.value !== compareValue) {
                         this.classList.add('modal-field-changed');
                     } else {
                         this.classList.remove('modal-field-changed');
@@ -4897,8 +4905,12 @@
 
             editInputs.forEach(input => {
                 const column = input.dataset.column;
-                const originalValue = input.dataset.originalValue;
                 const newValue = input.value;
+
+                // For date fields, use ISO format for comparison
+                const originalValue = input.dataset.isoOriginal !== undefined
+                    ? input.dataset.isoOriginal
+                    : input.dataset.originalValue;
 
                 if (newValue !== originalValue) {
                     changedData[column] = newValue;
