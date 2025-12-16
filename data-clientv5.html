@@ -426,6 +426,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            position: relative;
         }
 
         .btn-modern {
@@ -441,6 +442,8 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn-modern:hover {
@@ -815,27 +818,28 @@
         .btn-success:hover { background: #059669; }
         .btn-purple:hover { background: #7c3aed; }
 
-        /* Column Dropdown - FIXED Z-INDEX */
+        /* Column Dropdown - FIXED FOR MODERN LAYOUT */
         .column-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
+            position: fixed;
             background: var(--bg-container);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            z-index: 99999; /* Increased from 9999 */
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
             min-width: 280px;
-            max-height: 400px;
+            max-width: 320px;
+            max-height: 450px;
             overflow-y: auto;
             display: none;
-            margin-top: 5px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
 
-        .column-dropdown.show { 
-            display: block; 
-            position: fixed; /* Changed from absolute to fixed for better layering */
-            z-index: 99999;
+        .column-dropdown.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .column-dropdown-header {
@@ -2982,23 +2986,41 @@
             });
             
             // Clear filters
-            document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
-            
-            // Control buttons
-            document.getElementById('refreshBtn').addEventListener('click', function() {
+            document.getElementById('clearFilters').addEventListener('click', function(e) {
+                e.stopPropagation();
+                clearAllFilters();
+            });
+
+            // Control buttons with stopPropagation to prevent event conflicts
+            document.getElementById('refreshBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
                 if (!isLoading) loadData();
             });
-            
-            document.getElementById('columnToggleBtn').addEventListener('click', toggleColumnDropdown);
-            document.getElementById('densityToggleBtn').addEventListener('click', toggleDensity);
 
-            // Click outside to close column dropdown
+            document.getElementById('columnToggleBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleColumnDropdown();
+            });
+
+            document.getElementById('densityToggleBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleDensity();
+            });
+
+            // Click outside to close column dropdown with smooth transition
             document.addEventListener('click', function(event) {
                 const dropdown = document.getElementById('columnDropdown');
                 const toggleBtn = document.getElementById('columnToggleBtn');
-                
-                if (!dropdown.contains(event.target) && !toggleBtn.contains(event.target)) {
+
+                if (dropdown.classList.contains('show') &&
+                    !dropdown.contains(event.target) &&
+                    !toggleBtn.contains(event.target)) {
                     dropdown.classList.remove('show');
+                    setTimeout(() => {
+                        if (!dropdown.classList.contains('show')) {
+                            dropdown.style.display = 'none';
+                        }
+                    }, 200);
                 }
             });
 
@@ -3761,30 +3783,42 @@
         function toggleColumnDropdown() {
             const dropdown = document.getElementById('columnDropdown');
             const toggleBtn = document.getElementById('columnToggleBtn');
-            
+
             if (dropdown.classList.contains('show')) {
                 dropdown.classList.remove('show');
+                // Wait for transition to finish before hiding
+                setTimeout(() => {
+                    if (!dropdown.classList.contains('show')) {
+                        dropdown.style.display = 'none';
+                    }
+                }, 200);
             } else {
                 // Calculate position relative to button for fixed positioning
                 const rect = toggleBtn.getBoundingClientRect();
-                
+
+                dropdown.style.display = 'block';
                 dropdown.style.position = 'fixed';
-                dropdown.style.top = (rect.bottom + 5) + 'px';
+                dropdown.style.top = (rect.bottom + 8) + 'px';
                 dropdown.style.left = rect.left + 'px';
                 dropdown.style.right = 'auto';
-                
+
                 // Ensure dropdown doesn't go off-screen
-                const dropdownWidth = 280; // min-width from CSS
+                const dropdownWidth = 280;
                 const windowWidth = window.innerWidth;
-                
+
                 if (rect.left + dropdownWidth > windowWidth) {
                     dropdown.style.left = 'auto';
                     dropdown.style.right = '10px';
                 }
-                
-                // Show dropdown
-                dropdown.classList.add('show');
-                
+
+                // Force reflow before adding show class for smooth transition
+                dropdown.offsetHeight;
+
+                // Show dropdown with animation
+                requestAnimationFrame(() => {
+                    dropdown.classList.add('show');
+                });
+
                 // Scroll dropdown to top
                 dropdown.scrollTop = 0;
                 
