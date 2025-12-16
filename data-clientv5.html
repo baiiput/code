@@ -273,6 +273,7 @@
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
             background: var(--bg-container);
             color: var(--text-primary);
+            box-sizing: border-box;
         }
 
         .search-box input:focus {
@@ -475,12 +476,15 @@
             gap: 12px;
             padding-top: 12px;
             border-top: 1px solid var(--border-color);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
             gap: 4px;
+            min-width: 0;
         }
 
         .filter-group label {
@@ -499,6 +503,8 @@
             transition: border-color 0.3s ease;
             background: var(--bg-container);
             color: var(--text-primary);
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .filter-group input:focus, .filter-group select:focus {
@@ -985,16 +991,28 @@
         }
 
         /* Responsive */
+        /* Medium screens (900px and below) */
+        @media (max-width: 900px) {
+            .column-filters {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            }
+
+            .controls-content {
+                padding: 14px 18px;
+            }
+        }
+
+        /* Tablet and below (768px) */
         @media (max-width: 768px) {
             .search-section {
                 grid-template-columns: 1fr;
             }
-            
+
             .control-buttons {
                 flex-direction: column;
                 gap: 8px;
             }
-            
+
             .stats {
                 display: grid !important;
                 grid-template-columns: 1fr 1fr 1fr !important;
@@ -1010,15 +1028,125 @@
                 gap: 2px !important;
                 min-width: 0 !important;
             }
-            
+
             .column-filters {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 10px;
             }
 
             .copy-btn {
                 min-width: 28px;
                 min-height: 28px;
                 font-size: 10px;
+            }
+        }
+
+        /* Small tablets and large phones (600px and below) */
+        @media (max-width: 600px) {
+            .controls-content {
+                padding: 12px 15px;
+            }
+
+            .column-filters {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .filter-group input, .filter-group select {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+
+            .search-box input {
+                padding: 10px 50px 10px 12px;
+                font-size: 14px;
+            }
+
+            .filter-group label {
+                font-size: 10px;
+            }
+        }
+
+        /* Mobile phones (480px and below) */
+        @media (max-width: 480px) {
+            .controls-content {
+                padding: 10px 12px;
+            }
+
+            .search-section {
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+
+            .column-filters {
+                gap: 8px;
+                padding-top: 10px;
+            }
+
+            .filter-group {
+                gap: 3px;
+            }
+
+            .filter-group input, .filter-group select {
+                padding: 7px 8px;
+                font-size: 13px;
+                border-radius: 4px;
+            }
+
+            .search-box input {
+                padding: 8px 45px 8px 10px;
+                font-size: 13px;
+            }
+
+            .search-clear-btn {
+                right: 6px;
+                width: 20px;
+                height: 20px;
+                font-size: 14px;
+            }
+
+            .search-icon {
+                right: 30px;
+                font-size: 12px;
+            }
+
+            .control-buttons {
+                gap: 6px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .checkbox-filter-container {
+                max-height: 100px;
+            }
+        }
+
+        /* Very small phones (360px and below) */
+        @media (max-width: 360px) {
+            .controls-content {
+                padding: 8px 10px;
+            }
+
+            .filter-group input, .filter-group select {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+
+            .search-box input {
+                padding: 7px 40px 7px 8px;
+                font-size: 12px;
+            }
+
+            .filter-group label {
+                font-size: 9px;
+            }
+
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
             }
         }
 
