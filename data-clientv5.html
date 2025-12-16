@@ -4673,7 +4673,14 @@
             prevBtn.disabled = rowIndex === 0;
             nextBtn.disabled = rowIndex === filteredData.length - 1;
 
-            // Show edit button if user is authenticated and approval system enabled
+            // Show edit button - ALWAYS VISIBLE FOR TESTING
+            if (editBtn) {
+                editBtn.style.display = 'block';
+                console.log('✏️ Edit button shown (testing mode - always visible)');
+            }
+
+            // Production logic (uncomment when ready):
+            /*
             if (editBtn && APPROVAL_CONFIG.ENABLE_APPROVAL_SYSTEM) {
                 if (APPROVAL_CONFIG.REQUIRE_AUTH_FOR_EDIT) {
                     editBtn.style.display = currentUser.isAuthenticated ? 'block' : 'none';
@@ -4681,6 +4688,7 @@
                     editBtn.style.display = 'block';
                 }
             }
+            */
 
             modalBody.innerHTML = generateModalContent(row);
 
