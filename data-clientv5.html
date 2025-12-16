@@ -4779,11 +4779,18 @@
                         }
                     }
                 }
-                // Select fields (Status, Payment, Paket)
+                // Select fields (Status, Payment, Paket) - Auto-extract unique values from data
                 else if (column === 'O') { // Status
                     editInput = document.createElement('select');
                     editInput.className = 'modal-edit-select';
-                    const statuses = ['', 'Proses', 'Selesai', 'Pending', 'Cancel'];
+                    // Extract unique Status values from all data
+                    const uniqueStatuses = new Set();
+                    allData.forEach(row => {
+                        if (row.O && row.O.toString().trim()) {
+                            uniqueStatuses.add(row.O.toString().trim());
+                        }
+                    });
+                    const statuses = ['', ...Array.from(uniqueStatuses).sort()];
                     statuses.forEach(status => {
                         const option = document.createElement('option');
                         option.value = status;
@@ -4795,7 +4802,14 @@
                 else if (column === 'M') { // Payment
                     editInput = document.createElement('select');
                     editInput.className = 'modal-edit-select';
-                    const payments = ['', 'Transfer', 'Cash', 'QRIS', 'Pending'];
+                    // Extract unique Payment values from all data
+                    const uniquePayments = new Set();
+                    allData.forEach(row => {
+                        if (row.M && row.M.toString().trim()) {
+                            uniquePayments.add(row.M.toString().trim());
+                        }
+                    });
+                    const payments = ['', ...Array.from(uniquePayments).sort()];
                     payments.forEach(payment => {
                         const option = document.createElement('option');
                         option.value = payment;
@@ -4807,7 +4821,14 @@
                 else if (column === 'P') { // Paket
                     editInput = document.createElement('select');
                     editInput.className = 'modal-edit-select';
-                    const pakets = ['', 'Basic', 'Standard', 'Premium', 'Enterprise'];
+                    // Extract unique Paket values from all data
+                    const uniquePakets = new Set();
+                    allData.forEach(row => {
+                        if (row.P && row.P.toString().trim()) {
+                            uniquePakets.add(row.P.toString().trim());
+                        }
+                    });
+                    const pakets = ['', ...Array.from(uniquePakets).sort()];
                     pakets.forEach(paket => {
                         const option = document.createElement('option');
                         option.value = paket;
