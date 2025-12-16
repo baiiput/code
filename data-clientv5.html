@@ -262,16 +262,23 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-color);
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* NO transition on filter-card to prevent button click delays */
         }
 
-        .filter-card:hover {
+        /* Only add hover to collapsible cards, NOT search card */
+        .filter-card:not(.search-card):hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
             transform: translateY(-1px);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .search-card {
             border-left: 3px solid var(--accent-blue);
+            /* Search card NEVER has hover effects - contains interactive buttons */
+        }
+
+        .search-card:hover {
+            transform: none !important;
         }
 
         .search-card-content {
@@ -818,7 +825,7 @@
         .btn-success:hover { background: #059669; }
         .btn-purple:hover { background: #7c3aed; }
 
-        /* Column Dropdown - FIXED FOR MODERN LAYOUT */
+        /* Column Dropdown - INSTANT DISPLAY (NO TRANSITIONS) */
         .column-dropdown {
             position: fixed;
             background: var(--bg-container);
@@ -831,15 +838,11 @@
             max-height: 450px;
             overflow-y: auto;
             display: none;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
+            /* NO transitions - instant show/hide to prevent flickering */
         }
 
         .column-dropdown.show {
             display: block;
-            opacity: 1;
-            transform: translateY(0);
         }
 
         .column-dropdown-header {
@@ -2987,27 +2990,35 @@
             
             // Clear filters
             document.getElementById('clearFilters').addEventListener('click', function(e) {
+                console.time('⏱️ Clear Filters Response');
                 e.stopPropagation();
                 clearAllFilters();
+                console.timeEnd('⏱️ Clear Filters Response');
             });
 
             // Control buttons with stopPropagation to prevent event conflicts
             document.getElementById('refreshBtn').addEventListener('click', function(e) {
+                console.time('⏱️ Refresh Button Response');
                 e.stopPropagation();
                 if (!isLoading) loadData();
+                console.timeEnd('⏱️ Refresh Button Response');
             });
 
             document.getElementById('columnToggleBtn').addEventListener('click', function(e) {
+                console.time('⏱️ Column Toggle Response');
                 e.stopPropagation();
                 toggleColumnDropdown();
+                console.timeEnd('⏱️ Column Toggle Response');
             });
 
             document.getElementById('densityToggleBtn').addEventListener('click', function(e) {
+                console.time('⏱️ Density Toggle Response');
                 e.stopPropagation();
                 toggleDensity();
+                console.timeEnd('⏱️ Density Toggle Response');
             });
 
-            // Click outside to close column dropdown with smooth transition
+            // Click outside to close column dropdown - INSTANT (no delays)
             document.addEventListener('click', function(event) {
                 const dropdown = document.getElementById('columnDropdown');
                 const toggleBtn = document.getElementById('columnToggleBtn');
@@ -3015,12 +3026,9 @@
                 if (dropdown.classList.contains('show') &&
                     !dropdown.contains(event.target) &&
                     !toggleBtn.contains(event.target)) {
+                    // Instant close - NO setTimeout, NO delays
                     dropdown.classList.remove('show');
-                    setTimeout(() => {
-                        if (!dropdown.classList.contains('show')) {
-                            dropdown.style.display = 'none';
-                        }
-                    }, 200);
+                    console.log('🔒 Dropdown closed instantly (click outside)');
                 }
             });
 
@@ -3781,22 +3789,19 @@
         }
 
         function toggleColumnDropdown() {
+            const startTime = performance.now();
             const dropdown = document.getElementById('columnDropdown');
             const toggleBtn = document.getElementById('columnToggleBtn');
 
             if (dropdown.classList.contains('show')) {
+                // Instant close
                 dropdown.classList.remove('show');
-                // Wait for transition to finish before hiding
-                setTimeout(() => {
-                    if (!dropdown.classList.contains('show')) {
-                        dropdown.style.display = 'none';
-                    }
-                }, 200);
+                const elapsed = performance.now() - startTime;
+                console.log(`🔒 Dropdown closed in ${elapsed.toFixed(2)}ms`);
             } else {
-                // Calculate position relative to button for fixed positioning
+                // Calculate position relative to button
                 const rect = toggleBtn.getBoundingClientRect();
 
-                dropdown.style.display = 'block';
                 dropdown.style.position = 'fixed';
                 dropdown.style.top = (rect.bottom + 8) + 'px';
                 dropdown.style.left = rect.left + 'px';
@@ -3804,25 +3809,17 @@
 
                 // Ensure dropdown doesn't go off-screen
                 const dropdownWidth = 280;
-                const windowWidth = window.innerWidth;
-
-                if (rect.left + dropdownWidth > windowWidth) {
+                if (rect.left + dropdownWidth > window.innerWidth) {
                     dropdown.style.left = 'auto';
                     dropdown.style.right = '10px';
                 }
 
-                // Force reflow before adding show class for smooth transition
-                dropdown.offsetHeight;
-
-                // Show dropdown with animation
-                requestAnimationFrame(() => {
-                    dropdown.classList.add('show');
-                });
-
-                // Scroll dropdown to top
+                // Instant show - NO animations or delays
+                dropdown.classList.add('show');
                 dropdown.scrollTop = 0;
-                
-                console.log('📊 Column dropdown opened with fixed positioning');
+
+                const elapsed = performance.now() - startTime;
+                console.log(`📊 Dropdown opened in ${elapsed.toFixed(2)}ms (should be < 10ms)`);
             }
         }
 
