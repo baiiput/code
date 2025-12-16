@@ -2765,7 +2765,7 @@
                     }
                     
                     // Multi-line handling
-                    if (['B', 'C', 'D', 'H', 'I', 'J'].includes(col) && value) {
+                    if (['B', 'C', 'D', 'H', 'I', 'J', 'N'].includes(col) && value) {
                         const lines = value.split('\n').filter(line => line.trim());
                         if (lines.length > 1) {
                             td.innerHTML = '';
@@ -3122,7 +3122,7 @@
                         html += `<div class="detail-item">`;
                         html += `<div class="detail-label">${label}</div>`;
                         
-                        if (['B', 'C', 'D', 'H', 'I', 'J'].includes(col) && value.includes('\n')) {
+                        if (['B', 'C', 'D', 'H', 'I', 'J', 'N'].includes(col) && value.includes('\n')) {
                             const lines = value.split('\n').filter(line => line.trim());
                             html += `<div class="detail-value">`;
                             lines.forEach(line => {
