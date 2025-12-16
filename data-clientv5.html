@@ -2939,12 +2939,26 @@
                 <!-- Content will be populated dynamically -->
             </div>
             <div class="modal-footer">
-                <div style="font-size: 12px; color: var(--text-muted);">
+                <div style="font-size: 12px; color: var(--text-muted);" id="modalFooterHint">
                     💡 Klik tombol copy untuk menyalin data
                 </div>
-                <div class="modal-footer-actions">
-                    <button class="modal-action-btn secondary" onclick="closeModal()">Tutup</button>
-                    <button class="modal-action-btn" onclick="copyAllData()">📋 Copy All</button>
+                <div class="modal-actions" id="modalActions">
+                    <!-- View Mode Actions -->
+                    <div id="viewModeActions" style="display: flex; gap: 10px; justify-content: flex-end; width: 100%;">
+                        <button class="btn-cancel-edit" onclick="closeModal()">Tutup</button>
+                        <button class="modal-action-btn" onclick="copyAllData()">📋 Copy All</button>
+                        <button class="btn-edit-mode" id="btnEnterEditMode" onclick="enterEditMode()" style="display: none;">
+                            ✏️ Edit Data
+                        </button>
+                    </div>
+
+                    <!-- Edit Mode Actions -->
+                    <div id="editModeActions" style="display: none; gap: 10px; justify-content: flex-end; width: 100%;">
+                        <button class="btn-cancel-edit" onclick="cancelEditMode()">❌ Cancel</button>
+                        <button class="btn-submit-approval" id="btnSubmitForApproval" onclick="submitForApproval()">
+                            📤 Submit for Approval
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4637,7 +4651,7 @@
         
         function openModal(rowIndex) {
             if (!filteredData[rowIndex]) return;
-            
+
             currentModalRowIndex = rowIndex;
             const modal = document.getElementById('rowModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -4645,17 +4659,40 @@
             const modalPosition = document.getElementById('modalPosition');
             const prevBtn = document.getElementById('prevRowBtn');
             const nextBtn = document.getElementById('nextRowBtn');
-            
+            const editBtn = document.getElementById('btnEnterEditMode');
+
             const row = filteredData[rowIndex];
-            
+
+            // Store original data for change tracking
+            originalRowData = { ...row };
+            currentEditingRow = row;
+
             modalTitle.textContent = `Detail Client: ${row.A || 'Tanpa Nama'}`;
             modalPosition.textContent = `${rowIndex + 1} / ${filteredData.length}`;
-            
+
             prevBtn.disabled = rowIndex === 0;
             nextBtn.disabled = rowIndex === filteredData.length - 1;
-            
+
+            // Show edit button if user is authenticated and approval system enabled
+            if (editBtn && APPROVAL_CONFIG.ENABLE_APPROVAL_SYSTEM) {
+                if (APPROVAL_CONFIG.REQUIRE_AUTH_FOR_EDIT) {
+                    editBtn.style.display = currentUser.isAuthenticated ? 'block' : 'none';
+                } else {
+                    editBtn.style.display = 'block';
+                }
+            }
+
             modalBody.innerHTML = generateModalContent(row);
-            
+
+            // Reset to view mode
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('modal-edit-mode');
+            }
+            document.getElementById('viewModeActions').style.display = 'flex';
+            document.getElementById('editModeActions').style.display = 'none';
+            document.getElementById('modalFooterHint').textContent = '💡 Klik tombol copy untuk menyalin data';
+
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -4671,6 +4708,247 @@
             if (newIndex >= 0 && newIndex < filteredData.length) {
                 openModal(newIndex);
             }
+        }
+
+        // ========================================
+        // ✏️ EDIT MODE FUNCTIONS
+        // ========================================
+
+        function enterEditMode() {
+            if (APPROVAL_CONFIG.REQUIRE_AUTH_FOR_EDIT && !currentUser.isAuthenticated) {
+                showToast('❌ Please sign in to edit data');
+                return;
+            }
+
+            console.log('✏️ Entering edit mode...');
+
+            // Switch UI to edit mode
+            const modal = document.getElementById('rowModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.classList.add('modal-edit-mode');
+
+            // Switch action buttons
+            document.getElementById('viewModeActions').style.display = 'none';
+            document.getElementById('editModeActions').style.display = 'flex';
+            document.getElementById('modalFooterHint').textContent = '✏️ Edit fields below and click Submit for Approval when done';
+
+            // Convert all detail-value divs to editable inputs
+            const detailItems = modal.querySelectorAll('.detail-item');
+            detailItems.forEach(item => {
+                const label = item.querySelector('.detail-label');
+                const valueDiv = item.querySelector('.detail-value');
+
+                if (!valueDiv || !label) return;
+
+                // Get column from label
+                const labelText = label.textContent;
+                const column = Object.keys(columnLabels).find(col => columnLabels[col] === labelText);
+
+                if (!column) return;
+
+                const originalValue = currentEditingRow[column] || '';
+
+                // Create edit input
+                let editInput;
+
+                // Multi-line fields
+                if (['B', 'C', 'D', 'H', 'I', 'J', 'N'].includes(column)) {
+                    editInput = document.createElement('textarea');
+                    editInput.className = 'modal-edit-textarea';
+                    editInput.value = originalValue;
+                    editInput.rows = Math.max(3, originalValue.split('\n').length);
+                }
+                // Date field
+                else if (column === 'K') {
+                    editInput = document.createElement('input');
+                    editInput.type = 'date';
+                    editInput.className = 'modal-edit-input';
+                    // Convert displayed date to yyyy-mm-dd format
+                    if (originalValue) {
+                        const date = new Date(originalValue);
+                        if (!isNaN(date)) {
+                            editInput.value = date.toISOString().split('T')[0];
+                        }
+                    }
+                }
+                // Select fields (Status, Payment, Paket)
+                else if (column === 'O') { // Status
+                    editInput = document.createElement('select');
+                    editInput.className = 'modal-edit-select';
+                    const statuses = ['', 'Proses', 'Selesai', 'Pending', 'Cancel'];
+                    statuses.forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.textContent = status || '(Empty)';
+                        if (status === originalValue) option.selected = true;
+                        editInput.appendChild(option);
+                    });
+                }
+                else if (column === 'M') { // Payment
+                    editInput = document.createElement('select');
+                    editInput.className = 'modal-edit-select';
+                    const payments = ['', 'Transfer', 'Cash', 'QRIS', 'Pending'];
+                    payments.forEach(payment => {
+                        const option = document.createElement('option');
+                        option.value = payment;
+                        option.textContent = payment || '(Empty)';
+                        if (payment === originalValue) option.selected = true;
+                        editInput.appendChild(option);
+                    });
+                }
+                else if (column === 'P') { // Paket
+                    editInput = document.createElement('select');
+                    editInput.className = 'modal-edit-select';
+                    const pakets = ['', 'Basic', 'Standard', 'Premium', 'Enterprise'];
+                    pakets.forEach(paket => {
+                        const option = document.createElement('option');
+                        option.value = paket;
+                        option.textContent = paket || '(Empty)';
+                        if (paket === originalValue) option.selected = true;
+                        editInput.appendChild(option);
+                    });
+                }
+                // Regular text fields
+                else {
+                    editInput = document.createElement('input');
+                    editInput.type = 'text';
+                    editInput.className = 'modal-edit-input';
+                    editInput.value = originalValue;
+                }
+
+                editInput.dataset.column = column;
+                editInput.dataset.originalValue = originalValue;
+
+                // Add change listener for highlighting
+                editInput.addEventListener('input', function() {
+                    if (this.value !== this.dataset.originalValue) {
+                        this.classList.add('modal-field-changed');
+                    } else {
+                        this.classList.remove('modal-field-changed');
+                    }
+                });
+
+                // Hide view div, show edit input
+                valueDiv.style.display = 'none';
+                const editWrapper = document.createElement('div');
+                editWrapper.className = 'modal-field-edit';
+                editWrapper.appendChild(editInput);
+
+                const changeIndicator = document.createElement('div');
+                changeIndicator.className = 'field-change-indicator';
+                changeIndicator.textContent = '✓ Changed';
+                editWrapper.appendChild(changeIndicator);
+
+                item.appendChild(editWrapper);
+            });
+
+            showToast('✏️ Edit mode enabled - modify fields and submit for approval');
+        }
+
+        function cancelEditMode() {
+            if (!confirm('Discard all changes and return to view mode?')) return;
+
+            console.log('❌ Canceling edit mode...');
+
+            // Re-render modal in view mode
+            openModal(currentModalRowIndex);
+
+            showToast('Changes discarded');
+        }
+
+        async function submitForApproval() {
+            console.log('📤 Submitting for approval...');
+
+            // Collect changed fields
+            const modal = document.getElementById('rowModal');
+            const editInputs = modal.querySelectorAll('.modal-edit-input, .modal-edit-select, .modal-edit-textarea');
+
+            const changedData = {};
+            const changedColumns = [];
+
+            editInputs.forEach(input => {
+                const column = input.dataset.column;
+                const originalValue = input.dataset.originalValue;
+                const newValue = input.value;
+
+                if (newValue !== originalValue) {
+                    changedData[column] = newValue;
+                    changedColumns.push(column);
+                }
+            });
+
+            if (changedColumns.length === 0) {
+                showToast('⚠️ No changes detected');
+                return;
+            }
+
+            // Prepare approval data
+            const approvalData = {
+                rowId: currentEditingRow.E || currentEditingRow.A, // ACC_NO or Nama
+                originalData: {},
+                newData: changedData,
+                changedColumns: changedColumns,
+                changedBy: currentUser.email || 'anonymous@example.com',
+                changedByName: currentUser.name || 'Anonymous User',
+                sourceSheet: currentSheet === 'semua-client' ? (currentEditingRow._category || 'Client Aktif') :
+                            currentSheet === 'client-aktif' ? 'Client Aktif' :
+                            currentSheet === 'client-non-aktif' ? 'Client Non Aktif' : 'Client Lepas'
+            };
+
+            // Add original data for changed columns
+            changedColumns.forEach(col => {
+                approvalData.originalData[col] = currentEditingRow[col] || '';
+            });
+
+            console.log('Approval data:', approvalData);
+
+            // Show confirmation
+            const changesSummary = changedColumns.map(col => {
+                return `${columnLabels[col]}: "${approvalData.originalData[col]}" → "${approvalData.newData[col]}"`;
+            }).join('\n');
+
+            if (!confirm(`Submit these changes for approval?\n\n${changesSummary}`)) {
+                return;
+            }
+
+            // TODO: Uncomment when Apps Script is ready
+            /*
+            try {
+                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'addPendingApproval',
+                        approvalData: approvalData
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('✅ Changes submitted for approval!');
+                    closeModal();
+
+                    // Refresh approval queue if admin
+                    if (currentUser.isAdmin) {
+                        loadPendingApprovals();
+                    }
+                } else {
+                    showToast('❌ Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error submitting for approval:', error);
+                showToast('❌ Error submitting changes');
+            }
+            */
+
+            // Demo mode response
+            showToast(`✅ Changes submitted for approval! (Demo mode)\n${changedColumns.length} fields changed`);
+            console.log('Would submit to API:', approvalData);
+
+            // Close modal after successful submission
+            setTimeout(() => {
+                closeModal();
+            }, 1500);
         }
 
         function generateModalContent(row) {
