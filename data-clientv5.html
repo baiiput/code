@@ -1348,6 +1348,20 @@
                         </div>
                     </div>
                     <div class="filter-group">
+                        <label>Email Client</label>
+                        <div class="search-box">
+                            <input type="text" id="filterEmail" placeholder="Filter email...">
+                            <button class="search-clear-btn" id="filterEmailClear" type="button">×</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Nomor KIT</label>
+                        <div class="search-box">
+                            <input type="text" id="filterKit" placeholder="Filter nomor KIT...">
+                            <button class="search-clear-btn" id="filterKitClear" type="button">×</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
                         <label>Status</label>
                         <div class="checkbox-filter-container" id="statusFilterContainer">
                             <div class="checkbox-filter-header">
@@ -1814,7 +1828,9 @@
                 // Apply text filters
                 if (filters.namaFilter && !row.A.toLowerCase().includes(filters.namaFilter)) return false;
                 if (filters.nomorCSFilter && !row.G.toLowerCase().includes(filters.nomorCSFilter)) return false;
-                
+                if (filters.emailFilter && !row.F.toLowerCase().includes(filters.emailFilter)) return false;
+                if (filters.kitFilter && !row.I.toLowerCase().includes(filters.kitFilter)) return false;
+
                 // Apply checkbox filters
                 if (checkboxFilters.status.size > 0) {
                     const rowStatus = row.O || '';
@@ -2069,7 +2085,9 @@
             const searchInputs = [
                 { inputId: 'globalSearch', clearId: 'globalSearchClear' },
                 { inputId: 'filterNama', clearId: 'filterNamaClear' },
-                { inputId: 'filterNomorCS', clearId: 'filterNomorCSClear' }
+                { inputId: 'filterNomorCS', clearId: 'filterNomorCSClear' },
+                { inputId: 'filterEmail', clearId: 'filterEmailClear' },
+                { inputId: 'filterKit', clearId: 'filterKitClear' }
             ];
             
             searchInputs.forEach(({ inputId, clearId }) => {
@@ -2137,7 +2155,15 @@
             document.getElementById('filterNomorCS').addEventListener('input', function() {
                 smartDebouncer.debounceImmediate('nomor-filter', applyFilters, 300);
             });
-            
+
+            document.getElementById('filterEmail').addEventListener('input', function() {
+                smartDebouncer.debounceImmediate('email-filter', applyFilters, 300);
+            });
+
+            document.getElementById('filterKit').addEventListener('input', function() {
+                smartDebouncer.debounceImmediate('kit-filter', applyFilters, 300);
+            });
+
             // Date filters
             document.getElementById('filterTanggalStart').addEventListener('change', applyFilters);
             document.getElementById('filterTanggalEnd').addEventListener('change', applyFilters);
@@ -2570,6 +2596,8 @@
                 globalSearch: document.getElementById('globalSearch').value.toLowerCase(),
                 namaFilter: document.getElementById('filterNama').value.toLowerCase(),
                 nomorCSFilter: document.getElementById('filterNomorCS').value.toLowerCase(),
+                emailFilter: document.getElementById('filterEmail').value.toLowerCase(),
+                kitFilter: document.getElementById('filterKit').value.toLowerCase(),
                 tanggalStartFilter: document.getElementById('filterTanggalStart').value,
                 tanggalEndFilter: document.getElementById('filterTanggalEnd').value
             };
@@ -2620,6 +2648,8 @@
             document.getElementById('globalSearch').value = '';
             document.getElementById('filterNama').value = '';
             document.getElementById('filterNomorCS').value = '';
+            document.getElementById('filterEmail').value = '';
+            document.getElementById('filterKit').value = '';
             document.getElementById('filterTanggalStart').value = '';
             document.getElementById('filterTanggalEnd').value = '';
 
