@@ -4981,9 +4981,22 @@
                     ? input.dataset.isoOriginal
                     : input.dataset.originalValue;
 
+                // Debug logging for date field
+                if (column === 'K') {
+                    console.log('📅 Date field check:', {
+                        column: column,
+                        newValue: newValue,
+                        originalValue: originalValue,
+                        isoOriginal: input.dataset.isoOriginal,
+                        displayOriginal: input.dataset.originalValue,
+                        isChanged: newValue !== originalValue
+                    });
+                }
+
                 if (newValue !== originalValue) {
                     changedData[column] = newValue;
                     changedColumns.push(column);
+                    console.log(`✏️ Field changed: ${column} | Old: "${originalValue}" → New: "${newValue}"`);
                 }
             });
 
