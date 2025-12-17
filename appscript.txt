@@ -5655,7 +5655,7 @@ function isAdmin(email) {
     if (!adminSheet) {
       Logger.log('⚠️ Admin_Users sheet not found, using fallback');
       // Fallback: return true for specific emails
-      const fallbackAdmins = ['admin@example.com']; // TODO: Update with actual admin emails
+      const fallbackAdmins = ['baiiput@gmail.com']; // Admin email
       return fallbackAdmins.includes(email.toLowerCase());
     }
 
