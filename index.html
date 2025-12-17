@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Client Starlink - Enhanced</title>
+
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <style>
         /* CSS Variables for Theme Support */
         :root[data-theme="light"] {
@@ -2690,6 +2696,11 @@
                             <button class="btn-modern btn-icon" id="approvalQueueBtn" title="Approval Queue" style="display: none; position: relative;">
                                 <span>📋</span>
                                 <span class="approval-badge" id="approvalBadge" style="display: none;">0</span>
+                            </button>
+
+                            <!-- Force Reload Button -->
+                            <button class="btn-modern btn-icon" id="forceReloadBtn" title="Force Reload (Clear Cache)" onclick="forceReload()">
+                                <span>🔄💨</span>
                             </button>
                         </div>
                     </div>
@@ -5978,9 +5989,70 @@
             }
         }
 
+        // ========================================
+        // 🔄 VERSION CHECK & CACHE MANAGEMENT
+        // ========================================
+
+        const APP_VERSION = '2.0.1'; // Update this when making changes
+
+        function checkVersion() {
+            const storedVersion = localStorage.getItem('app_version');
+
+            if (storedVersion !== APP_VERSION) {
+                console.log(`🔄 Version changed: ${storedVersion} → ${APP_VERSION}`);
+                console.log('Clearing cache and reloading...');
+
+                // Update version
+                localStorage.setItem('app_version', APP_VERSION);
+
+                // Force hard reload
+                window.location.reload(true);
+                return false;
+            }
+
+            return true;
+        }
+
+        function forceReload() {
+            console.log('🔄 Force reload requested');
+
+            // Clear all localStorage except user session
+            const userEmail = localStorage.getItem('user_email');
+            const userName = localStorage.getItem('user_name');
+            const userPicture = localStorage.getItem('user_picture');
+
+            localStorage.clear();
+
+            // Restore user session
+            if (userEmail) localStorage.setItem('user_email', userEmail);
+            if (userName) localStorage.setItem('user_name', userName);
+            if (userPicture) localStorage.setItem('user_picture', userPicture);
+
+            // Set new version
+            localStorage.setItem('app_version', APP_VERSION);
+
+            // Hard reload
+            window.location.reload(true);
+        }
+
+        // Add keyboard shortcut: Ctrl+Shift+R for force reload
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                showToast('🔄 Force reloading...');
+                setTimeout(forceReload, 500);
+            }
+        });
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Starting Data Client Starlink - Modern Design Version');
+            console.log(`📦 Version: ${APP_VERSION}`);
+
+            // Check version and auto-reload if changed
+            if (!checkVersion()) {
+                return; // Reloading...
+            }
 
             initializeTheme();
             initializeDensity();
