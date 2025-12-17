@@ -2969,7 +2969,7 @@
         // 🌟 CENTRALIZED CONFIGURATION
         const CONFIG = {
             // 🚀 MAIN APPS SCRIPT URL
-            API_URL: 'https://script.google.com/macros/s/AKfycbxxoP13UrnFopLscVmP-SR-zJp-9wEt40Mddhs14ZkmO0W3jD5P9ZLXjeTcnvhd-_lV/exec',
+            API_URL: 'https://script.google.com/macros/s/AKfycbyqA10mgTuwccs_At5EXt2AE8kGeuzaZhsYoXwTckGQwHB4nzzg_-ZaIN5FlELyz3CL/exec',
 
             // 🎯 OPTIONAL: Apps Script URLs yang BERBEDA (jika ada)
             CUSTOM_APIS: {},
@@ -5406,7 +5406,11 @@
                     currentUser = JSON.parse(savedUser);
                     if (currentUser.isAuthenticated) {
                         updateUserProfile();
-                        checkAdminStatus();
+                        // Call checkAdminStatus but don't let errors block page
+                        checkAdminStatus().catch(err => {
+                            console.warn('⚠️ Could not verify admin status with backend:', err.message);
+                            console.log('✅ Using local admin check as fallback');
+                        });
                     }
                 } catch (e) {
                     console.error('Error loading saved user:', e);
@@ -5432,7 +5436,11 @@
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             updateUserProfile();
-            checkAdminStatus();
+            // Call checkAdminStatus but don't let errors block page
+            checkAdminStatus().catch(err => {
+                console.warn('⚠️ Could not verify admin status with backend:', err.message);
+                console.log('✅ Using local admin check as fallback');
+            });
 
             showToast(`✅ Signed in as ${currentUser.name}`);
         }
