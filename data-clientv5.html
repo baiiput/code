@@ -2968,11 +2968,14 @@
     <script>
         // 🌟 CENTRALIZED CONFIGURATION
         const CONFIG = {
-            // 🚀 MAIN APPS SCRIPT URL
-            API_URL: 'https://script.google.com/macros/s/AKfycbyqA10mgTuwccs_At5EXt2AE8kGeuzaZhsYoXwTckGQwHB4nzzg_-ZaIN5FlELyz3CL/exec',
+            // 🚀 MAIN APPS SCRIPT URL - FOR DATA LOADING
+            API_URL: 'https://script.google.com/macros/s/AKfycbxxoP13UrnFopLscVmP-SR-zJp-9wEt40Mddhs14ZkmO0W3jD5P9ZLXjeTcnvhd-_lV/exec',
 
             // 🎯 OPTIONAL: Apps Script URLs yang BERBEDA (jika ada)
-            CUSTOM_APIS: {},
+            CUSTOM_APIS: {
+                // Approval system uses separate URL (if different deployment)
+                'approval': 'https://script.google.com/macros/s/AKfycbyqA10mgTuwccs_At5EXt2AE8kGeuzaZhsYoXwTckGQwHB4nzzg_-ZaIN5FlELyz3CL/exec'
+            },
 
             // 🌐 DOMAIN & SECURITY SETTINGS
             WEBSITE_DOMAIN: 'https://octolink.id',
@@ -5341,11 +5344,14 @@
             // Google OAuth Client ID (optional - currently using demo mode)
             GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Get from Google Cloud Console
 
-            // Apps Script URL - automatically loaded from external config.js
+            // Apps Script URL - uses approval-specific URL if available
             get APPS_SCRIPT_URL() {
-                return typeof CONFIG !== 'undefined' && CONFIG.API_URL
-                    ? CONFIG.API_URL
-                    : 'https://script.google.com/macros/s/AKfycbxxoP13UrnFopLscVmP-SR-zJp-9wEt40Mddhs14ZkmO0W3jD5P9ZLXjeTcnvhd-_lV/exec';
+                if (typeof CONFIG !== 'undefined') {
+                    // Try to get approval-specific URL, fallback to main API_URL
+                    return CONFIG.getApiUrl('approval');
+                }
+                // Ultimate fallback
+                return 'https://script.google.com/macros/s/AKfycbyqA10mgTuwccs_At5EXt2AE8kGeuzaZhsYoXwTckGQwHB4nzzg_-ZaIN5FlELyz3CL/exec';
             },
 
             // Admin emails (fallback if Admin_Users sheet not available)
