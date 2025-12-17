@@ -2964,9 +2964,78 @@
         </div>
     </div>
 
-    <!-- Load config.js eksternal -->
-    <script src="config.js"></script>
-    
+    <!-- CONFIG - Embedded Inline to Avoid ORB Blocking -->
+    <script>
+        // 🌟 CENTRALIZED CONFIGURATION
+        const CONFIG = {
+            // 🚀 MAIN APPS SCRIPT URL
+            API_URL: 'https://script.google.com/macros/s/AKfycbxxoP13UrnFopLscVmP-SR-zJp-9wEt40Mddhs14ZkmO0W3jD5P9ZLXjeTcnvhd-_lV/exec',
+
+            // 🎯 OPTIONAL: Apps Script URLs yang BERBEDA (jika ada)
+            CUSTOM_APIS: {},
+
+            // 🌐 DOMAIN & SECURITY SETTINGS
+            WEBSITE_DOMAIN: 'https://octolink.id',
+            ALLOWED_ORIGINS: [
+                'https://octolink.id',
+                'https://www.octolink.id',
+                'https://sys.octolink.id',
+                'http://localhost',
+                'http://127.0.0.1'
+            ],
+
+            // ⚙️ API SETTINGS
+            API_TIMEOUT: 30000,
+            RETRY_ATTEMPTS: 3,
+            VALIDATE_ORIGIN: true,
+            DEBUG_MODE: false,
+            ENABLE_LOGGING: true,
+
+            // 🔧 HELPER FUNCTIONS
+            log: function(message, data = null) {
+                if (this.DEBUG_MODE && this.ENABLE_LOGGING) {
+                    console.log('[CONFIG]', message, data || '');
+                }
+            },
+
+            error: function(message, error = null) {
+                if (this.ENABLE_LOGGING) {
+                    console.error('[CONFIG ERROR]', message, error || '');
+                }
+            },
+
+            // 🎯 SMART API URL GETTER
+            getApiUrl: function(context = 'default') {
+                if (this.CUSTOM_APIS[context]) {
+                    this.log('Using custom API for ' + context + ':', this.CUSTOM_APIS[context]);
+                    return this.CUSTOM_APIS[context];
+                }
+                this.log('Using main API for ' + context + ':', this.API_URL);
+                return this.API_URL;
+            },
+
+            // 🔧 VALIDATE CONFIGURATION
+            validate: function() {
+                const issues = [];
+
+                if (!this.API_URL || this.API_URL.includes('YOUR_SCRIPT_ID')) {
+                    issues.push('⚠️ API_URL belum diset dengan benar');
+                }
+
+                if (issues.length > 0) {
+                    console.warn('🔧 KONFIGURASI ISSUES:', issues);
+                    return false;
+                }
+
+                this.log('✅ Konfigurasi valid');
+                return true;
+            }
+        };
+
+        console.log('✅ CONFIG loaded (inline)');
+        window.CONFIG = CONFIG;
+    </script>
+
     <script>
         // ===== PERFORMANCE OPTIMIZATION CLASSES =====
         
