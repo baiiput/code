@@ -4,8 +4,8 @@
 const CONFIG = {
     // 🚀 MAIN APPS SCRIPT URL - HANYA PERLU UPDATE DI SINI!
     // Jika semua halaman (dashboard, checker, payment) pakai Apps Script yang SAMA:
-    // Updated: 2024-12-17 - URL dari deployment terbaru dengan approval system
-    API_URL: 'https://script.google.com/macros/s/AKfycbwvZ2IGMisUjjymIco8eIdbrptMy8Nk_AeO8lLmoKN-OLXPHdC6JwK9D4uMAWygUTrV/exec',
+    // Updated: 2024-12-17 - URL dari deployment terbaru dengan doOptions untuk CORS fix
+    API_URL: 'https://script.google.com/macros/s/AKfycbyCrQ7zeC3MbsX7WTVSpeKvhEW8vBz0RzJ8vrvh8wP3ZxxPvlbptlodXxxkgIlrGBDG/exec',
 
     // 🎯 OPTIONAL: Apps Script URLs yang BERBEDA (jika ada)
     // Hanya isi ini jika ada halaman yang pakai Apps Script berbeda
