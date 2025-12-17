@@ -4,13 +4,15 @@
 const CONFIG = {
     // 🚀 MAIN APPS SCRIPT URL - HANYA PERLU UPDATE DI SINI!
     // Jika semua halaman (dashboard, checker, payment) pakai Apps Script yang SAMA:
-    API_URL: 'https://script.google.com/macros/s/AKfycbwNSbTUCNmBdmSOUUdnmSjGG2YiZzkbWmSJN4nxFVT5HdIwkQRai7PgrMCVyCN0vpRk/exec',
-    
+    // Updated: 2024-12-17 - URL dari deployment terbaru dengan approval system
+    API_URL: 'https://script.google.com/macros/s/AKfycbwXMk3IsmqZM8N0UxOrzuuSvbAwkED12H06_wg153C5NQB4ZpUab7pI-ohLQu_HWCGo/exec',
+
     // 🎯 OPTIONAL: Apps Script URLs yang BERBEDA (jika ada)
     // Hanya isi ini jika ada halaman yang pakai Apps Script berbeda
+    // Karena kita pakai 1 deployment untuk semua (data + approval), comment dulu custom approval URL
     CUSTOM_APIS: {
-        // Approval system uses separate URL (if different deployment)
-        'approval': 'https://script.google.com/macros/s/AKfycbyqA10mgTuwccs_At5EXt2AE8kGeuzaZhsYoXwTckGQwHB4nzzg_-ZaIN5FlELyz3CL/exec'
+        // Approval system menggunakan MAIN API_URL yang sama (sudah include approval functions)
+        // 'approval': 'https://script.google.com/macros/s/AKfycbwXMk3IsmqZM8N0UxOrzuuSvbAwkED12H06_wg153C5NQB4ZpUab7pI-ohLQu_HWCGo/exec'
         // dashboard: 'https://script.google.com/macros/s/DIFFERENT_DASHBOARD_ID/exec',  // Uncomment jika beda
         // payment: 'https://script.google.com/macros/s/DIFFERENT_PAYMENT_ID/exec',     // Uncomment jika beda
         // admin: 'https://script.google.com/macros/s/DIFFERENT_ADMIN_ID/exec',         // Uncomment jika beda
