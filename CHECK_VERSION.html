@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Version Check - Starlink System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { color: #2563eb; margin-bottom: 10px; }
+        .version { font-size: 14px; color: #64748b; margin-bottom: 30px; }
+        .check { margin: 20px 0; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        .check.success { background: #d1fae5; border-color: #10b981; }
+        .check.error { background: #fee2e2; border-color: #ef4444; }
+        .check.warning { background: #fef3c7; border-color: #f59e0b; }
+        .label { font-weight: 600; margin-bottom: 5px; }
+        .value { font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; }
+        button {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { opacity: 0.9; }
+        .instructions {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .code {
+            background: #1e293b;
+            color: #10b981;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Version & Configuration Check</h1>
+        <div class="version">Build: 2024-12-17 | v2.0 with Real Google Auth</div>
+
+        <div id="results"></div>
+
+        <button onclick="runCheck()">🔄 Run Check Again</button>
+        <button onclick="window.location.href='index.html'">📊 Go to Main App</button>
+
+        <div class="instructions">
+            <h3>📝 How to Fix Issues:</h3>
+            <ol>
+                <li><strong>Upload latest files to server:</strong>
+                    <div class="code">
+                        - index.html (with config.js loader)<br>
+                        - config.js (with correct URLs)
+                    </div>
+                </li>
+                <li><strong>Clear browser cache:</strong> Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)</li>
+                <li><strong>Verify URLs in config.js:</strong> Check API_URL and approval URL are correct</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Load config.js first -->
+    <script src="config.js"></script>
+
+    <script>
+        function runCheck() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+
+            // Check 1: CONFIG object exists
+            const check1 = document.createElement('div');
+            if (typeof CONFIG !== 'undefined') {
+                check1.className = 'check success';
+                check1.innerHTML = `
+                    <div class="label">✅ CONFIG object loaded</div>
+                    <div class="value">config.js successfully loaded</div>
+                `;
+            } else {
+                check1.className = 'check error';
+                check1.innerHTML = `
+                    <div class="label">❌ CONFIG object NOT found</div>
+                    <div class="value">config.js failed to load or not included</div>
+                `;
+            }
+            results.appendChild(check1);
+
+            // Check 2: Main API URL
+            const check2 = document.createElement('div');
+            if (typeof CONFIG !== 'undefined' && CONFIG.API_URL) {
+                const isOldUrl = CONFIG.API_URL.includes('AKfycbwXMk3IsmqZM8N0UxOrzuuSvbAwkED12H06_wg153C5NQB4ZpUab7pI-ohLQu_HWCGo');
+                check2.className = isOldUrl ? 'check warning' : 'check success';
+                check2.innerHTML = `
+                    <div class="label">${isOldUrl ? '⚠️' : '✅'} Main API_URL</div>
+                    <div class="value">${CONFIG.API_URL}</div>
+                    ${isOldUrl ? '<div style="color: #f59e0b; margin-top: 5px;">⚠️ This looks like an old URL. Update config.js if needed.</div>' : ''}
+                `;
+            } else {
+                check2.className = 'check error';
+                check2.innerHTML = `
+                    <div class="label">❌ API_URL not found</div>
+                    <div class="value">CONFIG.API_URL is undefined</div>
+                `;
+            }
+            results.appendChild(check2);
+
+            // Check 3: Approval API URL
+            const check3 = document.createElement('div');
+            if (typeof CONFIG !== 'undefined') {
+                const approvalUrl = CONFIG.getApiUrl ? CONFIG.getApiUrl('approval') : 'getApiUrl function not found';
+                const isOldUrl = approvalUrl.includes('AKfycbwXMk3IsmqZM8N0UxOrzuuSvbAwkED12H06_wg153C5NQB4ZpUab7pI-ohLQu_HWCGo');
+                check3.className = isOldUrl ? 'check error' : 'check success';
+                check3.innerHTML = `
+                    <div class="label">${isOldUrl ? '❌' : '✅'} Approval API URL</div>
+                    <div class="value">${approvalUrl}</div>
+                    ${isOldUrl ? '<div style="color: #ef4444; margin-top: 5px;">❌ OLD URL DETECTED! This is causing CORS errors. Update config.js CUSTOM_APIS.approval</div>' : ''}
+                `;
+            } else {
+                check3.className = 'check error';
+                check3.innerHTML = `
+                    <div class="label">❌ Cannot check approval URL</div>
+                    <div class="value">CONFIG not loaded</div>
+                `;
+            }
+            results.appendChild(check3);
+
+            // Check 4: Custom APIs
+            const check4 = document.createElement('div');
+            if (typeof CONFIG !== 'undefined' && CONFIG.CUSTOM_APIS) {
+                check4.className = 'check success';
+                check4.innerHTML = `
+                    <div class="label">📋 Custom APIs configured</div>
+                    <div class="value">${JSON.stringify(CONFIG.CUSTOM_APIS, null, 2)}</div>
+                `;
+            } else {
+                check4.className = 'check warning';
+                check4.innerHTML = `
+                    <div class="label">⚠️ No custom APIs</div>
+                    <div class="value">Using main API_URL for all requests</div>
+                `;
+            }
+            results.appendChild(check4);
+
+            // Check 5: File version
+            const check5 = document.createElement('div');
+            check5.className = 'check';
+            const hasConfigLoader = document.querySelector('script[src="config.js"]');
+            if (hasConfigLoader) {
+                check5.className += ' success';
+                check5.innerHTML = `
+                    <div class="label">✅ index.html has config.js loader</div>
+                    <div class="value">Latest version with external config</div>
+                `;
+            } else {
+                check5.className += ' warning';
+                check5.innerHTML = `
+                    <div class="label">⚠️ config.js loader check</div>
+                    <div class="value">Could not verify if index.html loads config.js properly</div>
+                `;
+            }
+            results.appendChild(check5);
+
+            // Summary
+            const summary = document.createElement('div');
+            summary.style.marginTop = '20px';
+            summary.style.padding = '15px';
+            summary.style.background = '#f1f5f9';
+            summary.style.borderRadius = '8px';
+
+            const hasErrors = document.querySelectorAll('.check.error').length > 0;
+            const hasWarnings = document.querySelectorAll('.check.warning').length > 0;
+
+            if (!hasErrors && !hasWarnings) {
+                summary.innerHTML = `
+                    <h3 style="color: #10b981;">✅ All checks passed!</h3>
+                    <p>Your configuration is correct. If you're still experiencing issues, clear your browser cache.</p>
+                `;
+            } else if (hasErrors) {
+                summary.innerHTML = `
+                    <h3 style="color: #ef4444;">❌ Issues found!</h3>
+                    <p>Please fix the errors above. Most likely you need to:</p>
+                    <ul>
+                        <li>Upload the latest index.html and config.js to your server</li>
+                        <li>Clear browser cache (Ctrl+Shift+R)</li>
+                    </ul>
+                `;
+            } else {
+                summary.innerHTML = `
+                    <h3 style="color: #f59e0b;">⚠️ Warnings found</h3>
+                    <p>Review the warnings above to ensure optimal configuration.</p>
+                `;
+            }
+            results.appendChild(summary);
+        }
+
+        // Run check on page load
+        window.addEventListener('DOMContentLoaded', runCheck);
+    </script>
+</body>
+</html>
