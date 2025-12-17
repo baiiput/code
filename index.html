@@ -5737,9 +5737,10 @@
                 const changesHtml = approval.changedColumns.map(col => {
                     const oldVal = approval.originalData[col] || '-';
                     const newVal = approval.newData[col] || '-';
+                    const fieldLabel = columnLabels[col] || col; // Use friendly label
                     return `
                         <tr class="changed-row">
-                            <td><strong>${col}</strong></td>
+                            <td><strong>${fieldLabel}</strong></td>
                             <td class="old-value">${oldVal}</td>
                             <td class="new-value">${newVal}</td>
                         </tr>
@@ -5789,6 +5790,17 @@
 
             console.log('✅ Approving:', approvalId);
 
+            // Find and disable button with loading state
+            const item = document.querySelector(`[data-approval-id="${approvalId}"]`);
+            const approveBtn = item?.querySelector('.btn-approve');
+            const rejectBtn = item?.querySelector('.btn-reject');
+
+            if (approveBtn) {
+                approveBtn.disabled = true;
+                approveBtn.textContent = '⏳ Approving...';
+            }
+            if (rejectBtn) rejectBtn.disabled = true;
+
             // Approve via Apps Script API using GET request
             try {
                 const params = new URLSearchParams({
@@ -5813,10 +5825,22 @@
                     loadData(); // Refresh table data
                 } else {
                     showToast('❌ ' + result.message);
+                    // Re-enable buttons on error
+                    if (approveBtn) {
+                        approveBtn.disabled = false;
+                        approveBtn.textContent = '✅ Approve';
+                    }
+                    if (rejectBtn) rejectBtn.disabled = false;
                 }
             } catch (error) {
                 console.error('Error approving change:', error);
                 showToast('❌ Error approving change');
+                // Re-enable buttons on error
+                if (approveBtn) {
+                    approveBtn.disabled = false;
+                    approveBtn.textContent = '✅ Approve';
+                }
+                if (rejectBtn) rejectBtn.disabled = false;
             }
         }
 
@@ -5851,6 +5875,14 @@
 
             console.log('❌ Rejecting:', pendingRejectApprovalId, 'Reason:', reason);
 
+            // Show loading state on confirm button
+            const confirmBtn = document.getElementById('btnConfirmReject');
+            const originalText = confirmBtn ? confirmBtn.textContent : '';
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = '⏳ Rejecting...';
+            }
+
             // Reject via Apps Script API using GET request
             try {
                 const params = new URLSearchParams({
@@ -5873,21 +5905,38 @@
                     showToast('✅ Change rejected');
                     loadPendingApprovals();
                     renderApprovalQueue();
+                    closeRejectReasonModal();
                 } else {
                     showToast('❌ ' + result.message);
+                    // Re-enable button on error
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = originalText;
+                    }
                 }
             } catch (error) {
                 console.error('Error rejecting change:', error);
                 showToast('❌ Error rejecting change');
+                // Re-enable button on error
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = originalText;
+                }
             }
-
-            closeRejectReasonModal();
         }
 
         async function handleApproveAll() {
             if (!confirm(`Approve all ${pendingApprovals.length} pending changes?`)) return;
 
             console.log('✅ Approving all changes...');
+
+            // Show loading state on approve all button
+            const approveAllBtn = document.getElementById('btnApproveAll');
+            const originalText = approveAllBtn ? approveAllBtn.textContent : '';
+            if (approveAllBtn) {
+                approveAllBtn.disabled = true;
+                approveAllBtn.textContent = '⏳ Approving all...';
+            }
 
             // Approve all via Apps Script API using GET request
             try {
@@ -5912,10 +5961,20 @@
                     loadData();
                 } else {
                     showToast('❌ ' + result.message);
+                    // Re-enable button on error
+                    if (approveAllBtn) {
+                        approveAllBtn.disabled = false;
+                        approveAllBtn.textContent = originalText;
+                    }
                 }
             } catch (error) {
                 console.error('Error approving all:', error);
                 showToast('❌ Error approving all changes');
+                // Re-enable button on error
+                if (approveAllBtn) {
+                    approveAllBtn.disabled = false;
+                    approveAllBtn.textContent = originalText;
+                }
             }
         }
 
