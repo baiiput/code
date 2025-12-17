@@ -1293,37 +1293,191 @@ function doGet(e) {
     else if (action === 'getReportData') {
   var month = parseInt(e.parameter.month);
   var year = parseInt(e.parameter.year);
-  
+
   if (!month || !year) {
     var now = new Date();
     month = now.getMonth() + 1;
     year = now.getFullYear();
   }
-  
+
   var result = getReportData(month, year);
   return createResponse(result);
 }
+
+    // ========================================
+    // 🔐 APPROVAL SYSTEM ACTIONS (via GET)
+    // ========================================
+
+    // ADD PENDING APPROVAL
+    else if (action === 'addPendingApproval') {
+      Logger.log('📝 Adding pending approval via GET...');
+
+      try {
+        // Parse data from URL parameters
+        var approvalData = {
+          kit: e.parameter.kit,
+          submittedBy: e.parameter.submittedBy,
+          submittedAt: e.parameter.submittedAt,
+          sourceSheet: e.parameter.sourceSheet,
+          originalData: JSON.parse(e.parameter.originalData || '{}'),
+          newData: JSON.parse(e.parameter.newData || '{}')
+        };
+
+        Logger.log('Approval data: ' + JSON.stringify(approvalData));
+        var result = addPendingApproval(approvalData);
+        return createResponse(result);
+      } catch (error) {
+        Logger.log('❌ Error in addPendingApproval: ' + error.message);
+        return createResponse({
+          status: 'error',
+          message: 'Error processing approval: ' + error.message
+        });
+      }
+    }
+
+    // GET PENDING APPROVALS
+    else if (action === 'getPendingApprovals') {
+      Logger.log('📋 Getting pending approvals via GET...');
+      var filterStatus = e.parameter.filterStatus || 'Pending';
+      var result = getPendingApprovals(filterStatus);
+      return createResponse(result);
+    }
+
+    // APPROVE CHANGE
+    else if (action === 'approveChange') {
+      Logger.log('✅ Approving change via GET...');
+
+      try {
+        var approvalId = e.parameter.approvalId;
+        var adminEmail = e.parameter.adminEmail;
+
+        if (!approvalId || !adminEmail) {
+          return createResponse({
+            status: 'error',
+            message: 'approvalId and adminEmail parameters required'
+          });
+        }
+
+        Logger.log('Approval ID: ' + approvalId);
+        Logger.log('Admin: ' + adminEmail);
+
+        var result = approveChange(approvalId, adminEmail);
+        return createResponse(result);
+      } catch (error) {
+        Logger.log('❌ Error in approveChange: ' + error.message);
+        return createResponse({
+          status: 'error',
+          message: 'Error approving change: ' + error.message
+        });
+      }
+    }
+
+    // REJECT CHANGE
+    else if (action === 'rejectChange') {
+      Logger.log('❌ Rejecting change via GET...');
+
+      try {
+        var approvalId = e.parameter.approvalId;
+        var adminEmail = e.parameter.adminEmail;
+        var reason = e.parameter.reason || 'No reason provided';
+
+        if (!approvalId || !adminEmail) {
+          return createResponse({
+            status: 'error',
+            message: 'approvalId and adminEmail parameters required'
+          });
+        }
+
+        Logger.log('Approval ID: ' + approvalId);
+        Logger.log('Admin: ' + adminEmail);
+        Logger.log('Reason: ' + reason);
+
+        var result = rejectChange(approvalId, adminEmail, reason);
+        return createResponse(result);
+      } catch (error) {
+        Logger.log('❌ Error in rejectChange: ' + error.message);
+        return createResponse({
+          status: 'error',
+          message: 'Error rejecting change: ' + error.message
+        });
+      }
+    }
+
+    // APPROVE ALL
+    else if (action === 'approveAll') {
+      Logger.log('✅✅✅ Approving all changes via GET...');
+
+      try {
+        var adminEmail = e.parameter.adminEmail;
+
+        if (!adminEmail) {
+          return createResponse({
+            status: 'error',
+            message: 'adminEmail parameter required'
+          });
+        }
+
+        Logger.log('Admin: ' + adminEmail);
+
+        var result = approveAll(adminEmail);
+        return createResponse(result);
+      } catch (error) {
+        Logger.log('❌ Error in approveAll: ' + error.message);
+        return createResponse({
+          status: 'error',
+          message: 'Error approving all: ' + error.message
+        });
+      }
+    }
+
+    // CHECK IS ADMIN
+    else if (action === 'isAdmin') {
+      Logger.log('🔐 Checking admin status via GET...');
+
+      var email = e.parameter.email;
+
+      if (!email) {
+        return createResponse({
+          status: 'error',
+          message: 'email parameter required'
+        });
+      }
+
+      var result = {
+        status: 'success',
+        isAdmin: isAdmin(email)
+      };
+
+      Logger.log('Admin check result: ' + result.isAdmin);
+      return createResponse(result);
+    }
 
     // DEFAULT CASE
     else {
       Logger.log('❌ Invalid action: ' + action);
       return createResponse({
         status: 'error',
-        message: 'Action tidak valid. Available: search, validateKitMulti, submitPaymentMultiKit, checkDuplicates, getClientNames, getAllStatus, submitClientData, getAllClientDataComplete, getClientLepasData, getClientNonAktifData, getClientsBySheet, validateClientByName',
+        message: 'Action tidak valid. Available: search, validateKitMulti, submitPaymentMultiKit, checkDuplicates, getClientNames, getAllStatus, submitClientData, getAllClientDataComplete, getClientLepasData, getClientNonAktifData, getClientsBySheet, validateClientByName, addPendingApproval, getPendingApprovals, approveChange, rejectChange, approveAll, isAdmin',
         receivedAction: action,
         availableActions: [
-          'search', 
-          'validateKitMulti', 
-          'submitPaymentMultiKit', 
-          'checkDuplicates', 
-          'getClientNames', 
-          'getAllStatus', 
-          'submitClientData', 
+          'search',
+          'validateKitMulti',
+          'submitPaymentMultiKit',
+          'checkDuplicates',
+          'getClientNames',
+          'getAllStatus',
+          'submitClientData',
           'getAllClientDataComplete',
-          'getClientLepasData',       
-          'getClientNonAktifData',    
-          'getClientsBySheet', 
-          'validateClientByName'
+          'getClientLepasData',
+          'getClientNonAktifData',
+          'getClientsBySheet',
+          'validateClientByName',
+          'addPendingApproval',
+          'getPendingApprovals',
+          'approveChange',
+          'rejectChange',
+          'approveAll',
+          'isAdmin'
         ],
         searchParameters: ['kit', 'serial', 'login', 'email', 'phone', 'account', 'name'] // ✅ UPDATED
       });
