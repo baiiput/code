@@ -31,7 +31,7 @@ Sebelum bisa buat OAuth Client ID, Anda perlu configure consent screen:
 
 5. **Authorized JavaScript origins**:
    ```
-   https://sys.octolink.id
+   https://datasl.octolink.id
    https://octolink.id
    http://localhost (untuk testing)
    ```
