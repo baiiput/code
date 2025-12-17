@@ -4775,8 +4775,19 @@
                     editInput.className = 'modal-edit-input';
                     // Convert displayed date to yyyy-mm-dd format for input
                     if (originalValue) {
-                        const date = new Date(originalValue);
-                        if (!isNaN(date)) {
+                        // Parse DD/MM/YYYY format
+                        let date;
+                        if (originalValue.includes('/')) {
+                            const parts = originalValue.split('/');
+                            if (parts.length === 3) {
+                                // DD/MM/YYYY -> YYYY-MM-DD
+                                date = new Date(parts[2], parts[1] - 1, parts[0]);
+                            }
+                        } else {
+                            date = new Date(originalValue);
+                        }
+
+                        if (date && !isNaN(date)) {
                             const isoDateValue = date.toISOString().split('T')[0];
                             editInput.value = isoDateValue;
                             // Store ISO format for proper comparison later
@@ -4856,11 +4867,19 @@
                 // Add change listener for highlighting
                 editInput.addEventListener('input', function() {
                     // For date fields, compare with ISO format
-                    const compareValue = this.dataset.isoOriginal !== undefined
+                    let compareValue = this.dataset.isoOriginal !== undefined
                         ? this.dataset.isoOriginal
                         : this.dataset.originalValue;
 
-                    if (this.value !== compareValue) {
+                    let currentValue = this.value;
+
+                    // Normalize textarea values for comparison
+                    if (this.tagName === 'TEXTAREA') {
+                        currentValue = currentValue.trim().replace(/\r\n/g, '\n');
+                        compareValue = compareValue.trim().replace(/\r\n/g, '\n');
+                    }
+
+                    if (currentValue !== compareValue) {
                         this.classList.add('modal-field-changed');
                     } else {
                         this.classList.remove('modal-field-changed');
@@ -4907,12 +4926,18 @@
 
             editInputs.forEach(input => {
                 const column = input.dataset.column;
-                const newValue = input.value;
+                let newValue = input.value;
 
                 // For date fields, use ISO format for comparison
-                const originalValue = input.dataset.isoOriginal !== undefined
+                let originalValue = input.dataset.isoOriginal !== undefined
                     ? input.dataset.isoOriginal
                     : input.dataset.originalValue;
+
+                // Normalize textarea values (trim and normalize line endings)
+                if (input.tagName === 'TEXTAREA') {
+                    newValue = newValue.trim().replace(/\r\n/g, '\n');
+                    originalValue = originalValue.trim().replace(/\r\n/g, '\n');
+                }
 
                 // Debug logging for date field
                 if (column === 'K') {
