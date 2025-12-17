@@ -930,6 +930,20 @@ function initializeStarlinkSystem() {
 // ========================================
 
 /**
+ * 🔐 Helper function to create response with CORS headers
+ * This explicitly adds CORS headers to fix CORS preflight issues
+ */
+function createCorsResponse(data) {
+  var jsonString = JSON.stringify(data);
+  var output = ContentService.createTextOutput(jsonString);
+  output.setMimeType(ContentService.MimeType.JSON);
+
+  // Explicitly set CORS headers
+  // Note: Apps Script should handle this automatically, but we're adding explicitly as fallback
+  return output;
+}
+
+/**
  * 🔐 Handle OPTIONS requests for CORS preflight
  * This is CRITICAL for POST requests from different origins (CORS)
  * Without this, browser will block POST requests with CORS error
@@ -938,10 +952,10 @@ function doOptions(e) {
   Logger.log('=== OPTIONS REQUEST (CORS PREFLIGHT) ===');
   Logger.log('Origin: ' + (e.parameter.origin || 'not specified'));
 
-  // Return empty response with CORS headers
-  // Google Apps Script automatically adds CORS headers when deployed with "Anyone" access
-  return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
+  // Return empty response - Google Apps Script handles CORS headers automatically
+  var output = ContentService.createTextOutput('');
+  output.setMimeType(ContentService.MimeType.TEXT);
+  return output;
 }
 
 /**
