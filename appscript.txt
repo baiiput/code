@@ -926,8 +926,23 @@ function initializeStarlinkSystem() {
 
 
 // ========================================
-// 🌐 12. API HANDLERS (doGet/doPost)
+// 🌐 12. API HANDLERS (doGet/doPost/doOptions)
 // ========================================
+
+/**
+ * 🔐 Handle OPTIONS requests for CORS preflight
+ * This is CRITICAL for POST requests from different origins (CORS)
+ * Without this, browser will block POST requests with CORS error
+ */
+function doOptions(e) {
+  Logger.log('=== OPTIONS REQUEST (CORS PREFLIGHT) ===');
+  Logger.log('Origin: ' + (e.parameter.origin || 'not specified'));
+
+  // Return empty response with CORS headers
+  // Google Apps Script automatically adds CORS headers when deployed with "Anyone" access
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
 
 /**
  * 🔄 COMPLETE doGet() Function dengan kolom mapping baru dan Serial Number search
