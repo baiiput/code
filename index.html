@@ -5001,10 +5001,11 @@
                 // Build URL with parameters (GET request)
                 const params = new URLSearchParams({
                     action: 'addPendingApproval',
-                    kit: approvalData.kit,
-                    submittedBy: approvalData.submittedBy,
-                    submittedAt: approvalData.submittedAt,
+                    rowId: approvalData.rowId,
+                    changedBy: approvalData.changedBy,
+                    changedByName: approvalData.changedByName,
                     sourceSheet: approvalData.sourceSheet,
+                    changedColumns: JSON.stringify(approvalData.changedColumns),
                     originalData: JSON.stringify(approvalData.originalData),
                     newData: JSON.stringify(approvalData.newData)
                 });
@@ -5606,15 +5607,17 @@
             // Check if admin based on config (fallback)
             currentUser.isAdmin = APPROVAL_CONFIG.ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
 
-            // Verify admin status with Apps Script API
+            // Verify admin status with Apps Script API using GET
             try {
-                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'isAdmin',
-                        email: currentUser.email
-                    })
+                const params = new URLSearchParams({
+                    action: 'isAdmin',
+                    email: currentUser.email
+                });
+                const url = `${APPROVAL_CONFIG.APPS_SCRIPT_URL}?${params.toString()}`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
                 });
                 const result = await response.json();
                 currentUser.isAdmin = result.isAdmin || false;
@@ -5645,15 +5648,17 @@
 
             console.log('📋 Loading pending approvals...');
 
-            // Load from Apps Script API
+            // Load from Apps Script API using GET
             try {
-                const response = await fetch(APPROVAL_CONFIG.APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'getPendingApprovals',
-                        filterStatus: 'Pending'
-                    })
+                const params = new URLSearchParams({
+                    action: 'getPendingApprovals',
+                    filterStatus: 'Pending'
+                });
+                const url = `${APPROVAL_CONFIG.APPS_SCRIPT_URL}?${params.toString()}`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
                 });
                 const result = await response.json();
                 if (result.status === 'success') {

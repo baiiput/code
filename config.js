@@ -19,8 +19,9 @@ const CONFIG = {
     },
     
  // 🌐 DOMAIN & SECURITY SETTINGS
-    WEBSITE_DOMAIN: 'https://datasl.octolink.id',
+    WEBSITE_DOMAIN: 'https://sys.octolink.id',
     ALLOWED_ORIGINS: [
+        'https://sys.octolink.id',
         'https://datasl.octolink.id',
         'https://octolink.id',
         'https://www.octolink.id',

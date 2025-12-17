@@ -1315,10 +1315,11 @@ function doGet(e) {
       try {
         // Parse data from URL parameters
         var approvalData = {
-          kit: e.parameter.kit,
-          submittedBy: e.parameter.submittedBy,
-          submittedAt: e.parameter.submittedAt,
+          rowId: e.parameter.rowId,
+          changedBy: e.parameter.changedBy,
+          changedByName: e.parameter.changedByName,
           sourceSheet: e.parameter.sourceSheet,
+          changedColumns: JSON.parse(e.parameter.changedColumns || '[]'),
           originalData: JSON.parse(e.parameter.originalData || '{}'),
           newData: JSON.parse(e.parameter.newData || '{}')
         };
