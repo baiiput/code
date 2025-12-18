@@ -3774,11 +3774,24 @@
             });
             
             // Sheet selector
-            document.querySelectorAll('.sheet-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const sheetKey = this.dataset.sheet;
+            console.log('🔧 Attaching sheet tab event listeners...');
+            const sheetTabs = document.querySelectorAll('.sheet-tab');
+            console.log(`Found ${sheetTabs.length} sheet tabs`);
+
+            sheetTabs.forEach((tab, index) => {
+                const sheetKey = tab.dataset.sheet;
+                console.log(`  Tab ${index}: ${sheetKey}`);
+
+                tab.addEventListener('click', function(e) {
+                    console.log(`🖱️ Clicked sheet tab: ${sheetKey}`);
+                    console.log(`  Current sheet: ${currentSheet}`);
+                    console.log(`  isLoading: ${isLoading}`);
+
                     if (sheetKey !== currentSheet) {
+                        console.log(`  Switching to: ${sheetKey}`);
                         switchSheet(sheetKey);
+                    } else {
+                        console.log(`  Already on ${sheetKey}, skipping`);
                     }
                 });
             });
@@ -3870,7 +3883,20 @@
         // ===== SHEET MANAGEMENT =====
         
         function switchSheet(sheetKey) {
-            if (!sheetConfig[sheetKey] || isLoading) return;
+            console.log(`📋 switchSheet called: ${sheetKey}`);
+            console.log(`  sheetConfig exists: ${!!sheetConfig[sheetKey]}`);
+            console.log(`  isLoading: ${isLoading}`);
+
+            if (!sheetConfig[sheetKey]) {
+                console.error(`❌ Sheet config not found for: ${sheetKey}`);
+                return;
+            }
+
+            if (isLoading) {
+                console.warn(`⚠️ Cannot switch sheet, currently loading data`);
+                showToast('⏳ Tunggu data selesai dimuat...');
+                return;
+            }
             
             // Reset sorting when switching sheets
             currentSort.column = null;
