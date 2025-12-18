@@ -5616,8 +5616,8 @@ const APPROVAL_CONFIG = {
  * Get the main client data spreadsheet
  */
 function getClientDataSpreadsheet() {
-  // Use the existing REPORT_SPREADSHEET_ID or modify as needed
-  return SpreadsheetApp.openById(REPORT_SPREADSHEET_ID);
+  // Return the spreadsheet that this script is bound to (CS Starlink Data)
+  return SpreadsheetApp.getActiveSpreadsheet();
 }
 
 /**
