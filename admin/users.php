@@ -115,35 +115,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if ($conn->query("UPDATE users SET is_active = $new_status WHERE id = $id AND role = 'admin'")) {
+        if ($conn->query("UPDATE users SET is_active = $new_status WHERE id = $id")) {
             setFlashMessage('success', 'Status user berhasil diubah');
         } else {
             setFlashMessage('error', 'Gagal mengubah status user');
         }
 
-        header('Location: /admin/users.php');
+        header('Location: /admin/users.php' . (isset($_GET['role']) ? '?role=' . $_GET['role'] : ''));
+        exit;
+    } elseif ($action === 'reset_password') {
+        $id = $_POST['id'];
+        $new_password = $_POST['new_password'] ?? '12345';
+
+        $password_hash = password_hash($new_password, PASSWORD_DEFAULT);
+
+        if ($conn->query("UPDATE users SET password = '$password_hash' WHERE id = $id AND role = 'customer'")) {
+            setFlashMessage('success', "Password berhasil direset menjadi: $new_password");
+        } else {
+            setFlashMessage('error', 'Gagal mereset password');
+        }
+
+        header('Location: /admin/users.php?role=customer');
         exit;
     }
 }
 
-// Get all admin users
-$users = $conn->query("
-    SELECT * FROM users
-    WHERE role = 'admin'
-    ORDER BY user_level ASC, created_at DESC
-");
+// Get role filter from query parameter
+$role_filter = $_GET['role'] ?? 'admin';
+$role_filter = in_array($role_filter, ['admin', 'customer']) ? $role_filter : 'admin';
+
+// Get users based on role filter
+if ($role_filter === 'customer') {
+    $users = $conn->query("
+        SELECT u.*, c.nama_lengkap as customer_name, c.telepon, c.email
+        FROM users u
+        LEFT JOIN customers c ON u.customer_id = c.id
+        WHERE u.role = 'customer'
+        ORDER BY u.created_at DESC
+    ");
+} else {
+    $users = $conn->query("
+        SELECT * FROM users
+        WHERE role = 'admin'
+        ORDER BY user_level ASC, created_at DESC
+    ");
+}
 
 include '../includes/header.php';
 ?>
 
 <div class="mb-8 flex justify-between items-center">
     <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Kelola User Admin</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">Manajemen user dengan multi level (Super Admin only)</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Kelola User</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Manajemen user admin & customer (Super Admin only)</p>
     </div>
+    <?php if ($role_filter === 'admin'): ?>
     <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
         + Tambah User Admin
     </button>
+    <?php endif; ?>
+</div>
+
+<!-- Tab Navigation -->
+<div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+    <nav class="-mb-px flex space-x-8">
+        <a href="?role=admin" class="<?php echo $role_filter === 'admin' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            User Admin
+        </a>
+        <a href="?role=customer" class="<?php echo $role_filter === 'customer' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            User Customer
+        </a>
+    </nav>
 </div>
 
 <!-- User Level Info -->
@@ -165,7 +207,11 @@ include '../includes/header.php';
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Username</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Lengkap</th>
+                    <?php if ($role_filter === 'customer'): ?>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kontak</th>
+                    <?php else: ?>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Level</th>
+                    <?php endif; ?>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -178,7 +224,20 @@ include '../includes/header.php';
                                 <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($user['username']); ?></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">ID: <?php echo $user['id']; ?></div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($user['full_name']); ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <?php
+                                $display_name = $role_filter === 'customer'
+                                    ? ($user['customer_name'] ?? $user['full_name'])
+                                    : $user['full_name'];
+                                echo htmlspecialchars($display_name);
+                                ?>
+                            </td>
+                            <?php if ($role_filter === 'customer'): ?>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <div><?php echo htmlspecialchars($user['telepon'] ?? '-'); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($user['email'] ?? '-'); ?></div>
+                            </td>
+                            <?php else: ?>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <?php
                                 $levelBadges = [
@@ -192,6 +251,7 @@ include '../includes/header.php';
                                     Level <?php echo $user['user_level']; ?> - <?php echo getUserLevelName($user['user_level']); ?>
                                 </span>
                             </td>
+                            <?php endif; ?>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <form method="POST" class="inline">
                                     <input type="hidden" name="action" value="toggle_status">
@@ -203,16 +263,22 @@ include '../includes/header.php';
                                 </form>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <?php if ($role_filter === 'admin'): ?>
                                 <button onclick='openModal("edit", <?php echo json_encode($user); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
                                 <?php if ($user['id'] != getCurrentUser()['id']): ?>
                                 <button onclick="confirmDelete(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400">Hapus</button>
+                                <?php endif; ?>
+                                <?php else: ?>
+                                <button onclick='openResetPasswordModal(<?php echo $user["id"]; ?>, "<?php echo htmlspecialchars($user["username"]); ?>")' class="text-blue-600 hover:text-blue-900 dark:text-blue-400">Reset Password</button>
                                 <?php endif; ?>
                             </td>
                         </tr>
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada data user admin</td>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                            Belum ada data user <?php echo $role_filter === 'customer' ? 'customer' : 'admin'; ?>
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -280,6 +346,41 @@ include '../includes/header.php';
     <input type="hidden" name="id" id="deleteId">
 </form>
 
+<!-- Reset Password Modal (Customer Only) -->
+<div id="resetPasswordModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Reset Password Customer</h3>
+            <button onclick="closeResetPasswordModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="action" value="reset_password">
+            <input type="hidden" name="id" id="resetUserId">
+
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Username: <strong id="resetUsername"></strong></p>
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Password Baru *</label>
+                <input type="text" name="new_password" id="new_password" required placeholder="Masukkan password baru" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Password akan di-hash secara otomatis</p>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeResetPasswordModal()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition duration-200">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200">
+                    Reset Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function openModal(action, data = null) {
     const modal = document.getElementById('userModal');
@@ -317,6 +418,18 @@ function confirmDelete(id, username) {
         document.getElementById('deleteId').value = id;
         document.getElementById('deleteForm').submit();
     }
+}
+
+function openResetPasswordModal(userId, username) {
+    const modal = document.getElementById('resetPasswordModal');
+    document.getElementById('resetUserId').value = userId;
+    document.getElementById('resetUsername').textContent = username;
+    document.getElementById('new_password').value = '12345'; // Default password
+    modal.classList.remove('hidden');
+}
+
+function closeResetPasswordModal() {
+    document.getElementById('resetPasswordModal').classList.add('hidden');
 }
 </script>
 

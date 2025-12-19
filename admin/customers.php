@@ -29,17 +29,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 $customer_id = $conn->insert_id;
 
-                // Create user account
-                $username = strtolower(str_replace(' ', '', $nama_lengkap)) . $customer_id;
-                $password = password_hash('12345', PASSWORD_DEFAULT); // Default password
+                // Get username and password from form, or generate automatically
+                $username_input = sanitize($_POST['username'] ?? '');
+                $password_input = sanitize($_POST['password'] ?? '');
+
+                // Generate username if not provided
+                if (empty($username_input)) {
+                    $username = strtolower(str_replace(' ', '', $nama_lengkap)) . $customer_id;
+                } else {
+                    $username = $username_input;
+                }
+
+                // Use default password if not provided
+                $plain_password = empty($password_input) ? '12345' : $password_input;
+                $password = password_hash($plain_password, PASSWORD_DEFAULT);
                 $user_level = USER_LEVEL_CUSTOMER; // Level 4
+
+                // Check if username already exists
+                $check = $conn->query("SELECT COUNT(*) as total FROM users WHERE username = '$username'");
+                if ($check->fetch_assoc()['total'] > 0) {
+                    setFlashMessage('error', 'Username sudah digunakan. Silakan gunakan username lain.');
+                    header('Location: /admin/customers.php');
+                    exit;
+                }
 
                 $stmt2 = $conn->prepare("INSERT INTO users (username, password, role, customer_id, user_level, full_name) VALUES (?, ?, 'customer', ?, ?, ?)");
                 $stmt2->bind_param("ssiis", $username, $password, $customer_id, $user_level, $nama_lengkap);
                 $stmt2->execute();
                 $stmt2->close();
 
-                setFlashMessage('success', "Pelanggan berhasil ditambahkan. Username: $username, Password: 12345");
+                setFlashMessage('success', "Pelanggan berhasil ditambahkan. Username: $username, Password: $plain_password");
             } else {
                 setFlashMessage('error', 'Gagal menambahkan pelanggan');
             }
@@ -203,6 +222,23 @@ include '../includes/header.php';
                     <label class="block text-gray-700 dark:text-gray-300 mb-2">Keterangan</label>
                     <textarea name="keterangan" id="keterangan" rows="2" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
                 </div>
+
+                <!-- Login Credentials Section (only show when adding new customer) -->
+                <div id="loginSection" class="md:col-span-2 border-t border-gray-200 dark:border-gray-600 pt-4 mt-4">
+                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3">Akun Login Customer</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                            <input type="text" name="username" id="username" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Kosongkan untuk otomatis">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kosongkan untuk generate otomatis dari nama</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                            <input type="text" name="password" id="password" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Kosongkan untuk default (12345)">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 12345 (jika dikosongkan)</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-6 flex justify-end space-x-3">
@@ -228,6 +264,7 @@ function openModal(action, data = null) {
     const modal = document.getElementById('customerModal');
     const form = document.getElementById('customerForm');
     const title = document.getElementById('modalTitle');
+    const loginSection = document.getElementById('loginSection');
 
     form.reset();
     document.getElementById('formAction').value = action;
@@ -242,8 +279,14 @@ function openModal(action, data = null) {
         document.getElementById('email').value = data.email || '';
         document.getElementById('pekerjaan').value = data.pekerjaan || '';
         document.getElementById('keterangan').value = data.keterangan || '';
+
+        // Hide login section when editing
+        loginSection.classList.add('hidden');
     } else {
         title.textContent = 'Tambah Pelanggan';
+
+        // Show login section when adding
+        loginSection.classList.remove('hidden');
     }
 
     modal.classList.remove('hidden');

@@ -13,24 +13,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'add' || $action === 'edit') {
         $id = $_POST['id'] ?? null;
-        $kode_barang = sanitize($_POST['kode_barang']);
         $nama_barang = sanitize($_POST['nama_barang']);
+        $kategori = sanitize($_POST['kategori']);
         $deskripsi = sanitize($_POST['deskripsi']);
         $harga_modal = floatval($_POST['harga_modal']);
 
+        // Auto-generate kode barang based on kategori
+        $kategori_codes = [
+            'Elektronik' => 'ELK',
+            'Furniture' => 'FRN',
+            'Kendaraan' => 'KND',
+            'Fashion' => 'FSH',
+            'Peralatan Rumah Tangga' => 'PRT',
+            'Gadget' => 'GDG',
+            'Lainnya' => 'LAN'
+        ];
+
+        $prefix = $kategori_codes[$kategori] ?? 'LAN';
+
         if ($action === 'add') {
-            $stmt = $conn->prepare("INSERT INTO products (kode_barang, nama_barang, deskripsi, harga_modal) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("sssd", $kode_barang, $nama_barang, $deskripsi, $harga_modal);
+            // Get last number for this kategori
+            $result = $conn->query("SELECT kode_barang FROM products WHERE kategori = '$kategori' ORDER BY id DESC LIMIT 1");
+            $last_number = 0;
+
+            if ($result && $result->num_rows > 0) {
+                $last_code = $result->fetch_assoc()['kode_barang'];
+                // Extract number from code (e.g., ELK-005 -> 5)
+                if (preg_match('/-(\d+)$/', $last_code, $matches)) {
+                    $last_number = intval($matches[1]);
+                }
+            }
+
+            $new_number = $last_number + 1;
+            $kode_barang = $prefix . '-' . str_pad($new_number, 3, '0', STR_PAD_LEFT);
+
+            $stmt = $conn->prepare("INSERT INTO products (kode_barang, nama_barang, kategori, deskripsi, harga_modal) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssd", $kode_barang, $nama_barang, $kategori, $deskripsi, $harga_modal);
 
             if ($stmt->execute()) {
-                setFlashMessage('success', 'Barang berhasil ditambahkan');
+                setFlashMessage('success', "Barang berhasil ditambahkan dengan kode: $kode_barang");
             } else {
                 setFlashMessage('error', 'Gagal menambahkan barang');
             }
             $stmt->close();
         } else {
-            $stmt = $conn->prepare("UPDATE products SET kode_barang = ?, nama_barang = ?, deskripsi = ?, harga_modal = ? WHERE id = ?");
-            $stmt->bind_param("sssdi", $kode_barang, $nama_barang, $deskripsi, $harga_modal, $id);
+            // When editing, keep existing kode_barang but allow kategori change
+            $current = $conn->query("SELECT kode_barang, kategori FROM products WHERE id = $id")->fetch_assoc();
+
+            // If kategori changed, generate new kode
+            if ($current['kategori'] != $kategori) {
+                $result = $conn->query("SELECT kode_barang FROM products WHERE kategori = '$kategori' ORDER BY id DESC LIMIT 1");
+                $last_number = 0;
+
+                if ($result && $result->num_rows > 0) {
+                    $last_code = $result->fetch_assoc()['kode_barang'];
+                    if (preg_match('/-(\d+)$/', $last_code, $matches)) {
+                        $last_number = intval($matches[1]);
+                    }
+                }
+
+                $new_number = $last_number + 1;
+                $kode_barang = $prefix . '-' . str_pad($new_number, 3, '0', STR_PAD_LEFT);
+            } else {
+                $kode_barang = $current['kode_barang'];
+            }
+
+            $stmt = $conn->prepare("UPDATE products SET kode_barang = ?, nama_barang = ?, kategori = ?, deskripsi = ?, harga_modal = ? WHERE id = ?");
+            $stmt->bind_param("ssssdi", $kode_barang, $nama_barang, $kategori, $deskripsi, $harga_modal, $id);
 
             if ($stmt->execute()) {
                 setFlashMessage('success', 'Barang berhasil diupdate');
@@ -106,6 +155,7 @@ include '../includes/header.php';
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kode</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Barang</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kategori</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Harga Modal</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
@@ -119,6 +169,11 @@ include '../includes/header.php';
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($product['nama_barang']); ?></div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($product['deskripsi']); ?></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <span class="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                    <?php echo htmlspecialchars($product['kategori'] ?? 'Lainnya'); ?>
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo formatRupiah($product['harga_modal']); ?></td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -141,7 +196,7 @@ include '../includes/header.php';
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada data barang</td>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada data barang</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -166,21 +221,31 @@ include '../includes/header.php';
             <input type="hidden" name="id" id="productId">
 
             <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Kode Barang</label>
-                        <input type="text" name="kode_barang" id="kode_barang" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Harga Modal</label>
-                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                    </div>
-                </div>
-
                 <div>
                     <label class="block text-gray-700 dark:text-gray-300 mb-2">Nama Barang *</label>
                     <input type="text" name="nama_barang" id="nama_barang" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Kategori *</label>
+                        <select name="kategori" id="kategori" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="Furniture">Furniture</option>
+                            <option value="Kendaraan">Kendaraan</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Peralatan Rumah Tangga">Peralatan Rumah Tangga</option>
+                            <option value="Gadget">Gadget</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kode barang akan dibuat otomatis berdasarkan kategori</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Harga Modal *</label>
+                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    </div>
                 </div>
 
                 <div>
@@ -219,8 +284,8 @@ function openModal(action, data = null) {
     if (action === 'edit' && data) {
         title.textContent = 'Edit Barang';
         document.getElementById('productId').value = data.id;
-        document.getElementById('kode_barang').value = data.kode_barang || '';
         document.getElementById('nama_barang').value = data.nama_barang;
+        document.getElementById('kategori').value = data.kategori || 'Lainnya';
         document.getElementById('deskripsi').value = data.deskripsi || '';
         document.getElementById('harga_modal').value = data.harga_modal || '';
     } else {
