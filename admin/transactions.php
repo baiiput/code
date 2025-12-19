@@ -127,10 +127,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = intval($_POST['id']);
         $status = sanitize($_POST['status']);
 
-        if ($conn->query("UPDATE transactions SET status = '$status' WHERE id = $id")) {
-            setFlashMessage('success', 'Status transaksi berhasil diubah');
-        } else {
-            setFlashMessage('error', 'Gagal mengubah status transaksi');
+        // Get transaction details
+        $trans = $conn->query("SELECT funded_by_investor, total_harga, status as current_status FROM transactions WHERE id = $id")->fetch_assoc();
+
+        if (!$trans) {
+            setFlashMessage('error', 'Transaksi tidak ditemukan');
+            header('Location: /admin/transactions.php');
+            exit;
+        }
+
+        $conn->begin_transaction();
+        try {
+            // If cancelling transaction that was funded by investor, return the allocated funds
+            if ($status === 'dibatalkan' && $trans['funded_by_investor'] == 1 && $trans['current_status'] !== 'dibatalkan') {
+                // Get investor allocations for this transaction
+                $allocations = $conn->query("SELECT investor_id, alokasi FROM transaction_investors WHERE transaction_id = $id");
+
+                while ($alloc = $allocations->fetch_assoc()) {
+                    $investor_id = $alloc['investor_id'];
+                    $alokasi = $alloc['alokasi'];
+
+                    // Return funds to investor
+                    $conn->query("UPDATE investors SET modal_allocated = modal_allocated - $alokasi, modal_tersedia = modal_tersedia + $alokasi WHERE id = $investor_id");
+                }
+
+                // Delete investor allocations
+                $conn->query("DELETE FROM transaction_investors WHERE transaction_id = $id");
+            }
+
+            // Update transaction status
+            if ($conn->query("UPDATE transactions SET status = '$status' WHERE id = $id")) {
+                $conn->commit();
+                setFlashMessage('success', 'Status transaksi berhasil diubah. Modal investor dikembalikan (jika applicable).');
+            } else {
+                $conn->rollback();
+                setFlashMessage('error', 'Gagal mengubah status transaksi');
+            }
+        } catch (Exception $e) {
+            $conn->rollback();
+            setFlashMessage('error', 'Gagal mengubah status: ' . $e->getMessage());
         }
 
         header('Location: /admin/transactions.php');
