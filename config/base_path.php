@@ -6,11 +6,11 @@
  * PENTING: Sesuaikan BASE_PATH dengan lokasi hosting Anda
  */
 
-// Untuk hosting di root domain (contoh: koperasi.com)
-// define('BASE_PATH', '/');
+// Untuk hosting di root domain (contoh: koperasi.octolink.id)
+define('BASE_PATH', '');
 
 // Untuk hosting di subfolder (contoh: galaxy.octolink.id/koperasi)
-define('BASE_PATH', '/koperasi');
+// define('BASE_PATH', '/koperasi');
 
 // Untuk localhost development
 // define('BASE_PATH', '');
