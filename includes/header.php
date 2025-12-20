@@ -25,10 +25,22 @@ $isAdminPage = isAdmin();
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
 
     <!-- Navbar -->
-    <nav class="bg-white dark:bg-gray-800 shadow-lg">
+    <nav class="bg-white dark:bg-gray-800 shadow-lg" x-data="{ mobileMenuOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
+                    <!-- Mobile menu button -->
+                    <?php if ($isAdminPage): ?>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none mr-2">
+                        <svg class="h-6 w-6" :class="{ 'hidden': mobileMenuOpen, 'block': !mobileMenuOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg class="h-6 w-6" :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <?php endif; ?>
+
                     <a href="<?php echo baseUrl($isAdminPage ? 'admin/index.php' : 'customer/index.php'); ?>" class="flex items-center">
                         <span class="text-xl font-bold text-blue-600 dark:text-blue-400">Koperasi Syariah</span>
                     </a>
@@ -112,37 +124,45 @@ $isAdminPage = isAdmin();
 
         <!-- Mobile Menu -->
         <?php if ($isAdminPage): ?>
-        <div class="md:hidden border-t border-gray-200 dark:border-gray-700">
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform -translate-y-2"
+             class="md:hidden border-t border-gray-200 dark:border-gray-700"
+             @click.away="mobileMenuOpen = false">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="<?php echo baseUrl('admin/index.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Dashboard
+                <a href="<?php echo baseUrl('admin/index.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    📊 Dashboard
                 </a>
-                <a href="<?php echo baseUrl('admin/customers.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Pelanggan
+                <a href="<?php echo baseUrl('admin/customers.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    👥 Pelanggan
                 </a>
-                <a href="<?php echo baseUrl('admin/products.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Barang
+                <a href="<?php echo baseUrl('admin/products.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    📦 Barang
                 </a>
-                <a href="<?php echo baseUrl('admin/transactions.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Transaksi
+                <a href="<?php echo baseUrl('admin/transactions.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    💳 Transaksi
                 </a>
-                <a href="<?php echo baseUrl('admin/payments.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Pembayaran
+                <a href="<?php echo baseUrl('admin/payments.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    💰 Pembayaran
                 </a>
-                <a href="<?php echo baseUrl('admin/verify_payments.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Verifikasi
+                <a href="<?php echo baseUrl('admin/verify_payments.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    ✅ Verifikasi
                 </a>
                 <?php if (hasPermission(USER_LEVEL_MANAGER)): ?>
-                <a href="<?php echo baseUrl('admin/investors.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Investor
+                <a href="<?php echo baseUrl('admin/investors.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    💼 Investor
                 </a>
-                <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Kas
+                <a href="<?php echo baseUrl('admin/kas_transactions.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    🏦 Kas
                 </a>
                 <?php endif; ?>
                 <?php if (isSuperAdmin()): ?>
-                <a href="<?php echo baseUrl('admin/users.php'); ?>" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Users
+                <a href="<?php echo baseUrl('admin/users.php'); ?>" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    👤 Users
                 </a>
                 <?php endif; ?>
             </div>
