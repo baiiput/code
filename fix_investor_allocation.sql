@@ -13,7 +13,7 @@ SET modal_allocated = COALESCE((
     FROM transaction_investors ti
     JOIN transactions t ON ti.transaction_id = t.id
     WHERE ti.investor_id = i.id
-    AND t.status NOT IN ('dibatalkan', 'lunas')
+    AND t.status NOT IN ('batal', 'lunas')
 ), 0);
 
 -- Step 2: Recalculate modal_tersedia (= total_modal - modal_allocated)
@@ -23,7 +23,7 @@ SET modal_tersedia = total_modal - modal_allocated;
 -- Step 3: Clean up transaction_investors for cancelled transactions
 DELETE ti FROM transaction_investors ti
 JOIN transactions t ON ti.transaction_id = t.id
-WHERE t.status = 'dibatalkan';
+WHERE t.status = 'batal';
 
 -- Verification: Show investor summary
 SELECT

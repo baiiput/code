@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             FROM transaction_investors ti
             JOIN transactions t ON ti.transaction_id = t.id
             WHERE ti.investor_id = $id
-            AND t.status NOT IN ('dibatalkan', 'lunas')
+            AND t.status NOT IN ('batal', 'lunas')
         ");
 
         if ($active_check->fetch_assoc()['total'] > 0) {
@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 DELETE ti FROM transaction_investors ti
                 JOIN transactions t ON ti.transaction_id = t.id
                 WHERE ti.investor_id = $id
-                AND t.status IN ('dibatalkan', 'lunas')
+                AND t.status IN ('batal', 'lunas')
             ");
 
             // Delete investor
