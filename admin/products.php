@@ -260,7 +260,7 @@ include '../includes/header.php';
 
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2">Harga Modal *</label>
-                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" required value="0" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                        <input type="text" name="harga_modal" id="harga_modal" required value="0" class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0">
                     </div>
                 </div>
 
@@ -289,6 +289,56 @@ include '../includes/header.php';
 </form>
 
 <script>
+// ===== RUPIAH FORMATTING FUNCTIONS =====
+function formatRupiah(angka) {
+    if (!angka) return '';
+    const number = angka.toString().replace(/[^,\d]/g, '');
+    const split = number.split(',');
+    const sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+    if (ribuan) {
+        const separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    return rupiah;
+}
+
+function unformatRupiah(rupiah) {
+    return rupiah.replace(/\./g, '').replace(/,/g, '.');
+}
+
+// Auto-format rupiah inputs on keyup
+document.addEventListener('DOMContentLoaded', function() {
+    const rupiahInputs = document.querySelectorAll('.rupiah-input');
+
+    rupiahInputs.forEach(input => {
+        input.addEventListener('keyup', function(e) {
+            this.value = formatRupiah(this.value);
+        });
+
+        // Format existing value on load
+        if (input.value) {
+            input.value = formatRupiah(input.value);
+        }
+    });
+
+    // Remove formatting before form submit
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            rupiahInputs.forEach(input => {
+                if (input.value) {
+                    input.value = unformatRupiah(input.value);
+                }
+            });
+        });
+    });
+});
+
+// ===== MODAL FUNCTIONS =====
 function openModal(action, data = null) {
     const modal = document.getElementById('productModal');
     const form = document.getElementById('productForm');
@@ -303,7 +353,7 @@ function openModal(action, data = null) {
         document.getElementById('nama_barang').value = data.nama_barang;
         document.getElementById('kategori').value = data.kategori || 'Lainnya';
         document.getElementById('deskripsi').value = data.deskripsi || '';
-        document.getElementById('harga_modal').value = data.harga_modal || '';
+        document.getElementById('harga_modal').value = formatRupiah(data.harga_modal || '0');
     } else {
         title.textContent = 'Tambah Barang';
     }

@@ -348,12 +348,12 @@ include '../includes/header.php';
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2">Harga Modal *</label>
-                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" required readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white">
+                        <input type="text" name="harga_modal" id="harga_modal" required readonly class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white">
                     </div>
 
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2">Margin (Rp) *</label>
-                        <input type="number" name="margin" id="margin" step="0.01" required onkeyup="calculateTotal()" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                        <input type="text" name="margin" id="margin" required onkeyup="calculateTotal()" class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0">
                     </div>
 
                     <div>
@@ -426,7 +426,7 @@ include '../includes/header.php';
                             </div>
                             <div class="col-span-4">
                                 <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Nominal Alokasi</label>
-                                <input type="number" name="allocations[]" class="allocation-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" step="0.01" min="0" onkeyup="validateInvestorAllocation()">
+                                <input type="text" name="allocations[]" class="allocation-input rupiah-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" onkeyup="validateInvestorAllocation()" placeholder="0">
                             </div>
                             <div class="col-span-2">
                                 <button type="button" onclick="removeInvestorRow(this)" class="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg">Hapus</button>
@@ -470,6 +470,80 @@ include '../includes/header.php';
 </div>
 
 <script>
+// ===== RUPIAH INPUT FORMATTING FUNCTIONS =====
+function formatRupiahInput(angka) {
+    if (!angka) return '';
+    const number = angka.toString().replace(/[^,\d]/g, '');
+    const split = number.split(',');
+    const sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+    if (ribuan) {
+        const separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    return rupiah;
+}
+
+function unformatRupiah(rupiah) {
+    if (!rupiah) return '0';
+    return rupiah.toString().replace(/\./g, '').replace(/,/g, '.');
+}
+
+// Auto-format rupiah inputs on keyup and setup
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup existing rupiah inputs
+    setupRupiahInputs();
+
+    // Observer for dynamically added inputs (investor allocations)
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                setupRupiahInputs();
+            }
+        });
+    });
+
+    const investorContainer = document.getElementById('investorRows');
+    if (investorContainer) {
+        observer.observe(investorContainer, { childList: true, subtree: true });
+    }
+
+    // Remove formatting before form submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        document.querySelectorAll('.rupiah-input').forEach(input => {
+            if (input.value && !input.readOnly) {
+                input.value = unformatRupiah(input.value);
+            }
+        });
+    });
+});
+
+function setupRupiahInputs() {
+    const rupiahInputs = document.querySelectorAll('.rupiah-input');
+    rupiahInputs.forEach(input => {
+        if (!input.dataset.rupiahSetup) {
+            input.addEventListener('keyup', function(e) {
+                const cursorPos = this.selectionStart;
+                const oldLength = this.value.length;
+                this.value = formatRupiahInput(this.value);
+                const newLength = this.value.length;
+                // Adjust cursor position after formatting
+                this.setSelectionRange(cursorPos + (newLength - oldLength), cursorPos + (newLength - oldLength));
+            });
+            input.dataset.rupiahSetup = 'true';
+
+            // Format existing value
+            if (input.value) {
+                input.value = formatRupiahInput(input.value);
+            }
+        }
+    });
+}
+
 // Investor options template (cached for cloning)
 let investorOptionsHtml = '';
 
@@ -493,14 +567,16 @@ function updateHargaModal() {
     const select = document.getElementById('product_id');
     const option = select.options[select.selectedIndex];
     const hargaModal = option.getAttribute('data-modal') || 0;
-    document.getElementById('harga_modal').value = hargaModal;
+    document.getElementById('harga_modal').value = formatRupiahInput(hargaModal);
     calculateTotal();
     validateInvestorAllocation();
 }
 
 function calculateTotal() {
-    const hargaModal = parseFloat(document.getElementById('harga_modal').value) || 0;
-    const margin = parseFloat(document.getElementById('margin').value) || 0;
+    const hargaModalRaw = unformatRupiah(document.getElementById('harga_modal').value);
+    const marginRaw = unformatRupiah(document.getElementById('margin').value);
+    const hargaModal = parseFloat(hargaModalRaw) || 0;
+    const margin = parseFloat(marginRaw) || 0;
     const tenor = parseInt(document.getElementById('tenor').value) || 0;
 
     const total = hargaModal + margin;
@@ -539,7 +615,7 @@ function addInvestorRow() {
         </div>
         <div class="col-span-4">
             <label class="block text-gray-700 dark:text-gray-300 text-sm mb-1">Nominal Alokasi</label>
-            <input type="number" name="allocations[]" class="allocation-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" step="0.01" min="0" onkeyup="validateInvestorAllocation()">
+            <input type="text" name="allocations[]" class="allocation-input rupiah-input w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" onkeyup="validateInvestorAllocation()" placeholder="0">
         </div>
         <div class="col-span-2">
             <button type="button" onclick="removeInvestorRow(this)" class="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg">Hapus</button>
@@ -563,12 +639,14 @@ function updateInvestorInfo(select) {
 }
 
 function validateInvestorAllocation() {
-    const hargaModal = parseFloat(document.getElementById('harga_modal').value) || 0;
+    const hargaModalRaw = unformatRupiah(document.getElementById('harga_modal').value);
+    const hargaModal = parseFloat(hargaModalRaw) || 0;
     const allocationInputs = document.querySelectorAll('.allocation-input');
 
     let totalAllocation = 0;
     allocationInputs.forEach(input => {
-        totalAllocation += parseFloat(input.value) || 0;
+        const valueRaw = unformatRupiah(input.value);
+        totalAllocation += parseFloat(valueRaw) || 0;
     });
 
     const diff = hargaModal - totalAllocation;
