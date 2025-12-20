@@ -78,95 +78,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         header('Location: /admin/customers.php');
         exit;
-    } elseif ($action === 'delete') {
-        // Staff tidak boleh hapus data
+    } elseif ($action === 'deactivate') {
+        // Soft delete - set is_active = 0
+        // Staff tidak boleh nonaktifkan
         if (isStaff()) {
-            setFlashMessage('error', 'Staff tidak memiliki akses untuk menghapus data');
+            setFlashMessage('error', 'Staff tidak memiliki akses untuk menonaktifkan pelanggan');
             header('Location: /admin/customers.php');
             exit;
         }
 
         $id = $_POST['id'];
 
-        // Check if customer has any transactions
-        $all_trans = $conn->query("SELECT COUNT(*) as total FROM transactions WHERE customer_id = $id");
-        $total_trans = $all_trans->fetch_assoc()['total'];
+        // Check if customer has active transactions
+        $active_check = $conn->query("
+            SELECT COUNT(*) as total
+            FROM transactions
+            WHERE customer_id = $id
+            AND status NOT IN ('batal', 'lunas')
+        ");
+        $active_trans = $active_check->fetch_assoc()['total'];
 
-        if ($total_trans > 0) {
-            // Check if there are active transactions (not cancelled or completed)
-            $active_check = $conn->query("
-                SELECT COUNT(*) as total
-                FROM transactions
-                WHERE customer_id = $id
-                AND status NOT IN ('batal', 'lunas')
-            ");
-            $active_trans = $active_check->fetch_assoc()['total'];
-
-            if ($active_trans > 0) {
-                setFlashMessage('error', 'Tidak dapat menghapus pelanggan yang memiliki transaksi aktif. Selesaikan atau batalkan transaksi terlebih dahulu.');
-                header('Location: /admin/customers.php');
-                exit;
-            }
+        if ($active_trans > 0) {
+            setFlashMessage('error', 'Tidak dapat menonaktifkan pelanggan yang memiliki transaksi aktif. Selesaikan atau batalkan transaksi terlebih dahulu.');
+            header('Location: /admin/customers.php');
+            exit;
         }
 
-        // Begin transaction for safe deletion
-        $conn->begin_transaction();
-        try {
-            // Get all transaction IDs for this customer (only cancelled/completed)
-            $trans_result = $conn->query("
-                SELECT id
-                FROM transactions
-                WHERE customer_id = $id
-                AND status IN ('batal', 'lunas')
-            ");
-
-            $transaction_ids = [];
-            while ($row = $trans_result->fetch_assoc()) {
-                $transaction_ids[] = $row['id'];
-            }
-
-            if (!empty($transaction_ids)) {
-                $ids_string = implode(',', $transaction_ids);
-
-                // Delete related records in order (child tables first)
-                $conn->query("DELETE FROM installments WHERE transaction_id IN ($ids_string)");
-                $conn->query("DELETE FROM transaction_investors WHERE transaction_id IN ($ids_string)");
-
-                // Mark kas_transactions as 'batal' instead of deleting (keep financial audit trail)
-                $conn->query("
-                    UPDATE kas_transactions
-                    SET status = 'batal'
-                    WHERE referensi_type = 'transaction'
-                    AND referensi_id IN ($ids_string)
-                ");
-
-                // Delete the transactions themselves
-                $conn->query("DELETE FROM transactions WHERE id IN ($ids_string)");
-            }
-
-            // Delete user account
-            $conn->query("DELETE FROM users WHERE customer_id = $id");
-
-            // Finally delete customer
-            $conn->query("DELETE FROM customers WHERE id = $id");
-
-            $conn->commit();
-            setFlashMessage('success', 'Pelanggan dan semua data transaksi terkait berhasil dihapus');
-        } catch (Exception $e) {
-            $conn->rollback();
-            setFlashMessage('error', 'Gagal menghapus pelanggan: ' . $e->getMessage());
+        // Deactivate customer (soft delete)
+        if ($conn->query("UPDATE customers SET is_active = 0 WHERE id = $id")) {
+            // Also deactivate user account
+            $conn->query("UPDATE users SET is_active = 0 WHERE customer_id = $id");
+            setFlashMessage('success', 'Pelanggan berhasil dinonaktifkan. Data dan history transaksi tetap tersimpan.');
+        } else {
+            setFlashMessage('error', 'Gagal menonaktifkan pelanggan');
         }
 
         header('Location: /admin/customers.php');
         exit;
+    } elseif ($action === 'activate') {
+        // Restore - set is_active = 1
+        // Staff tidak boleh aktivasi
+        if (isStaff()) {
+            setFlashMessage('error', 'Staff tidak memiliki akses untuk mengaktifkan pelanggan');
+            header('Location: /admin/customers.php');
+            exit;
+        }
+
+        $id = $_POST['id'];
+
+        // Activate customer
+        if ($conn->query("UPDATE customers SET is_active = 1 WHERE id = $id")) {
+            // Also activate user account
+            $conn->query("UPDATE users SET is_active = 1 WHERE customer_id = $id");
+            setFlashMessage('success', 'Pelanggan berhasil diaktifkan kembali!');
+        } else {
+            setFlashMessage('error', 'Gagal mengaktifkan pelanggan');
+        }
+
+        header('Location: /admin/customers.php?filter=active');
+        exit;
     }
 }
 
-// Get all customers
+// Get filter from URL (default: active only)
+$filter = $_GET['filter'] ?? 'active';
+
+// Build WHERE clause based on filter
+$where_clause = '';
+if ($filter === 'active') {
+    $where_clause = 'WHERE c.is_active = 1';
+} elseif ($filter === 'inactive') {
+    $where_clause = 'WHERE c.is_active = 0';
+}
+// 'all' filter has no WHERE clause
+
+// Get customers based on filter
 $customers = $conn->query("
     SELECT c.*, u.username
     FROM customers c
     LEFT JOIN users u ON u.customer_id = c.id
+    $where_clause
     ORDER BY c.created_at DESC
 ");
 
@@ -181,6 +172,21 @@ include '../includes/header.php';
     <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
         + Tambah Pelanggan
     </button>
+</div>
+
+<!-- Filter Tabs -->
+<div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+    <nav class="-mb-px flex space-x-8">
+        <a href="?filter=active" class="<?php echo $filter === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            ✓ Aktif
+        </a>
+        <a href="?filter=inactive" class="<?php echo $filter === 'inactive' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            ✗ Nonaktif
+        </a>
+        <a href="?filter=all" class="<?php echo $filter === 'all' ? 'border-gray-500 text-gray-600 dark:text-gray-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            📋 Semua
+        </a>
+    </nav>
 </div>
 
 <!-- Customers Table -->
@@ -201,7 +207,12 @@ include '../includes/header.php';
                     <?php while ($customer = $customers->fetch_assoc()): ?>
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nama_lengkap']); ?></div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nama_lengkap']); ?></div>
+                                    <?php if ($customer['is_active'] == 0): ?>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Nonaktif</span>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($customer['email'] ?? '-'); ?></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($customer['nik'] ?? '-'); ?></td>
@@ -210,7 +221,11 @@ include '../includes/header.php';
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick='openModal("edit", <?php echo json_encode($customer); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
                                 <?php if (!isStaff()): ?>
-                                <button onclick="confirmDelete(<?php echo $customer['id']; ?>, '<?php echo htmlspecialchars($customer['nama_lengkap']); ?>')" class="text-red-600 hover:text-red-900 dark:text-red-400">Hapus</button>
+                                    <?php if ($customer['is_active'] == 1): ?>
+                                        <button onclick="confirmDeactivate(<?php echo $customer['id']; ?>, '<?php echo htmlspecialchars($customer['nama_lengkap']); ?>')" class="text-orange-600 hover:text-orange-900 dark:text-orange-400">Nonaktifkan</button>
+                                    <?php else: ?>
+                                        <button onclick="confirmActivate(<?php echo $customer['id']; ?>, '<?php echo htmlspecialchars($customer['nama_lengkap']); ?>')" class="text-green-600 hover:text-green-900 dark:text-green-400">✓ Aktifkan Kembali</button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -307,10 +322,10 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Delete Confirmation Form -->
-<form id="deleteForm" method="POST" style="display: none;">
-    <input type="hidden" name="action" value="delete">
-    <input type="hidden" name="id" id="deleteId">
+<!-- Action Form (Deactivate/Activate) -->
+<form id="actionForm" method="POST" style="display: none;">
+    <input type="hidden" name="action" id="actionFormAction" value="">
+    <input type="hidden" name="id" id="actionFormId" value="">
 </form>
 
 <script>
@@ -350,10 +365,19 @@ function closeModal() {
     document.getElementById('customerModal').classList.add('hidden');
 }
 
-function confirmDelete(id, name) {
-    if (confirm(`Apakah Anda yakin ingin menghapus pelanggan "${name}"?`)) {
-        document.getElementById('deleteId').value = id;
-        document.getElementById('deleteForm').submit();
+function confirmDeactivate(id, name) {
+    if (confirm(`Apakah Anda yakin ingin menonaktifkan pelanggan "${name}"?\n\nPelanggan akan disembunyikan dari list aktif, tapi data dan history transaksi tetap tersimpan.\n\nAnda bisa mengaktifkan kembali kapan saja.`)) {
+        document.getElementById('actionFormAction').value = 'deactivate';
+        document.getElementById('actionFormId').value = id;
+        document.getElementById('actionForm').submit();
+    }
+}
+
+function confirmActivate(id, name) {
+    if (confirm(`Aktifkan kembali pelanggan "${name}"?\n\nPelanggan akan muncul di list aktif dan bisa melakukan transaksi.`)) {
+        document.getElementById('actionFormAction').value = 'activate';
+        document.getElementById('actionFormId').value = id;
+        document.getElementById('actionForm').submit();
     }
 }
 </script>
