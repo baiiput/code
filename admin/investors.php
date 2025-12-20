@@ -27,17 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $minimal_alokasi = floatval($_POST['minimal_alokasi']);
         $keterangan = sanitize($_POST['keterangan']);
 
-        // DEBUG: Display received values in browser
-        echo "<pre style='background: #000; color: #0f0; padding: 20px; margin: 20px;'>";
-        echo "=== DEBUG INFO ===\n";
-        echo "Action: " . htmlspecialchars($action) . "\n";
-        echo "kontrak_mulai: '" . htmlspecialchars($kontrak_mulai) . "' (length: " . strlen($kontrak_mulai) . ")\n";
-        echo "kontrak_selesai: '" . htmlspecialchars($kontrak_selesai) . "' (length: " . strlen($kontrak_selesai) . ")\n";
-        echo "\nFull POST data:\n";
-        print_r($_POST);
-        echo "</pre>";
-        die("=== STOP HERE FOR DEBUGGING ===");
-
         // Validate dates
         if (empty($kontrak_mulai) || empty($kontrak_selesai)) {
             setFlashMessage('error', 'Tanggal kontrak mulai dan selesai harus diisi');
