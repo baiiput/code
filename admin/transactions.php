@@ -141,14 +141,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // If cancelling transaction that was funded by investor, return the allocated funds
             if ($status === 'dibatalkan' && $trans['funded_by_investor'] == 1 && $trans['current_status'] !== 'dibatalkan') {
                 // Get investor allocations for this transaction
-                $allocations = $conn->query("SELECT investor_id, alokasi FROM transaction_investors WHERE transaction_id = $id");
+                $allocations = $conn->query("SELECT investor_id, modal_dialokasi FROM transaction_investors WHERE transaction_id = $id");
 
                 while ($alloc = $allocations->fetch_assoc()) {
                     $investor_id = $alloc['investor_id'];
-                    $alokasi = $alloc['alokasi'];
+                    $modal_dialokasi = $alloc['modal_dialokasi'];
 
                     // Return funds to investor
-                    $conn->query("UPDATE investors SET modal_allocated = modal_allocated - $alokasi, modal_tersedia = modal_tersedia + $alokasi WHERE id = $investor_id");
+                    $conn->query("UPDATE investors SET modal_allocated = modal_allocated - $modal_dialokasi, modal_tersedia = modal_tersedia + $modal_dialokasi WHERE id = $investor_id");
                 }
 
                 // Delete investor allocations

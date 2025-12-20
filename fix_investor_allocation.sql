@@ -9,7 +9,7 @@ USE koperasi_syariah;
 -- Step 1: Recalculate modal_allocated for each investor based on active transactions
 UPDATE investors i
 SET modal_allocated = COALESCE((
-    SELECT SUM(ti.alokasi)
+    SELECT SUM(ti.modal_dialokasi)
     FROM transaction_investors ti
     JOIN transactions t ON ti.transaction_id = t.id
     WHERE ti.investor_id = i.id
