@@ -101,10 +101,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $id = $_POST['id'];
 
-        // Check if product has transactions
-        $check = $conn->query("SELECT COUNT(*) as total FROM transactions WHERE product_id = $id");
+        // Check if product has ACTIVE transactions (not cancelled/completed)
+        $check = $conn->query("
+            SELECT COUNT(*) as total
+            FROM transactions
+            WHERE product_id = $id
+            AND status NOT IN ('batal', 'lunas')
+        ");
+
         if ($check->fetch_assoc()['total'] > 0) {
-            setFlashMessage('error', 'Tidak dapat menghapus barang yang memiliki transaksi');
+            setFlashMessage('error', 'Tidak dapat menghapus barang yang memiliki transaksi aktif');
         } else {
             if ($conn->query("DELETE FROM products WHERE id = $id")) {
                 setFlashMessage('success', 'Barang berhasil dihapus');
