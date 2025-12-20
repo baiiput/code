@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $stmt = $conn->prepare("INSERT INTO investors (kode_investor, nama_investor, email, telepon, alamat, total_modal, modal_tersedia, nisbah_investor, nisbah_koperasi, kontrak_mulai, kontrak_selesai, minimal_alokasi, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssssddiiisds", $kode_investor, $nama_investor, $email, $telepon, $alamat, $total_modal, $total_modal, $nisbah_investor, $nisbah_koperasi, $kontrak_mulai, $kontrak_selesai, $minimal_alokasi, $keterangan);
+            $stmt->bind_param("sssssddiissds", $kode_investor, $nama_investor, $email, $telepon, $alamat, $total_modal, $total_modal, $nisbah_investor, $nisbah_koperasi, $kontrak_mulai, $kontrak_selesai, $minimal_alokasi, $keterangan);
 
             if ($stmt->execute()) {
                 // Log to kas_transactions
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Edit investor - cannot change total_modal (use withdrawal/top-up feature)
             $stmt = $conn->prepare("UPDATE investors SET nama_investor = ?, email = ?, telepon = ?, alamat = ?, nisbah_investor = ?, nisbah_koperasi = ?, kontrak_mulai = ?, kontrak_selesai = ?, minimal_alokasi = ?, keterangan = ? WHERE id = ?");
-            $stmt->bind_param("sssiisssdsi", $nama_investor, $email, $telepon, $alamat, $nisbah_investor, $nisbah_koperasi, $kontrak_mulai, $kontrak_selesai, $minimal_alokasi, $keterangan, $id);
+            $stmt->bind_param("ssssiissdsi", $nama_investor, $email, $telepon, $alamat, $nisbah_investor, $nisbah_koperasi, $kontrak_mulai, $kontrak_selesai, $minimal_alokasi, $keterangan, $id);
 
             if ($stmt->execute()) {
                 setFlashMessage('success', 'Data investor berhasil diupdate');
