@@ -101,17 +101,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $id = $_POST['id'];
 
-        // Check if product has ACTIVE transactions (not cancelled/completed)
-        $check = $conn->query("
-            SELECT COUNT(*) as total
-            FROM transactions
-            WHERE product_id = $id
-            AND status NOT IN ('batal', 'lunas')
-        ");
+        // Check if product has any transactions (including cancelled/completed)
+        $all_trans = $conn->query("SELECT COUNT(*) as total FROM transactions WHERE product_id = $id");
+        $total_trans = $all_trans->fetch_assoc()['total'];
 
-        if ($check->fetch_assoc()['total'] > 0) {
-            setFlashMessage('error', 'Tidak dapat menghapus barang yang memiliki transaksi aktif');
+        if ($total_trans > 0) {
+            // Check if all transactions are cancelled or completed
+            $active_check = $conn->query("
+                SELECT COUNT(*) as total
+                FROM transactions
+                WHERE product_id = $id
+                AND status NOT IN ('batal', 'lunas')
+            ");
+            $active_trans = $active_check->fetch_assoc()['total'];
+
+            if ($active_trans > 0) {
+                setFlashMessage('error', 'Tidak dapat menghapus barang yang memiliki transaksi aktif. Selesaikan atau batalkan transaksi terlebih dahulu.');
+            } else {
+                setFlashMessage('error', 'Tidak dapat menghapus barang yang memiliki riwayat transaksi. Gunakan tombol Nonaktifkan jika ingin menyembunyikan barang ini.');
+            }
         } else {
+            // No transactions at all, safe to delete
             if ($conn->query("DELETE FROM products WHERE id = $id")) {
                 setFlashMessage('success', 'Barang berhasil dihapus');
             } else {
