@@ -107,16 +107,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: /admin/customers.php');
                 exit;
             }
-            // If all transactions are cancelled or completed, allow deletion
         }
 
-        // Delete user account first
-        $conn->query("DELETE FROM users WHERE customer_id = $id");
-        // Delete customer
-        if ($conn->query("DELETE FROM customers WHERE id = $id")) {
-            setFlashMessage('success', 'Pelanggan berhasil dihapus');
-        } else {
-            setFlashMessage('error', 'Gagal menghapus pelanggan');
+        // Begin transaction for safe deletion
+        $conn->begin_transaction();
+        try {
+            // Get all transaction IDs for this customer (only cancelled/completed)
+            $trans_result = $conn->query("
+                SELECT id
+                FROM transactions
+                WHERE customer_id = $id
+                AND status IN ('batal', 'lunas')
+            ");
+
+            $transaction_ids = [];
+            while ($row = $trans_result->fetch_assoc()) {
+                $transaction_ids[] = $row['id'];
+            }
+
+            if (!empty($transaction_ids)) {
+                $ids_string = implode(',', $transaction_ids);
+
+                // Delete related records in order (child tables first)
+                $conn->query("DELETE FROM installments WHERE transaction_id IN ($ids_string)");
+                $conn->query("DELETE FROM transaction_investors WHERE transaction_id IN ($ids_string)");
+
+                // Mark kas_transactions as 'batal' instead of deleting (keep financial audit trail)
+                $conn->query("
+                    UPDATE kas_transactions
+                    SET status = 'batal'
+                    WHERE referensi_type = 'transaction'
+                    AND referensi_id IN ($ids_string)
+                ");
+
+                // Delete the transactions themselves
+                $conn->query("DELETE FROM transactions WHERE id IN ($ids_string)");
+            }
+
+            // Delete user account
+            $conn->query("DELETE FROM users WHERE customer_id = $id");
+
+            // Finally delete customer
+            $conn->query("DELETE FROM customers WHERE id = $id");
+
+            $conn->commit();
+            setFlashMessage('success', 'Pelanggan dan semua data transaksi terkait berhasil dihapus');
+        } catch (Exception $e) {
+            $conn->rollback();
+            setFlashMessage('error', 'Gagal menghapus pelanggan: ' . $e->getMessage());
         }
 
         header('Location: /admin/customers.php');
