@@ -27,6 +27,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $minimal_alokasi = floatval($_POST['minimal_alokasi']);
         $keterangan = sanitize($_POST['keterangan']);
 
+        // Validate dates
+        if (empty($kontrak_mulai) || empty($kontrak_selesai)) {
+            setFlashMessage('error', 'Tanggal kontrak mulai dan selesai harus diisi');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        // Validate date format (YYYY-MM-DD)
+        $date_pattern = '/^\d{4}-\d{2}-\d{2}$/';
+        if (!preg_match($date_pattern, $kontrak_mulai) || !preg_match($date_pattern, $kontrak_selesai)) {
+            setFlashMessage('error', 'Format tanggal tidak valid. Gunakan format YYYY-MM-DD');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        // Validate date is valid
+        $mulai_parts = explode('-', $kontrak_mulai);
+        $selesai_parts = explode('-', $kontrak_selesai);
+        if (!checkdate($mulai_parts[1], $mulai_parts[2], $mulai_parts[0]) ||
+            !checkdate($selesai_parts[1], $selesai_parts[2], $selesai_parts[0])) {
+            setFlashMessage('error', 'Tanggal tidak valid');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        // Validate kontrak_selesai is after kontrak_mulai
+        if (strtotime($kontrak_selesai) <= strtotime($kontrak_mulai)) {
+            setFlashMessage('error', 'Tanggal selesai kontrak harus lebih besar dari tanggal mulai');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
         // Validate nisbah total = 100
         if (($nisbah_investor + $nisbah_koperasi) != 100) {
             setFlashMessage('error', 'Total Nisbah harus 100% (Investor + Koperasi)');
