@@ -123,6 +123,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         header('Location: /admin/investors.php');
         exit;
+    } elseif ($action === 'topup') {
+        // Handle top-up modal
+        $investor_id = intval($_POST['investor_id']);
+        $topup_amount = floatval($_POST['topup_amount']);
+        $topup_date = $_POST['topup_date'];
+        $topup_keterangan = sanitize($_POST['topup_keterangan'] ?? '');
+
+        // Validate amount
+        if ($topup_amount <= 0) {
+            setFlashMessage('error', 'Jumlah top-up harus lebih besar dari 0');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        // Get investor data
+        $investor = $conn->query("SELECT nama_investor, kode_investor, total_modal, modal_tersedia FROM investors WHERE id = $investor_id")->fetch_assoc();
+
+        if (!$investor) {
+            setFlashMessage('error', 'Investor tidak ditemukan');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        $conn->begin_transaction();
+        try {
+            // Update investor modal
+            $new_total_modal = $investor['total_modal'] + $topup_amount;
+            $new_modal_tersedia = $investor['modal_tersedia'] + $topup_amount;
+
+            $stmt = $conn->prepare("UPDATE investors SET total_modal = ?, modal_tersedia = ? WHERE id = ?");
+            $stmt->bind_param("ddi", $new_total_modal, $new_modal_tersedia, $investor_id);
+            $stmt->execute();
+
+            // Log to kas_transactions
+            $user_id = getCurrentUser()['id'];
+            $keterangan = "Top-up modal dari investor: {$investor['nama_investor']} ({$investor['kode_investor']})";
+            if ($topup_keterangan) {
+                $keterangan .= " - " . $topup_keterangan;
+            }
+
+            // Get current kas setting for saldo
+            $kas_query = $conn->query("SELECT setting_value FROM kas_settings WHERE setting_key = 'total_modal_investor'");
+            $saldo_before = 0;
+            if ($kas_query && $row = $kas_query->fetch_assoc()) {
+                $saldo_before = floatval($row['setting_value']);
+            }
+            $saldo_after = $saldo_before + $topup_amount;
+
+            $stmt2 = $conn->prepare("INSERT INTO kas_transactions (tipe, kategori, nominal, saldo_before, saldo_after, referensi_type, referensi_id, keterangan, tanggal_transaksi, created_by) VALUES ('masuk', 'investor_topup', ?, ?, ?, 'investor', ?, ?, ?, ?)");
+            $stmt2->bind_param("dddissi", $topup_amount, $saldo_before, $saldo_after, $investor_id, $keterangan, $topup_date, $user_id);
+            $stmt2->execute();
+
+            // Update kas_settings
+            $conn->query("UPDATE kas_settings SET setting_value = $new_total_modal WHERE setting_key = 'total_modal_investor'");
+
+            $conn->commit();
+            setFlashMessage('success', "Top-up berhasil! Modal investor bertambah Rp " . number_format($topup_amount, 0, ',', '.'));
+        } catch (Exception $e) {
+            $conn->rollback();
+            setFlashMessage('error', 'Gagal melakukan top-up: ' . $e->getMessage());
+        }
+
+        header('Location: /admin/investors.php');
+        exit;
     } elseif ($action === 'delete') {
         // Only Manager and Super Admin can delete
         if (isStaff()) {
@@ -334,6 +398,9 @@ include '../includes/header.php';
                                 </form>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick='openTopupModal(<?php echo json_encode($inv); ?>)' class="text-green-600 hover:text-green-900 dark:text-green-400 mr-3" title="Top-up Modal">
+                                    💰 Top-up
+                                </button>
                                 <button onclick='openModal("edit", <?php echo json_encode($inv); ?>)' class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">Edit</button>
                                 <button onclick="viewPortfolio(<?php echo $inv['id']; ?>, '<?php echo htmlspecialchars($inv['nama_investor']); ?>')" class="text-purple-600 hover:text-purple-900 dark:text-purple-400 mr-3">Portfolio</button>
                                 <?php if (!isStaff()): ?>
@@ -396,13 +463,13 @@ include '../includes/header.php';
 
                 <div id="modalFieldDiv">
                     <label class="block text-gray-700 dark:text-gray-300 mb-2">Total Modal *</label>
-                    <input type="number" name="total_modal" id="total_modal" required min="0" step="0.01" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <input type="text" name="total_modal" id="total_modal" required class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0">
                     <p class="text-xs text-gray-500 mt-1">Modal awal investor (tidak bisa diubah setelah dibuat)</p>
                 </div>
 
                 <div>
                     <label class="block text-gray-700 dark:text-gray-300 mb-2">Minimal Alokasi *</label>
-                    <input type="number" name="minimal_alokasi" id="minimal_alokasi" required min="0" step="0.01" value="1000000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <input type="text" name="minimal_alokasi" id="minimal_alokasi" required class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" value="1.000.000">
                 </div>
 
                 <div>
@@ -443,6 +510,56 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Top-up Modal -->
+<div id="topupModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="topupModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Top-up Modal Investor</h3>
+            <button onclick="closeTopupModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="topupForm" method="POST">
+            <input type="hidden" name="action" value="topup">
+            <input type="hidden" name="investor_id" id="topupInvestorId">
+
+            <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">Investor:</p>
+                <p class="font-semibold text-gray-900 dark:text-white" id="topupInvestorName"></p>
+                <p class="text-xs text-gray-600 dark:text-gray-400" id="topupInvestorCode"></p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Jumlah Top-up *</label>
+                <input type="text" name="topup_amount" id="topup_amount" required class="rupiah-input w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0">
+                <p class="text-xs text-gray-500 mt-1">Masukkan jumlah modal tambahan</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Tanggal Top-up *</label>
+                <input type="date" name="topup_date" id="topup_date" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Keterangan</label>
+                <textarea name="topup_keterangan" id="topup_keterangan" rows="2" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Opsional: catatan tambahan"></textarea>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="closeTopupModal()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition duration-200">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition duration-200">
+                    💰 Proses Top-up
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Delete Confirmation Form -->
 <form id="deleteForm" method="POST" style="display: none;">
     <input type="hidden" name="action" value="delete">
@@ -450,6 +567,59 @@ include '../includes/header.php';
 </form>
 
 <script>
+// ===== RUPIAH FORMATTING FUNCTIONS =====
+function formatRupiah(angka) {
+    if (!angka) return '';
+    const number = angka.toString().replace(/[^,\d]/g, '');
+    const split = number.split(',');
+    const sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+    if (ribuan) {
+        const separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    return rupiah;
+}
+
+function unformatRupiah(rupiah) {
+    return rupiah.replace(/\./g, '').replace(/,/g, '.');
+}
+
+// Auto-format rupiah inputs on keyup
+document.addEventListener('DOMContentLoaded', function() {
+    const rupiahInputs = document.querySelectorAll('.rupiah-input');
+
+    rupiahInputs.forEach(input => {
+        input.addEventListener('keyup', function(e) {
+            this.value = formatRupiah(this.value);
+        });
+
+        // Format existing value on load
+        if (this.value) {
+            this.value = formatRupiah(this.value);
+        }
+    });
+
+    // Remove formatting before form submit
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            rupiahInputs.forEach(input => {
+                if (input.value) {
+                    input.value = unformatRupiah(input.value);
+                }
+            });
+        });
+    });
+
+    // Set today's date for topup
+    document.getElementById('topup_date').value = new Date().toISOString().split('T')[0];
+});
+
+// ===== MODAL FUNCTIONS =====
 function openModal(action, data = null) {
     const modal = document.getElementById('investorModal');
     const form = document.getElementById('investorForm');
@@ -472,7 +642,7 @@ function openModal(action, data = null) {
         document.getElementById('nisbah_koperasi').value = data.nisbah_koperasi;
         document.getElementById('kontrak_mulai').value = data.kontrak_mulai;
         document.getElementById('kontrak_selesai').value = data.kontrak_selesai;
-        document.getElementById('minimal_alokasi').value = data.minimal_alokasi;
+        document.getElementById('minimal_alokasi').value = formatRupiah(data.minimal_alokasi);
         document.getElementById('keterangan').value = data.keterangan || '';
 
         // Hide total modal field on edit
@@ -490,6 +660,25 @@ function closeModal() {
     document.getElementById('investorModal').classList.add('hidden');
 }
 
+// ===== TOP-UP MODAL FUNCTIONS =====
+function openTopupModal(data) {
+    const modal = document.getElementById('topupModal');
+    const form = document.getElementById('topupForm');
+
+    form.reset();
+    document.getElementById('topupInvestorId').value = data.id;
+    document.getElementById('topupInvestorName').textContent = data.nama_investor;
+    document.getElementById('topupInvestorCode').textContent = `Kode: ${data.kode_investor}`;
+    document.getElementById('topup_date').value = new Date().toISOString().split('T')[0];
+
+    modal.classList.remove('hidden');
+}
+
+function closeTopupModal() {
+    document.getElementById('topupModal').classList.add('hidden');
+}
+
+// ===== OTHER FUNCTIONS =====
 function updateNisbahKoperasi() {
     const nisbahInvestor = parseInt(document.getElementById('nisbah_investor').value) || 0;
     const nisbahKoperasi = 100 - nisbahInvestor;
