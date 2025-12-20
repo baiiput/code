@@ -88,19 +88,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $id = $_POST['id'];
 
-        // Check if customer has transactions
-        $check = $conn->query("SELECT COUNT(*) as total FROM transactions WHERE customer_id = $id");
-        if ($check->fetch_assoc()['total'] > 0) {
-            setFlashMessage('error', 'Tidak dapat menghapus pelanggan yang memiliki transaksi');
-        } else {
-            // Delete user account first
-            $conn->query("DELETE FROM users WHERE customer_id = $id");
-            // Delete customer
-            if ($conn->query("DELETE FROM customers WHERE id = $id")) {
-                setFlashMessage('success', 'Pelanggan berhasil dihapus');
-            } else {
-                setFlashMessage('error', 'Gagal menghapus pelanggan');
+        // Check if customer has any transactions
+        $all_trans = $conn->query("SELECT COUNT(*) as total FROM transactions WHERE customer_id = $id");
+        $total_trans = $all_trans->fetch_assoc()['total'];
+
+        if ($total_trans > 0) {
+            // Check if there are active transactions (not cancelled or completed)
+            $active_check = $conn->query("
+                SELECT COUNT(*) as total
+                FROM transactions
+                WHERE customer_id = $id
+                AND status NOT IN ('batal', 'lunas')
+            ");
+            $active_trans = $active_check->fetch_assoc()['total'];
+
+            if ($active_trans > 0) {
+                setFlashMessage('error', 'Tidak dapat menghapus pelanggan yang memiliki transaksi aktif. Selesaikan atau batalkan transaksi terlebih dahulu.');
+                header('Location: /admin/customers.php');
+                exit;
             }
+            // If all transactions are cancelled or completed, allow deletion
+        }
+
+        // Delete user account first
+        $conn->query("DELETE FROM users WHERE customer_id = $id");
+        // Delete customer
+        if ($conn->query("DELETE FROM customers WHERE id = $id")) {
+            setFlashMessage('success', 'Pelanggan berhasil dihapus');
+        } else {
+            setFlashMessage('error', 'Gagal menghapus pelanggan');
         }
 
         header('Location: /admin/customers.php');
