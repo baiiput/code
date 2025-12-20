@@ -147,8 +147,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all products
-$products = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
+// Get filter from URL (default: active only)
+$filter = $_GET['filter'] ?? 'active';
+
+// Build WHERE clause based on filter
+$where_clause = '';
+if ($filter === 'active') {
+    $where_clause = 'WHERE is_active = 1';
+} elseif ($filter === 'inactive') {
+    $where_clause = 'WHERE is_active = 0';
+}
+// 'all' filter has no WHERE clause
+
+// Get products based on filter
+$products = $conn->query("SELECT * FROM products $where_clause ORDER BY created_at DESC");
 
 include '../includes/header.php';
 ?>
@@ -161,6 +173,21 @@ include '../includes/header.php';
     <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
         + Tambah Barang
     </button>
+</div>
+
+<!-- Filter Tabs -->
+<div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+    <nav class="-mb-px flex space-x-8">
+        <a href="?filter=active" class="<?php echo $filter === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            ✓ Aktif
+        </a>
+        <a href="?filter=inactive" class="<?php echo $filter === 'inactive' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            ✗ Nonaktif
+        </a>
+        <a href="?filter=all" class="<?php echo $filter === 'all' ? 'border-gray-500 text-gray-600 dark:text-gray-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+            📋 Semua
+        </a>
+    </nav>
 </div>
 
 <!-- Products Table -->
@@ -183,7 +210,12 @@ include '../includes/header.php';
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo htmlspecialchars($product['kode_barang']); ?></td>
                             <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($product['nama_barang']); ?></div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($product['nama_barang']); ?></div>
+                                    <?php if ($product['is_active'] == 0): ?>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Nonaktif</span>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($product['deskripsi']); ?></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
