@@ -27,6 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $minimal_alokasi = floatval($_POST['minimal_alokasi']);
         $keterangan = sanitize($_POST['keterangan']);
 
+        // DEBUG: Log received values
+        error_log("DEBUG Investor Form - Action: $action");
+        error_log("DEBUG kontrak_mulai: " . var_export($kontrak_mulai, true));
+        error_log("DEBUG kontrak_selesai: " . var_export($kontrak_selesai, true));
+        error_log("DEBUG POST data: " . print_r($_POST, true));
+
         // Validate dates
         if (empty($kontrak_mulai) || empty($kontrak_selesai)) {
             setFlashMessage('error', 'Tanggal kontrak mulai dan selesai harus diisi');
