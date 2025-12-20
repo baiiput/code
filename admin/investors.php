@@ -206,19 +206,19 @@ include '../includes/header.php';
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Total Modal</div>
-        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">Rp <?php echo number_format($stats['total_modal_all'], 0, ',', '.'); ?></div>
+        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">Rp <?php echo number_format($stats['total_modal_all'] ?? 0, 0, ',', '.'); ?></div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Modal Tersedia</div>
-        <div class="text-2xl font-bold text-green-600 dark:text-green-400">Rp <?php echo number_format($stats['total_tersedia'], 0, ',', '.'); ?></div>
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">Rp <?php echo number_format($stats['total_tersedia'] ?? 0, 0, ',', '.'); ?></div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Modal Dialokasi</div>
-        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">Rp <?php echo number_format($stats['total_allocated'], 0, ',', '.'); ?></div>
+        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">Rp <?php echo number_format($stats['total_allocated'] ?? 0, 0, ',', '.'); ?></div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Total Profit</div>
-        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">Rp <?php echo number_format($stats['total_profit_all'], 0, ',', '.'); ?></div>
+        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">Rp <?php echo number_format($stats['total_profit_all'] ?? 0, 0, ',', '.'); ?></div>
     </div>
 </div>
 

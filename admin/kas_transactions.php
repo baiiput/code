@@ -45,6 +45,20 @@ while ($row = $kas_settings->fetch_assoc()) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
 
+// Calculate actual values from investors table to ensure accuracy
+$investor_stats = $conn->query("
+    SELECT
+        SUM(total_modal) as total_modal_investor,
+        SUM(modal_tersedia) as modal_tersedia,
+        SUM(modal_allocated) as modal_allocated
+    FROM investors
+")->fetch_assoc();
+
+// Override kas_settings with actual calculated values from investors table
+$settings['total_modal_investor'] = $investor_stats['total_modal_investor'] ?? 0;
+$settings['modal_tersedia'] = $investor_stats['modal_tersedia'] ?? 0;
+$settings['modal_allocated'] = $investor_stats['modal_allocated'] ?? 0;
+
 include '../includes/header.php';
 ?>
 
