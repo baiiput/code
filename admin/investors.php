@@ -109,10 +109,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if ($conn->query("DELETE FROM investors WHERE id = $id")) {
-            setFlashMessage('success', 'Investor berhasil dihapus');
-        } else {
-            setFlashMessage('error', 'Gagal menghapus investor');
+        // Check if investor has active transactions (not cancelled/completed)
+        $active_check = $conn->query("
+            SELECT COUNT(*) as total
+            FROM transaction_investors ti
+            JOIN transactions t ON ti.transaction_id = t.id
+            WHERE ti.investor_id = $id
+            AND t.status NOT IN ('dibatalkan', 'lunas')
+        ");
+
+        if ($active_check->fetch_assoc()['total'] > 0) {
+            setFlashMessage('error', 'Tidak dapat menghapus investor yang masih memiliki transaksi aktif');
+            header('Location: /admin/investors.php');
+            exit;
+        }
+
+        $conn->begin_transaction();
+        try {
+            // Delete transaction_investors records for cancelled/completed transactions
+            $conn->query("
+                DELETE ti FROM transaction_investors ti
+                JOIN transactions t ON ti.transaction_id = t.id
+                WHERE ti.investor_id = $id
+                AND t.status IN ('dibatalkan', 'lunas')
+            ");
+
+            // Delete investor
+            if ($conn->query("DELETE FROM investors WHERE id = $id")) {
+                $conn->commit();
+                setFlashMessage('success', 'Investor berhasil dihapus');
+            } else {
+                $conn->rollback();
+                setFlashMessage('error', 'Gagal menghapus investor');
+            }
+        } catch (Exception $e) {
+            $conn->rollback();
+            setFlashMessage('error', 'Gagal menghapus investor: ' . $e->getMessage());
         }
 
         header('Location: /admin/investors.php');
