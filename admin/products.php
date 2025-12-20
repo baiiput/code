@@ -193,12 +193,12 @@ include '../includes/header.php';
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"><?php echo formatRupiah($product['harga_modal']); ?></td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <form method="POST" class="inline">
+                                <form method="POST" class="inline" title="Klik untuk mengubah status">
                                     <input type="hidden" name="action" value="toggle_status">
                                     <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
                                     <input type="hidden" name="is_active" value="<?php echo $product['is_active']; ?>">
-                                    <button type="submit" class="px-2 py-1 text-xs font-medium rounded <?php echo $product['is_active'] ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'; ?>">
-                                        <?php echo $product['is_active'] ? 'Aktif' : 'Nonaktif'; ?>
+                                    <button type="submit" class="px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all duration-200 <?php echo $product['is_active'] ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800' : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800'; ?>">
+                                        <?php echo $product['is_active'] ? '✓ Aktif (Klik untuk Nonaktifkan)' : '✗ Nonaktif (Klik untuk Aktifkan)'; ?>
                                     </button>
                                 </form>
                             </td>
@@ -260,7 +260,7 @@ include '../includes/header.php';
 
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2">Harga Modal *</label>
-                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                        <input type="number" name="harga_modal" id="harga_modal" step="0.01" required value="0" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
                     </div>
                 </div>
 
