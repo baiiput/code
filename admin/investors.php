@@ -126,6 +126,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $conn->begin_transaction();
         try {
+            // Mark all kas_transactions related to this investor as 'batal'
+            $conn->query("
+                UPDATE kas_transactions
+                SET status = 'batal'
+                WHERE referensi_type = 'investor'
+                AND referensi_id = $id
+            ");
+
             // Delete transaction_investors records for cancelled/completed transactions
             $conn->query("
                 DELETE ti FROM transaction_investors ti
@@ -137,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Delete investor
             if ($conn->query("DELETE FROM investors WHERE id = $id")) {
                 $conn->commit();
-                setFlashMessage('success', 'Investor berhasil dihapus');
+                setFlashMessage('success', 'Investor berhasil dihapus dan transaksi kas terkait ditandai sebagai batal');
             } else {
                 $conn->rollback();
                 setFlashMessage('error', 'Gagal menghapus investor');

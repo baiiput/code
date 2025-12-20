@@ -11,6 +11,7 @@ $pageTitle = 'Laporan Kas & Transaksi';
 // Get filter
 $filter_tipe = $_GET['tipe'] ?? 'all';
 $filter_kategori = $_GET['kategori'] ?? 'all';
+$filter_status = $_GET['status'] ?? 'aktif'; // Default to show only active transactions
 $filter_date_from = $_GET['date_from'] ?? '';
 $filter_date_to = $_GET['date_to'] ?? '';
 
@@ -21,6 +22,9 @@ if ($filter_tipe !== 'all') {
 }
 if ($filter_kategori !== 'all') {
     $where[] = "kategori = '$filter_kategori'";
+}
+if ($filter_status !== 'all') {
+    $where[] = "status = '$filter_status'";
 }
 if (!empty($filter_date_from)) {
     $where[] = "tanggal_transaksi >= '$filter_date_from'";
@@ -89,7 +93,7 @@ include '../includes/header.php';
 
 <!-- Filter -->
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-6">
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipe</label>
             <select name="tipe" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
@@ -106,6 +110,14 @@ include '../includes/header.php';
                 <option value="investor_allocation" <?php echo $filter_kategori === 'investor_allocation' ? 'selected' : ''; ?>>Alokasi ke Transaksi</option>
                 <option value="investor_return" <?php echo $filter_kategori === 'investor_return' ? 'selected' : ''; ?>>Return Modal + Profit</option>
                 <option value="investor_out" <?php echo $filter_kategori === 'investor_out' ? 'selected' : ''; ?>>Penarikan Investor</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+            <select name="status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="aktif" <?php echo $filter_status === 'aktif' ? 'selected' : ''; ?>>Aktif Saja</option>
+                <option value="batal" <?php echo $filter_status === 'batal' ? 'selected' : ''; ?>>Batal Saja</option>
+                <option value="all" <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>Semua</option>
             </select>
         </div>
         <div>
@@ -131,6 +143,7 @@ include '../includes/header.php';
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tanggal</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tipe</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kategori</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Nominal</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Saldo Before</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Saldo After</th>
@@ -140,7 +153,11 @@ include '../includes/header.php';
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 <?php if ($kas_trans->num_rows > 0): ?>
                     <?php while ($trans = $kas_trans->fetch_assoc()): ?>
-                        <tr>
+                        <?php
+                        $status = $trans['status'] ?? 'aktif';
+                        $rowClass = $status === 'batal' ? 'bg-gray-50 dark:bg-gray-900 opacity-60' : '';
+                        ?>
+                        <tr class="<?php echo $rowClass; ?>">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                 <?php echo date('d/m/Y', strtotime($trans['tanggal_transaksi'])); ?>
                             </td>
@@ -151,6 +168,11 @@ include '../includes/header.php';
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                 <?php echo htmlspecialchars($trans['kategori']); ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded <?php echo $status === 'batal' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 line-through' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'; ?>">
+                                    <?php echo ucfirst($status); ?>
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold <?php echo $trans['tipe'] === 'masuk' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'; ?>">
                                 Rp <?php echo number_format($trans['nominal'], 0, ',', '.'); ?>
@@ -168,15 +190,28 @@ include '../includes/header.php';
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada transaksi kas</td>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada transaksi kas</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Menampilkan 100 transaksi terakhir</p>
+        <div class="flex justify-between items-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Menampilkan 100 transaksi terakhir <?php echo $filter_status === 'aktif' ? '(hanya transaksi aktif)' : ($filter_status === 'batal' ? '(hanya transaksi batal)' : '(semua status)'); ?></p>
+            <p class="text-xs text-gray-500 dark:text-gray-500">💡 Transaksi batal ditampilkan dengan background abu-abu dan status bergaris</p>
+        </div>
     </div>
+</div>
+
+<!-- Info Note -->
+<div class="mt-4 bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+    <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">ℹ️ Informasi Status Transaksi:</h3>
+    <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+        <li><strong>Aktif:</strong> Transaksi valid yang memengaruhi perhitungan kas</li>
+        <li><strong>Batal:</strong> Transaksi yang dibatalkan (misal: investor dihapus). Tetap tersimpan untuk audit trail tapi tidak memengaruhi perhitungan</li>
+        <li><strong>Default:</strong> Hanya menampilkan transaksi aktif. Gunakan filter "Status" untuk melihat transaksi batal atau semua transaksi</li>
+    </ul>
 </div>
 
 <?php include '../includes/footer.php'; ?>
