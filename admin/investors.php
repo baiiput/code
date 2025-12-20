@@ -27,6 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $minimal_alokasi = floatval($_POST['minimal_alokasi']);
         $keterangan = sanitize($_POST['keterangan']);
 
+        // DEBUG: Display ALL received values including ID
+        echo "<pre style='background: #1a1a1a; color: #00ff00; padding: 20px; margin: 20px; font-family: monospace; border: 3px solid #00ff00;'>";
+        echo "╔═══════════════════════════════════════════════════════════╗\n";
+        echo "║              DEBUG INFO - INVESTOR FORM DATA              ║\n";
+        echo "╚═══════════════════════════════════════════════════════════╝\n\n";
+        echo "Action: " . htmlspecialchars($action) . "\n";
+        echo "ID: " . ($id ? htmlspecialchars($id) : 'NULL/EMPTY') . "\n";
+        echo "Kode Investor: " . htmlspecialchars($kode_investor) . "\n";
+        echo "Nama Investor: " . htmlspecialchars($nama_investor) . "\n";
+        echo "kontrak_mulai: '" . htmlspecialchars($kontrak_mulai) . "' (length: " . strlen($kontrak_mulai) . ")\n";
+        echo "kontrak_selesai: '" . htmlspecialchars($kontrak_selesai) . "' (length: " . strlen($kontrak_selesai) . ")\n";
+        echo "\n--- RAW POST DATA ---\n";
+        print_r($_POST);
+        echo "</pre>";
+        die("=== STOPPED FOR DEBUGGING - Silakan screenshot dan kirim ke saya ===");
+
         // Validate dates
         if (empty($kontrak_mulai) || empty($kontrak_selesai)) {
             setFlashMessage('error', 'Tanggal kontrak mulai dan selesai harus diisi');
